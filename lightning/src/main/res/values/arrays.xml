@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="user_agent">
+        <item>@string/agent_default</item>
+        <item>@string/agent_desktop</item>
+        <item>@string/agent_mobile</item>
+        <item>@string/agent_custom</item>
+    </string-array>
+
+    <string-array name="download_folder">
+        <item>@string/folder_default</item>
+        <item>@string/folder_custom</item>
+    </string-array>
+
+    <string-array name="homepage">
+        <item>@string/action_homepage</item>
+        <item>@string/action_blank</item>
+        <item>@string/action_bookmarks</item>
+        <item>@string/action_webpage</item>
+    </string-array>
+
+    <string-array name="suggestions">
+        <item>@string/powered_by_google</item>
+        <item>@string/powered_by_duck</item>
+        <item>@string/powered_by_baidu</item>
+        <item>@string/search_suggestions_off</item>
+    </string-array>
+
+    <string-array name="themes">
+        <item>@string/light_theme</item>
+        <item>@string/dark_theme</item>
+        <item>@string/black_theme</item>
+    </string-array>
+</resources>

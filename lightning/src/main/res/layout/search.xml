@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/search_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_marginBottom="6dp"
+    android:layout_marginLeft="2dp"
+    android:layout_marginRight="2dp"
+    android:layout_marginTop="6dp"
+    android:layout_weight="1"
+    android:background="?attr/searchBackground"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    android:descendantFocusability="beforeDescendants"
+    android:elevation="2dp"
+    android:focusableInTouchMode="true"
+    android:gravity="center">
+
+    <acr.browser.lightning.view.SearchView
+        android:id="@+id/search"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@null"
+        android:gravity="left|center_vertical"
+        android:hint="@string/search_hint"
+        android:imeOptions="actionGo"
+        android:inputType="textUri"
+        android:paddingBottom="1dp"
+        android:paddingLeft="8dp"
+        android:paddingRight="5dp"
+        android:paddingTop="1dp"
+        android:singleLine="true"
+        android:textColor="@color/gray_dark"
+        android:textColorHint="@color/hint_text"
+        android:textCursorDrawable="@null"/>
+
+</LinearLayout>

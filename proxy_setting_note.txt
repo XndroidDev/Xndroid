@@ -1,0 +1,126 @@
+/*
+* Android(6.0.1) proxy setting codes
+* codes in 'frameworks/base/wifi'
+ */
+
+/*
+* Android app 仅系统应用可修改wifi的proxy设置(WifiManager通过Binder将配置信息发送给WifiService处理)
+* proxy由服务WifiService管理,WifiService修改proxy设置时仅更改在内存中管理的各wifi proxy信息列表
+* ,以及将配置信息保存在 /data/misc/wifi/ipconfig.txt
+ */
+
+
+WifiConfigStore.addOrUpdateNetworkNative
+	WifiConfigStore.writeIpAndProxyConfigurationsOnChange
+		WifiConfigStore.writeIpAndProxyConfigurations
+			IpConfigStore.writeIpAndProxyConfigurations
+				IpConfigStore.writeConfig
+
+
+//class IpConfigStore
+
+
+public void writeIpAndProxyConfigurations(String filePath,
+                                              final SparseArray<IpConfiguration> networks) {
+        mWriter.write(filePath, new DelayedDiskWrite.Writer() {
+            public void onWriteCalled(DataOutputStream out) throws IOException{
+                out.writeInt(IPCONFIG_FILE_VERSION);//2
+                for(int i = 0; i < networks.size(); i++) {
+                    writeConfig(out, networks.keyAt(i), networks.valueAt(i));
+                }
+            }
+        });
+    }
+
+
+ private boolean writeConfig(DataOutputStream out, int configKey,
+                                IpConfiguration config) throws IOException {
+        boolean written = false;
+
+        try {
+            switch (config.ipAssignment) {
+                case STATIC:
+                    out.writeUTF(IP_ASSIGNMENT_KEY);
+                    out.writeUTF(config.ipAssignment.toString());
+                    StaticIpConfiguration staticIpConfiguration = config.staticIpConfiguration;
+                    if (staticIpConfiguration != null) {
+                        if (staticIpConfiguration.ipAddress != null) {
+                            LinkAddress ipAddress = staticIpConfiguration.ipAddress;
+                            out.writeUTF(LINK_ADDRESS_KEY);
+                            out.writeUTF(ipAddress.getAddress().getHostAddress());
+                            out.writeInt(ipAddress.getPrefixLength());
+                        }
+                        if (staticIpConfiguration.gateway != null) {
+                            out.writeUTF(GATEWAY_KEY);
+                            out.writeInt(0);  // Default route.
+                            out.writeInt(1);  // Have a gateway.
+                            out.writeUTF(staticIpConfiguration.gateway.getHostAddress());
+                        }
+                        for (InetAddress inetAddr : staticIpConfiguration.dnsServers) {
+                            out.writeUTF(DNS_KEY);
+                            out.writeUTF(inetAddr.getHostAddress());
+                        }
+                    }
+                    written = true;
+                    break;
+                case DHCP:
+                    out.writeUTF(IP_ASSIGNMENT_KEY);
+                    out.writeUTF(config.ipAssignment.toString());
+                    written = true;
+                    break;
+                case UNASSIGNED:
+                /* Ignore */
+                    break;
+                default:
+                    loge("Ignore invalid ip assignment while writing");
+                    break;
+            }
+
+            switch (config.proxySettings) {
+                case STATIC:
+                    ProxyInfo proxyProperties = config.httpProxy;
+                    String exclusionList = proxyProperties.getExclusionListAsString();
+                    out.writeUTF(PROXY_SETTINGS_KEY);
+                    out.writeUTF(config.proxySettings.toString());
+                    out.writeUTF(PROXY_HOST_KEY);
+                    out.writeUTF(proxyProperties.getHost());
+                    out.writeUTF(PROXY_PORT_KEY);
+                    out.writeInt(proxyProperties.getPort());
+                    if (exclusionList != null) {
+                        out.writeUTF(EXCLUSION_LIST_KEY);
+                        out.writeUTF(exclusionList);
+                    }
+                    written = true;
+                    break;
+                case PAC:
+                    ProxyInfo proxyPacProperties = config.httpProxy;
+                    out.writeUTF(PROXY_SETTINGS_KEY);
+                    out.writeUTF(config.proxySettings.toString());
+                    out.writeUTF(PROXY_PAC_FILE);
+                    out.writeUTF(proxyPacProperties.getPacFileUrl().toString());
+                    written = true;
+                    break;
+                case NONE:
+                    out.writeUTF(PROXY_SETTINGS_KEY);
+                    out.writeUTF(config.proxySettings.toString());
+                    written = true;
+                    break;
+                case UNASSIGNED:
+                    /* Ignore */
+                        break;
+                    default:
+                        loge("Ignore invalid proxy settings while writing");
+                        break;
+            }
+
+            if (written) {
+                out.writeUTF(ID_KEY);
+                out.writeInt(configKey);
+            }
+        } catch (NullPointerException e) {
+            loge("Failure in writing " + config + e);
+        }
+        out.writeUTF(EOS);
+
+        return written;
+    }

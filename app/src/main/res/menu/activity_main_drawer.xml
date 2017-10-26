@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_xndroid"
+            android:icon="@mipmap/ic_android"
+            android:title="Xndroid" />
+        <item
+            android:id="@+id/nav_xxnet"
+            android:icon="@mipmap/ic_xxnet"
+            android:title="XX-net" />
+    </group>
+
+    <item
+        android:id="@+id/nav_lightning"
+        android:icon="@mipmap/ic_browser_white"
+        android:title="Lightning browser" />
+
+    <item
+        android:id="@+id/nav_about"
+        android:icon="@mipmap/ic_help_white"
+        android:title="@string/about" />
+
+    <item
+        android:id="@+id/nav_exit"
+        android:icon="@mipmap/ic_exit_white"
+        android:title="@string/exit" />
+
+    <!--<item android:title="Communicate">-->
+        <!--<menu>-->
+            <!---->
+        <!--</menu>-->
+    <!--</item>-->
+
+</menu>

@@ -3,6 +3,7 @@ package net.xx.xndroid;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -27,6 +28,11 @@ public class MainActivity extends AppCompatActivity
     private AboutFragment mAboutFragment;
     private ViewGroup mRootView;
 
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+    }
 
     @Override
     protected void onPause() {
@@ -161,6 +167,10 @@ public class MainActivity extends AppCompatActivity
         this.startActivity(intent);
     }
 
+    public void startFqrouter(){
+        Intent intent = new Intent(this, fq.router2.MainActivity.class);
+        this.startActivity(intent);
+    }
 
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
@@ -178,6 +188,8 @@ public class MainActivity extends AppCompatActivity
             AppModel.appStop();
         } else if (id == R.id.nav_lightning){
             startLightning();
+        } else if (id == R.id.nav_fqrouter){
+            startFqrouter();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);

@@ -56,6 +56,8 @@ android {
     packagingOptions {
         exclude '.readme'
     }
+
+    useLibrary 'org.apache.http.legacy'
 }
 
 //dexcount {
@@ -94,7 +96,7 @@ dependencies {
     // tor proxy
     def netcipherVersion = '2.0.0-alpha1'
     compile "info.guardianproject.netcipher:netcipher:$netcipherVersion"
-    compile "info.guardianproject.netcipher:netcipher-webkit:$netcipherVersion"
+//    compile "info.guardianproject.netcipher:netcipher-webkit:$netcipherVersion"
     compile 'com.anthonycr.bonsai:bonsai:1.1.0'
     compile 'com.anthonycr.progress:animated-progress:1.0'
     // memory leak analysis

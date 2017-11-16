@@ -29,4 +29,5 @@ dependencies {
     compile 'com.android.support:support-v4:26.+'
     androidTestCompile 'junit:junit:4.12'
     compile project(':lightning')
+    compile project(':fqrouter')
 }

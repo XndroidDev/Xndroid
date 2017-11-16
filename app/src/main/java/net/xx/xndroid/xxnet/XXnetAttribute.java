@@ -20,7 +20,7 @@ public class XXnetAttribute {
     public static int sIpNum = -1;
     public static int sIpQuality = -1;
     public static String sNetState = "getting information";
-    public static boolean sIpv6 = false;
+    public static String sIpv6 = "";
     public static String sXXversion = "";
     public static int sWorkerH1 = 0;
     public static int sWorkerH2 = 0;
@@ -112,12 +112,12 @@ public class XXnetAttribute {
             return false;
         }
         try {
+            sXXversion = json.getString("xxnet_version").trim();
             sAppid = json.getString("gae_appid");
-            sIpNum = json.getInt("good_ip_num");
+            sIpNum = json.getInt("good_ipv4_num");
             sIpQuality = json.getInt("ip_quality");
-            sNetState = json.getString("network_state");
-            sIpv6 = json.getInt("use_ipv6") != 0;
-            sXXversion = json.getString("xxnet_version").replace("\n", "");
+            sNetState = json.getString("ipv4_state");
+            sIpv6 = json.getString("use_ipv6");
             sWorkerH1 = json.getInt("worker_h1");
             sWorkerH2 = json.getInt("worker_h2");
 //            LogUtil.defaultLogWrite("info", "xxnet state refreshed: Appid=" + sAppid
@@ -146,6 +146,7 @@ public class XXnetAttribute {
         map.put("auto_adjust_scan_ip_thread_num","1");
         map.put("scan_ip_thread_num","" + threadNum);
         map.put("ip_range",sIpRange);
+        map.put("use_ipv6","auto");
         String response = HttpJson.post("http://127.0.0.1:8085/module/gae_proxy/control/scan_ip?cmd=update",map);
         if(response.indexOf("success") > 0){
             sThreadNum = threadNum;
@@ -163,7 +164,7 @@ public class XXnetAttribute {
         Map<String,String> map = new HashMap<>();
         map.put("appid",appid);
         map.put("host_appengine_mode","direct");
-        map.put("use_ipv6",sIpv6 ? "1" : "0");
+        map.put("use_ipv6",sIpv6);
         map.put("proxy_enable","0");
         map.put("proxy_type","HTTP");
         map.put("proxy_port","0");

@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>fqrouter</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link href="/assets/bootstrap/css/bootstrap.css" rel="stylesheet" media="screen">
+    <link href="/assets/bootstrap/css/bootstrap-theme.css" rel="stylesheet" media="screen">
+    <link href="/assets/bootstrap-switch.css" rel="stylesheet" media="screen">
+    <style type="text/css">
+        th.sort-header {
+            cursor: pointer;
+        }
+
+        th.sort-header::-moz-selection,
+        th.sort-header::selection {
+            background: transparent;
+        }
+
+        table th.sort-header:after {
+            content: '';
+            float: right;
+            margin-top: 7px;
+            border-width: 0 4px 4px;
+            border-style: solid;
+            border-color: #404040 transparent;
+            visibility: hidden;
+        }
+
+        table th.sort-header:hover:after {
+            visibility: visible;
+        }
+
+        table th.sort-up:after,
+        table th.sort-down:after,
+        table th.sort-down:hover:after {
+            visibility: visible;
+            opacity: 0.4;
+        }
+
+        table th.sort-up:after {
+            border-bottom: none;
+            border-width: 4px 4px 0;
+        }
+
+        table.portrait .tx-speed {
+            display: none;
+        }
+
+        table.portrait .rx-speed {
+            display: none;
+        }
+
+        body {
+            margin-top: 16px;
+        }
+
+        #proxy-dialog .input-group {
+            width: 100%;
+        }
+
+        #proxy-dialog .input-group-addon {
+            width: 128px;
+        }
+
+        #proxy-dialog.add-mode .add-mode {
+            display: inline-block;
+        }
+
+        #proxy-dialog.add-mode .update-mode {
+            display: none;
+        }
+
+        #proxy-dialog.update-mode .add-mode {
+            display: none;
+        }
+
+        #proxy-dialog.update-mode .update-mode {
+            display: inline-block;
+        }
+
+        /*
+         * Side navigation
+         *
+         * Scrollspy and affixed enhanced navigation to highlight sections and secondary
+         * sections of docs content.
+         */
+
+        /* By default it's not affixed in mobile views, so undo that */
+        .bs-sidebar.affix {
+            position: static;
+        }
+
+            /* First level of nav */
+        .bs-sidenav {
+            margin-top: 30px;
+            margin-bottom: 30px;
+            padding-top:    10px;
+            padding-bottom: 10px;
+            text-shadow: 0 1px 0 #fff;
+            background-color: #f7f5fa;
+            border-radius: 5px;
+        }
+
+            /* All levels of nav */
+        .bs-sidebar .nav > li > a {
+            display: block;
+            color: #716b7a;
+            padding: 5px 20px;
+            font-size: 20px;
+        }
+        .bs-sidebar .nav > li > a:hover,
+        .bs-sidebar .nav > li > a:focus {
+            text-decoration: none;
+            background-color: #e5e3e9;
+            border-right: 1px solid #dbd8e0;
+        }
+        .bs-sidebar .nav > .active > a,
+        .bs-sidebar .nav > .active:hover > a,
+        .bs-sidebar .nav > .active:focus > a {
+            font-weight: bold;
+            color: #563d7c;
+            background-color: transparent;
+            border-right: 1px solid #563d7c;
+        }
+
+        .bs-sidebar .nav .nav > li > a {
+            padding-top:    3px;
+            padding-bottom: 3px;
+            padding-left: 30px;
+            font-size: 90%;
+        }
+
+            /* Show and affix the side nav when space allows it */
+        @media screen and (min-width: 992px) {
+            .bs-sidebar .nav > .active > ul {
+                display: block;
+            }
+            /* Widen the fixed sidebar */
+            .bs-sidebar.affix,
+            .bs-sidebar.affix-bottom {
+                width: 213px;
+            }
+            .bs-sidebar.affix {
+                position: fixed; /* Undo the static from mobile first approach */
+                top: 80px;
+            }
+            .bs-sidebar.affix-bottom {
+                position: absolute; /* Undo the static from mobile first approach */
+            }
+            .bs-sidebar.affix-bottom .bs-sidenav,
+            .bs-sidebar.affix .bs-sidenav {
+                margin-top: 0;
+                margin-bottom: 0;
+            }
+        }
+        @media screen and (min-width: 1200px) {
+            /* Widen the fixed sidebar again */
+            .bs-sidebar.affix-bottom,
+            .bs-sidebar.affix {
+                width: 263px;
+            }
+        }
+
+        .section-action {
+            margin-top: 16px;
+        }
+
+        .go-top {
+            position: fixed;
+            bottom: 2em;
+            right: 2em;
+            text-decoration: none;
+            color: white;
+            background-color: rgba(0,0,0,0.3);
+            font-size: 12px;
+            padding: 1em;
+            display: none;
+        }
+
+        .go-top:hover {
+            background-color: rgba(0,0,0,0.6);
+        }
+
+        a.go-top:hover{
+            color: white;
+        }
+
+        .busy-indicator {
+            background: url('/assets/busy-indicator.gif') center center no-repeat white;
+            position: absolute;
+            height: 100%;
+            width: 100%;
+            top: 0;
+            left: 0;
+            border-radius: 10px;
+            zoom: 1;
+            filter: alpha(opacity=50);
+            opacity: 0.5;
+            display: inline-block;
+        }
+
+        .list-group-item-caption {
+            width: 60px;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+    </style>
+</head>
+<body>
+<a name="top"></a>
+<div class="container">
+    <div class="col-md-3 col-sm-12">
+        <div class="bs-sidebar hidden-print" role="complementary" data-spy="affix">
+            <ul class="nav bs-sidenav">
+                <li>
+                    <a href="#share-uncensored-internet">{{ _('Share', '共享翻墙网络') }}</a>
+                    <ul class="nav">
+                        {% if is_root %}
+                        <li>
+                            <a href="#pick-and-play">Pick &amp; Play</a>
+                        </li>
+                        <li>
+                            <a href="#share-by-android">{{ _('Share by Android', '通过Android共享') }}</a>
+                        </li>
+                        {% endif %}
+                        {% if spi_wifi_repeater and spi_wifi_repeater['is_supported']() %}
+                        <li>
+                            <a href="#wifi-repeater">{{ _('Wifi Repeater', '无线中继') }}</a>
+                        </li>
+                        {% endif %}
+                        <li>
+                            <a href="#http-proxy">{{ _('HTTP Proxy', 'HTTP代理') }}</a>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#proxy-list">{{ _('Proxies', '代理列表') }}</a>
+                    <ul class="nav">
+                        <li><a href="javascript:void(0);" id="nav-add-proxy">{{ _('Add Proxy', '添加个人代理') }}</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-9" role="main">
+
+    <div class="row">
+        <div class="col-xs-10">
+            <a name="remote-access">
+            </a>
+            <h3>
+                {{ _('Remote Access', '本页面可以远程访问') }}
+            </h3>
+        </div>
+        <div class="col-xs-2">
+            <div class="pull-right section-action">
+                <a data-toggle="modal" href="#http-manager-dialog" class="btn btn-default pull-right"
+                   id="config-http-manager">
+                    {{ _('Config', '配置') }}
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-12">
+            {{ _(
+            """
+            It is hard to configure things on mobile, you can open following URL from device within the same local area network (LAN).
+            If this page is slow to loading slow within fqrouter or not working properly, try
+            """,
+            """
+            手机上操作不方便，建议在同一局域网内的其他机器上访问下面的网址进行远程管理。如果本页面在fqrouter软件内加载慢或者工作不正常，可以尝试
+            """) }}
+            <a target="_blank" href="http://127.0.0.1:{{ httpd.LISTEN_PORT }}">{{ _('open it in browser','在浏览器中打开') }}</a>
+            <div style="margin-top: 8px;">
+                <label class="label label-info" style="font-size: 16px; ">
+                    {% if default_interface_ip %}
+                    http://{{ default_interface_ip }}:{{ httpd.LISTEN_PORT }}
+                    {% else %}
+                    {{ _('Network Disconnected','无网络') }}
+                    {% endif %}
+                </label>
+            </div>
+        </div>
+    </div>
+    <a name="share-uncensored-internet"></a>
+    {% if is_root %}
+    <a name="pick-and-play"></a>
+    <hr/>
+    <div class="row">
+        <div class="col-xs-6">
+            <h3>
+                Pick &amp; Play
+            </h3>
+        </div>
+        <div class="col-xs-6">
+            <button class="btn btn-primary pull-right section-action" id="scan">{{ _('Scan', '扫描') }}</button>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-12">
+            {{ _(
+            """
+            Scan the currently connected wifi network to discover your other devices (iphone, windows pc, etc).
+            Pick any device from the list, then that device will route via fqrouter to access restricted website such as
+            youtube or twitter.
+            """,
+            """
+            扫描当前网络中的其他设备（iPhone，个人电脑等）。然后从扫描出来的列表中选取你希望翻墙的设备，这样那台设备就可以通过fqrouter翻墙了。
+            """) }}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12 hide" id="lan-devices">
+            <div class="busy-indicator" class="hide"></div>
+            <table class="table table-striped" style="margin-bottom: 0;">
+                <thead>
+                <tr>
+                    <th>{{ _('ip', 'ip') }}</th>
+                    <th>{{ _('hostname', '机器名') }}</th>
+                    <th class="no-sort">{{ _('picked', '已选中') }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+    {% if is_root %}
+    <a name="share-by-android"></a>
+    <hr/>
+    <div class="row">
+        <div class="col-xs-12">
+            <h3>
+                {{ _('Share by Android', '通过Android共享') }}
+            </h3>
+            {{ _("""
+            Android system comes with various ways to share internet to other devices.
+            For example 3G can be shared by Wifi Hotspot (so called Personal Portable Hotspot).
+            And there are USB sharing and Bluetooth sharing.
+            Normally you can find all those functionalities from system settings.
+            If you can not find them, just google for it. If fqrouter is started,
+            then you shared internet via System builtin ways,
+            then whoever connects in will get uncensored internet automatically.
+            There is no extra action need to be taken in fqrotuer.
+            """, """
+            Android系统自带多种共享网络给其他设备的方式。比如说3G可以用无线的方式共享出去（所谓便携式热点）。
+            还有用USB线共享网络，以及用蓝牙共享网络。一般这些系统提供的共享网络的功能入口都在设置里。
+            如果找不到，请自行Google。fqrouter启动之后，用Android系统自带的工具把网络共享出去，其他设备连进来就自动翻墙了。
+            不需要额外在fqrouter里再进行什么操作了。
+            """) }}
+        </div>
+    </div>
+    {% endif %}
+    {% if spi_wifi_repeater and spi_wifi_repeater['is_supported']() %}
+    <a name="wifi-repeater"></a>
+    <hr/>
+    <div class="row">
+        <div class="col-xs-5">
+            <h3>
+                {{ _('Wifi Repeater', '无线中继') }}
+            </h3>
+        </div>
+        <div class="col-xs-7">
+            <div class="pull-right section-action">
+                <a data-toggle="modal" href="#wifi-repeater-dialog" class="btn btn-default" id="config-wifi-repeater">
+                    {{ _('Config', '配置') }}
+                </a>
+
+                <div class="make-switch" data-on="success" data-off="default" id="wifi-repeater-switch">
+                    <input type="checkbox" {{ 'checked="checked"' if spi_wifi_repeater['is_started']() else '' }}>
+                </div>
+                <div id="wifi-repeater-busy-indicator-container" class="hide"
+                     style="width: 100px; height: 30px; position: relative; display: inline-block; text-align: center;">
+                    <div class="busy-indicator"></div>
+                    Working...
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-12">
+            {{ _(
+            """
+            Android built-in 3G hotspot can share 3G, but it can not share wifi.
+            If you are at home, obviously you do not want to surf internet via 3G,
+            but meantime you still want to share uncensored internet to other devices via Wifi.
+            Then you would need to use Wifi Repeater. However only a few mobile models support Wifi Repeater.
+            If you mobile is not one of those, starting wifi repeater might cause the system reboot.
+            But I can assure you, it will not do any harm to hardware.
+            Some device might need to Disable Wifi P2P by click config button above to make wifi repeater work.
+            """,
+            """
+            系统自带的便携式热点可以共享3G，但是无法共享家庭的无线网络。
+            如果我在家里，显然不希望还用3G上网，但是我又想用无线把翻墙网络共享给其他设备。
+            这个时候你就需要使用无线中继这个功能。但是只有少数手机支持无线中继，
+            如果你的手机不支持可能会导致系统重启，但是肯定不会对硬件造成任何损坏。
+            有些设备需要通过上面的配置按钮“禁用系统的WIFI P2P”，然后无线中继才可以成功启动。
+            """) }}
+        </div>
+    </div>
+    {% endif %}
+
+    <a name="http-proxy"></a>
+    <hr/>
+    <div class="row">
+        <div class="col-xs-5">
+            <h3>
+                {{ _('HTTP Proxy', 'HTTP代理') }}
+            </h3>
+        </div>
+        <div class="col-xs-7">
+            <div class="pull-right section-action">
+                <a data-toggle="modal" href="#http-gateway-dialog" class="btn btn-default" id="config-http-gateway">
+                    {{ _('Config', '配置') }}
+                </a>
+
+                <div class="make-switch" data-on="success" data-off="default" id="http-gateway-switch">
+                    <input type="checkbox" {{ 'checked="checked"' if http_gateway.server_greenlet else '' }}>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-12">
+            {{ _(
+            """
+            Share uncensored internet to friends nearby (within the same local area network). They just need to set http
+            proxy in their device
+            to the following values. If you do not know what is this about, just google for it.
+            If you can <a href='http://en.wikipedia.org/wiki/Android_rooting'>ROOT your mobile</a>, there will
+            be a lot more ways to share uncensored internet, and it also makes fqrouter more stable. You might want to give it a try someday.
+            """,
+            """
+            把翻墙网络共享给周围的朋友（同一个局域网内）。TA们只需要把设备上的HTTP代理设置为下面的值就可以了。搞不明白的朋友请自行Google。
+            如果你可以把你的<a href='http://zh.wikipedia.org/wiki/Root_(Android%E7%B3%BB%E7%BB%9F)'>手机ROOT了</a>，
+            那么就可以有更多的方式来共享翻墙网络了，而且fqrouter也会工作得更稳定。哪天可以试试。
+            """) }}
+            <ul class="list-group" style="margin-top: 8px; margin-bottom: 0;" id="http-gateway-info">
+                <li class="list-group-item">
+                    <label class="label label-default list-group-item-caption">HTTP</label>
+                    <label class="label label-info on hide" style="font-size: 16px;">
+                        {% if default_interface_ip %}
+                        {{ default_interface_ip }}:{{ http_gateway.LISTEN_PORT }}
+                        {% else %}
+                        {{ _('Network Disconnected', '无网络') }}
+                        {% endif %}
+                    </label>
+                    <label class="label label-info off" style="font-size: 16px;">
+                        {{ _('Please turn on the switch', '请先打开开关') }}
+                    </label>
+                </li>
+                <li class="list-group-item">
+                    <label class="label label-default list-group-item-caption">PAC</label>
+                    <label class="label label-info on hide" style="font-size: 16px;">
+                        {% if default_interface_ip %}
+                        http://{{ default_interface_ip }}:{{ http_gateway.LISTEN_PORT }}
+                        {% else %}
+                        {{ _('Network Disconnected', '无网络') }}
+                        {% endif %}
+                    </label>
+                    <label class="label label-info off" style="font-size: 16px;">
+                        {{ _('Please turn on the switch', '请先打开开关') }}
+                    </label>
+                </li>
+                {% if is_root %}
+                <li class="list-group-item">
+                    <label class="label label-default list-group-item-caption">{{ _('UPNP', '外网') }}</label>
+                    <label class="on hide" style="font-size: 16px;">
+                        <button class="btn btn-default" id="config-upnp">{{ _('Want to use fqrouter anytime anywhere?', '想要随时随地使用fqrouter？') }}</button>
+                    </label>
+                    <label class="label label-info off" style="font-size: 16px;">
+                        {{ _('Please turn on the switch', '请先打开开关') }}
+                    </label>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+    <a name="proxy-list"></a>
+    <hr/>
+    <div class="row">
+        <div class="col-xs-5">
+            <h3>
+                {{ _('Proxies', '代理列表') }}
+            </h3>
+        </div>
+        <div class="col-xs-7">
+            <div class="pull-right section-action">
+                <a data-toggle="modal" href="#proxies-dialog" class="btn btn-default" id="config-proxies">
+                    {{ _('Config', '配置') }}
+                </a>
+                <a id="show-add-proxy" class="btn btn-primary">
+                    <span class="glyphicon glyphicon-plus"></span>
+                    {{ _('Add Proxy', '添加代理') }}
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-12">
+            <div>
+                {{ _("""
+                The list are the proxies fqrouter using. Built-in public proxies might not satisfy your needs.
+                You can add your private proxy by clicking Add Proxy button.
+                Notice that, fqrouter does not use GoAgent to proxy HTTPS website.
+                Public proxy CAN NOT watch youtube video or download from google play.
+                """, """
+                下面的列表中列出了fqrouter正在使用的代理。默认设置的公共代理可能不能满足你对速度和稳定性的要求。
+                如果你有个人代理（比如说自己注册的GoAgent帐号），可以点“添加代理”按钮。
+                特别提示，fqrouter只使用GoAgent代理HTTP，也就是说twitter这样的HTTPS网站是无法只使用GoAgent就能访问的。
+                公共代理无法观看 Youtube 视频，也不能用于从 Google Play 上下载软件。
+                """) }}
+            </div>
+            <table class="table table-striped" id="proxies">
+                <thead>
+                <tr>
+                    <th>{{ _('proxy', '代理') }}</th>
+                    <th class="rx-speed">{{ _('download', '下载') }}</th>
+                    <th>{{ _('download', '下载') }}</th>
+                    <th class="tx-speed">{{ _('upload', '上传') }}</th>
+                    <th>{{ _('upload', '上传') }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <hr/>
+    <div class="row">
+        <div class="col-xs-12">
+            <!--<iframe style="width: 100%; height: 300px;" frameBorder="0" scrolling="no"-->
+                    <!--src="/notice?_t={{ now }}">-->
+            <!--</iframe>-->
+        </div>
+    </div>
+</div>
+</div>
+<!-- Modal -->
+<div class="modal fade add-mode" id="proxy-dialog" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title add-mode">
+                    {{ _('Add Proxy', '添加代理') }}
+                </h4>
+                <h4 class="modal-title update-mode">
+                    {{ _('Update Proxy', '更新代理') }}
+                </h4>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger hide"></div>
+                <p>{{ _('Proxy you added is private to you, fqrouter will NEVER upload these configs anywhere', '在这里添加的个人代理是私有的，不会被fqrouter上传到任何地方') }}</p>
+                <form role="form">
+                    <div class="form-group">
+                        <label>{{ _('Please select proxy type first', '请先选择要添加的代理类型') }}</label>
+                        <select name="proxy_type" class="form-control">
+                            <option value="">{{ _('Please Select...','请选择...') }}</option>
+                            <option value="GoAgent">GoAgent</option>
+                            <option value="Shadowsocks">Shadowsocks</option>
+                            <option value="SSH">SSH</option>
+                            <option value="HTTP">HTTP</option>
+                            <option value="SPDY">SPDY</option>
+                            <option value="Sock5">Sock5</option>
+                        </select>
+                    </div>
+                    <div class="basic">
+                        <div class="form-group">
+                            <div class="input-group hide" data-for-type="GoAgent">
+                                <span class="input-group-addon">App Id</span>
+                                <input name="appid" type="text" class="form-control"
+                                       placeholder="{{ _('xxx of xxx.appspot.com', 'xxx.appspot.com中的xxx') }}">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group hide" data-for-type="GoAgent">
+                                {{ _(
+                                'appid is the xxx of xxx.appspot.com. Multiple appid can be separated by pipe(|). /sdcard/goagent-google-ip.txt can be used to customize the google ip to connect, one ip per line.',
+                                'appid 只需要填xxx.appspot.com中的xxx不要填appspot.com。多个appid可以用竖线（|）分隔。GoAgent只被用来代理HTTP，需要配合其他代理才能完整翻墙。对于速度有特别要求的用户，可以在/sdcard/goagent-google-ip.txt里写上你使用的ip，一个ip一行。')
+                                }}
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group hide" data-for-type="SSH,Shadowsocks,HTTP,SPDY,Sock5">
+                                <span class="input-group-addon">{{ _('Host', '主机') }}</span>
+                                <input name="host" type="text" class="form-control"
+                                       placeholder="{{ _('ip or domain', 'ip 或者域名') }}">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group hide" data-for-type="SSH,Shadowsocks,HTTP,SPDY,Sock5">
+                                <span class="input-group-addon">{{ _('Port', '端口') }}</span>
+                                <input name="port" type="text" class="form-control">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group hide" data-for-type="SSH,HTTP,SPDY">
+                                <span class="input-group-addon">{{ _('User Name', '用户名') }}</span>
+                                <input name="username" type="text" class="form-control">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group hide" data-for-type="SSH,Shadowsocks,HTTP,SPDY">
+                                <span class="input-group-addon">{{ _('Password', '密码') }}</span>
+                                <input name="password" type="text" class="form-control">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group hide" data-for-type="SSH">
+                                {{ _("""
+                                leave password empty if you are using private key authentication. put private key at
+                                """, """
+                                如果你想要使用私钥认证就不要填密码，然后把私钥上传到
+                                """) }}
+                                <span id="ssh-host"></span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group hide" data-for-type="Shadowsocks">
+                                <span class="input-group-addon">{{ _('Encrypt Method', '加密方式') }}</span>
+                                <select name="encrypt_method"  class="form-control">
+                                    {% for m in ["table", "rc4", "rc4-md5", "aes-128-cfb", "aes-192-cfb", "aes-256-cfb", "bf-cfb",
+                                    "camellia-128-cfb", "camellia-192-cfb", "camellia-256-cfb", "cast5-cfb",
+                                    "des-cfb", "idea-cfb", "rc2-cfb", "seed-cfb"] %}
+                                    <option value="{{ m }}">{{ m }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group hide advanced-toggle">
+                        <button type="button" class="btn btn-default pull-right">
+                            {{ _('Advanced Settings', '高级设置') }}
+                            <span class="glyphicon glyphicon-collapse-down"></span>
+                        </button>
+                        <div style="clear: both"></div>
+                    </div>
+                    <div class="advanced hide">
+                        <div class="form-group">
+                            <div class="input-group hide" data-for-type="GoAgent">
+                                <span class="input-group-addon">{{ _('Version', '版本') }}</span>
+                                <select name="goagent_version" class="form-control">
+                                    <option value="auto">{{ _('Auto', '自动检测') }}</option>
+                                    <option value="below_3_2_0">&lt; 3.2.0</option>
+                                    <option value="equal_or_above_3_2_0">&gt;= 3.2.0</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group hide" data-for-type="GoAgent">
+                                <span class="input-group-addon">{{ _('Password', '密码') }}</span>
+                                <input name="goagent_password" type="text" class="form-control"
+                                       placeholder="{{ _('No password by default', '缺省无密码') }}">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group hide" data-for-type="HTTP,SPDY">
+                                <span class="input-group-addon">{{ _('Traffic Type', '可以代理的内容') }}</span>
+                                <select name="traffic_type" class="form-control">
+                                    <option value="HTTP/HTTPS">HTTP/HTTPS</option>
+                                    <option value="HTTP">HTTP</option>
+                                    <option value="HTTPS">HTTPS</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group hide" data-for-type="HTTP">
+                                <span class="input-group-addon">{{ _('Transport Type', '代理连接方式') }}</span>
+                                <select name="transport_type" class="form-control">
+                                    <option value="HTTP">HTTP</option>
+                                    <option value="SSL">HTTPS (shrpx, stunnel)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group hide" data-for-type="SSH,SPDY">
+                                <span class="input-group-addon">{{ _('Connections Count', '连接数量') }}</span>
+                                <input name="connections_count" type="text" class="form-control" value="4">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group hide" data-for-type="GoAgent">
+                                <span class="input-group-addon">{{ _('Options', '附加选项') }}</span>
+                                <select name="goagent_options"  class="form-control">
+                                    <option value="">{{ _('Not Encrypted', '不加密') }}</option>
+                                    <option value="rc4">rc4</option>
+                                    <option value="obfuscate">obfuscate</option>
+                                    <option value="rc4_obfuscate">rc4 & obfuscate</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger update-mode pull-left" id="delete-proxy">{{ _('Delete', '删除') }}</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">{{ _('Close', '关闭') }}</button>
+                <button class="btn btn-primary add-mode" id="add-proxy">{{ _('Add', '添加') }}</button>
+                <button class="btn btn-primary update-mode" id="update-proxy">{{ _('Update', '更新') }}</button>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+<!-- /.modal -->
+
+<!-- Modal -->
+<div class="modal fade" id="proxies-dialog" tabindex="-1" role="dialog"
+     aria-labelledby="proxies-dialog-title" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="proxies-dialog-title">
+                    {{ _('Configure Proxies', '配置代理') }}
+                </h4>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger hide"></div>
+                <form role="form">
+                    <div class="form-group">
+                        <label for="goagent-public-servers-switch">{{ _('GoAgent Public Servers', 'GoAgent 公共代理')
+                            }}</label>
+
+                        <div class="make-switch pull-right" data-on="success" data-off="default"
+                             id="goagent-public-servers-switch">
+                            <input type="checkbox" {{ 'checked="checked"' if config['public_servers']['goagent_enabled']
+                            else '' }}>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        {{ _('goagent appids shared by others, especially thanks the gfanqiang, ifqbrowser and smartladder', '由网友共享的goagent
+                        appid，尤其是要感谢gfanqiang,ifqbrowser,smartladder项目') }}
+                    </div>
+                    <div class="form-group">
+                        <label for="ss-public-servers-switch">{{ _('Shadowsocks Public Servers', 'Shadowsocks 公共代理')
+                            }}</label>
+
+                        <div class="make-switch pull-right" data-on="success" data-off="default"
+                             id="ss-public-servers-switch">
+                            <input type="checkbox" {{ 'checked="checked"' if config['public_servers']['ss_enabled'] else
+                            '' }}>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        {{ _('shadowsocks servers shared by others', '由网友共享的代理帐号') }}
+                    </div>
+                    <div class="form-group">
+                        <label for="prefers-private-proxy-switch">{{ _('Prefers Private Proxy', '优先使用个人代理') }}</label>
+                        <div class="make-switch pull-right" data-on="success" data-off="default" id="prefers-private-proxy-switch">
+                            <input type="checkbox" {{ 'checked="checked"' if prefers_private_proxy else '' }}>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        {{ _(
+                        'if enabled, private proxy will always be used for non-china websites.',
+                        '如果启用了，对于国外的网站无论是否可以直连都强制走个人代理。在个人代理线路质量好的情况下可以提高国外网站的访问速度。'
+                        ) }}
+                    </div>
+                    <div class="form-group advanced-toggle">
+                        <button type="button" class="btn btn-default pull-right">
+                            {{ _('Advanced Settings', '高级设置') }}
+                            <span class="glyphicon glyphicon-collapse-down"></span>
+                        </button>
+                        <div style="clear: both"></div>
+                    </div>
+                    <div class="advanced hide">
+                        {% if is_root %}
+                        <div class="form-group">
+                            <label for="tcp-scrambler-switch">{{ _('TCP Scrambler', 'TCP 混淆器') }}</label>
+
+                            <div class="make-switch pull-right" data-on="success" data-off="default"
+                                 id="tcp-scrambler-switch">
+                                <input type="checkbox" {{ 'checked="checked"' if tcp_scrambler_enabled else '' }}>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            {{ _(
+                            """
+                            scramble HTTP request at TCP level, so that GFW can let us go, without using a proxy
+                            server. disable this scrambler will make internet speed much slower!
+                            """,
+                            """
+                            混淆 TCP 层面混淆HTTP请求迷惑 GFW，这样就不用走代理了。禁用此选项会使得网速慢很多！
+                            """) }}
+                        </div>
+                        {% endif %}
+                        <div class="form-group">
+                            <label for="google-scrambler-switch">{{ _('Google Scrambler', 'Google 混淆器') }}</label>
+
+                            <div class="make-switch pull-right" data-on="success" data-off="default"
+                                 id="google-scrambler-switch">
+                                <input type="checkbox" {{ 'checked="checked"' if google_scrambler_enabled else '' }}>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            {{ _(
+                            """
+                            scramble google traffic, so that GFW can let us go, without using a proxy. disable this
+                            scrambler will make internet speed much slower!
+                            """,
+                            """
+                            混淆 Google 流量迷惑 GFW，这样就不用走代理了。禁用此选项会使得网速慢很多！
+                            """) }}
+                        </div>
+                        <div class="form-group">
+                            <label for="https-enforcer-switch">{{ _('Force HTTPS', '强制走HTTPS') }}</label>
+
+                            <div class="make-switch pull-right" data-on="success" data-off="default"
+                                 id="https-enforcer-switch">
+                                <input type="checkbox" {{ 'checked="checked"' if https_enforcer_enabled else '' }}>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            {{ _(
+                            """
+                            force some google traffic via https, so that we can watch youtube without using a proxy.
+                            """,
+                            """
+                            强制google的部分流量走https，这样即便没有代理也可以看youtube。
+                            """) }}
+                        </div>
+                        <div class="form-group">
+                            <label for="china-shortcut-switch">{{ _('China Shortcut', '直连中国的服务器') }}</label>
+
+                            <div class="make-switch pull-right" data-on="success" data-off="default"
+                                 id="china-shortcut-switch">
+                                <input type="checkbox" {{ 'checked="checked"' if china_shortcut_enabled else '' }}>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            {{ _(
+                            """
+                            if server is china ip, access directly. disable this shortcut will make internet speed much
+                            slower!
+                            """,
+                            """
+                            如果服务器的IP是中国的，就不走代理。禁用此选项会使得网速慢很多！
+                            一旦禁用，公共代理也不再起作用，必须添加个人代理。
+                            """) }}
+                        </div>
+                        <div class="form-group">
+                            <label for="direct-access-switch">{{ _('Direct Access', '直连可以直连的服务器') }}</label>
+
+                            <div class="make-switch pull-right" data-on="success" data-off="default"
+                                 id="direct-access-switch">
+                                <input type="checkbox" {{ 'checked="checked"' if direct_access_enabled else '' }}>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            {{ _(
+                            """
+                            try access directly first, use proxy only if tried and failed. disable this shortcut will make
+                            internet speed much slower!
+                            """,
+                            """
+                            每个连接先尝试直连，只在不得不走代理的时候才走代理。禁用此选项会使得网速慢很多！
+                            一旦禁用，公共代理也不再起作用，必须添加个人代理。
+                            """) }}
+                        </div>
+                        <div class="form-group">
+                            <label for="hosted-domain-switch">{{ _('Hosted Domain', '域名托管') }}</label>
+
+                            <div class="make-switch pull-right" data-on="success" data-off="default"
+                                 id="hosted-domain-switch">
+                                <input type="checkbox" {{ 'checked="checked"' if hosted_domain_enabled else '' }}>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            {{ _(
+                            """
+                            try to resolve not blocked ip for twitter/facebook/google domain if possible.
+                            """,
+                            """
+                            如果可能尽量把twitter/facebook/google的域名解析到没有被墙的IP。
+                            """) }}
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">{{ _('Close', '关闭') }}</button>
+            </div>
+        </div>
+        <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+</div>
+<!-- /.modal -->
+
+<!-- Modal -->
+<div class="modal fade" id="http-manager-dialog" tabindex="-1" role="dialog"
+     aria-labelledby="http-manager-dialog-title" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="http-manager-dialog-title">
+                    {{ _('Configure Remote Access', '配置远程访问') }}
+                </h4>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger hide"></div>
+                <form role="form">
+                    <div class="form-group">
+                        <label for="http-manager-port">{{ _('Port', '端口') }}</label>
+                        <input type="text" class="form-control" id="http-manager-port" value="{{ httpd.LISTEN_PORT }}">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">{{ _('Close', '关闭') }}</button>
+                <button type="button" class="btn btn-primary" id="http-manager-dialog-save">{{ _('Save', '保存') }}</button>
+            </div>
+        </div>
+        <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+</div>
+<!-- /.modal -->
+
+<!-- Modal -->
+<div class="modal fade" id="http-gateway-dialog" tabindex="-1" role="dialog"
+     aria-labelledby="http-gateway-dialog-title" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="http-gateway-dialog-title">
+                    {{ _('Configure HTTP Proxy', '配置HTTP代理') }}
+                </h4>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger hide"></div>
+                <form role="form">
+                    <div class="form-group">
+                        <label for="http-gateway-port">{{ _('Port', '端口') }}</label>
+                        <input type="text" class="form-control" id="http-gateway-port"
+                               value="{{ http_gateway.LISTEN_PORT }}">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">{{ _('Close', '关闭') }}</button>
+                <button type="button" class="btn btn-primary" id="http-gateway-dialog-save">{{ _('Save', '保存') }}</button>
+            </div>
+        </div>
+        <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+</div>
+<!-- /.modal -->
+
+<!-- Modal -->
+<div class="modal fade" id="wifi-repeater-dialog" tabindex="-1" role="dialog"
+     aria-labelledby="wifi-repeater-dialog-title" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="wifi-repeater-dialog-title">
+                    {{ _('Configure Wifi Repeater', '配置无线中继') }}
+                </h4>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger hide"></div>
+                <form role="form">
+                    <div class="form-group">
+                        <label for="wifi-repeater-ssid">SSID</label>
+                        <input type="text" class="form-control" id="wifi-repeater-ssid"
+                               value="{{ config['wifi_repeater']['ssid'] }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="wifi-repeater-password">{{ _('Password', '密码') }}</label>
+                        <input type="text" class="form-control" id="wifi-repeater-password"
+                               value="{{ config['wifi_repeater']['password'] }}">
+                    </div>
+                </form>
+                <div>
+                    <h5>{{ _('In some phone model, you need to manually disable the android wifi p2p service by clicking the button below to make the wifi repeater work', '有些机型需要点下面的按钮手工禁用系统自带的WIFI P2P服务才可以正常启动无线中继') }}</h5>
+                    <button class="btn btn-default" id="disable-wifi-p2p">{{ _('Disable Wifi P2P', '关闭系统的WIFI P2P') }}</button>
+                    <button class="btn btn-default" id="enable-wifi-p2p">{{ _('Restore Wifi P2P', '复原系统的WIFI P2P') }}</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger pull-left" id="wifi-repeater-dialog-reset">{{ _('My Wifi is
+                    Broken', '我的无线挂了') }}
+                </button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">{{ _('Close', '关闭') }}</button>
+                <button type="button" class="btn btn-primary" id="wifi-repeater-dialog-save">{{ _('Save', '保存') }}</button>
+            </div>
+        </div>
+        <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+</div>
+<!-- /.modal -->
+
+<!-- Modal -->
+<div class="modal fade" id="upnp-dialog" tabindex="-1" role="dialog"
+     aria-labelledby="upnp-dialog-title" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="upnp-dialog-title">
+                    {{ _('Configure UPNP', '配置外网访问') }}
+                </h4>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger hide"></div>
+                <form role="form">
+                    <div class="form-group">
+                        <label for="upnp-port">{{ _('External Port', '外网端口') }}</label>
+                        <input type="text" class="form-control" id="upnp-port" value="{{ config['upnp']['port'] }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="upnp-port">{{ _('Password Protected', '密码认证') }}</label>
+                        {% if config['upnp']['is_password_protected'] %}
+                        <input type="checkbox" id="upnp-password-protected" checked="checked"/>
+                        {% else %}
+                        <input type="checkbox" id="upnp-password-protected"/>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="upnp-username">{{ _('Username', '用户名') }}</label>
+                        <input type="text" class="form-control" id="upnp-username" value="{{ config['upnp']['username'] }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="upnp-password">{{ _('Password', '密码') }}</label>
+                        <input type="text" class="form-control" id="upnp-password" value="{{ config['upnp']['password'] }}">
+                    </div>
+                    <div class="form-group">
+                        <label >{{ _('Access Via', '访问方式') }}</label>
+                        <li class="list-group-item">
+                            <label class="label label-default list-group-item-caption">HTTP</label>
+                            <label class="label label-info" style="font-size: 16px;" id="external-http">
+                            </label>
+                        </li>
+                        <li class="list-group-item">
+                            <label class="label label-default list-group-item-caption">PAC</label>
+                            <label class="label label-info" style="font-size: 16px;" id="external-pac">
+                            </label>
+                        </li>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <div class="make-switch" data-on="success" data-off="default" id="upnp-switch">
+                    <input type="checkbox">
+                </div>
+                <button type="button" class="btn btn-default" data-dismiss="modal">{{ _('Close', '关闭') }}</button>
+            </div>
+        </div>
+        <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+</div>
+<!-- /.modal -->
+
+<footer>
+    <a href="#top" class="go-top"><span class="glyphicon glyphicon-arrow-up"></span></a>
+</footer>
+<script type="text/javascript">
+
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-37740383-3']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+
+</script>
+<script src="/assets/jquery.min.js"></script>
+<script src="/assets/bootstrap/js/bootstrap.js"></script>
+<script src="/assets/tablesort.min.js"></script>
+<script src="/assets/visibility.core.js"></script>
+<script src="/assets/visibility.timer.js"></script>
+<script src="/assets/bootstrap-switch.js"></script>
+<script src="/assets/bootbox.min.js"></script>
+<script>
+    bootbox.setDefaults({'locale': '{{ _("en", "zh_CN") }}'});
+    $(document).ready(function () {
+        // Show or hide the sticky footer button
+        $(window).scroll(function() {
+            if ($(this).scrollTop() > 200) {
+                $('.go-top').fadeIn(200);
+            } else {
+                $('.go-top').fadeOut(200);
+            }
+        });
+
+        // Animate the scroll to top
+        $('.go-top').click(function(event) {
+            event.preventDefault();
+
+            $('html, body').animate({scrollTop: 0}, 300);
+        });
+
+        var proxies_tablesort = new Tablesort($('#proxies')[0]);
+
+        function showHideSpeed() {
+            if (typeof(this.orientation) === "undefined" || window.orientation == -90 || window.orientation == 90) {
+                $('#proxies').removeClass('portrait');
+            } else {
+                $('#proxies').addClass('portrait');
+            }
+        }
+
+        function refreshProxyList() {
+            $('#proxies tbody').load('/proxies?list-only=True', function () {
+                proxies_tablesort.refresh();
+            });
+        }
+
+        function selectedProxyType(proxyType) {
+            $('#proxy-dialog [name=proxy_type]').val(proxyType);
+            $('#proxy-dialog .alert').addClass('hide');
+            $('#proxy-dialog .advanced-toggle').addClass('hide');
+            $('#proxy-dialog [data-for-type]').each(function(i, $input) {
+                var $input = $($input);
+                if (proxyType && $input.data('forType').indexOf(proxyType) >= 0) {
+                    $input.removeClass('hide');
+                    if ($input.parents('.advanced').length > 0) {
+                        $('#proxy-dialog .advanced-toggle').removeClass('hide');
+                    }
+                } else {
+                    $input.addClass('hide');
+                }
+            });
+        }
+
+        $(window).bind('orientationchange', function () {
+            showHideSpeed();
+        });
+
+        $('#proxies').on('click', 'button.proxy', function() {
+            var proxyId = $(this).data('proxyId');
+            if (proxyId) {
+                $('#proxy-dialog .alert').addClass('hide');
+                $('#proxy-dialog form')[0].reset();
+                $.get('/proxy?proxy_id=' + proxyId, function(proxy) {
+                    for (var k in proxy.properties) {
+                        $('#proxy-dialog [name=' + k +  ']').val(proxy.properties[k]);
+                    }
+                    selectedProxyType(proxy.proxy_type);
+                    $('#proxy-dialog').data('proxyId', proxy.proxy_id);
+                    $('#proxy-dialog').removeClass('add-mode').addClass('update-mode');
+                    $('#proxy-dialog').modal('show');
+                });
+            } else {
+                $('#proxies-dialog').modal('show');
+            }
+        });
+
+        $('#goagent-public-servers-switch').on('switch-change', function (e, data) {
+            if (data.value) {
+                $.post('/goagent-public-servers/enable');
+            } else {
+                $.post('/goagent-public-servers/disable');
+            }
+        });
+
+        $('#ss-public-servers-switch').on('switch-change', function (e, data) {
+            if (data.value) {
+                $.post('/ss-public-servers/enable');
+            } else {
+                $.post('/ss-public-servers/disable');
+            }
+        });
+
+        $('#prefers-private-proxy-switch').on('switch-change', function (e, data) {
+            if (data.value) {
+                $.post('/prefers-private-proxy/enable');
+            } else {
+                $.post('/prefers-private-proxy/disable');
+            }
+        });
+
+        $('#tcp-scrambler-switch').on('switch-change', function (e, data) {
+            if (data.value) {
+                $.post('/tcp-scrambler/enable');
+            } else {
+                $.post('/tcp-scrambler/disable');
+            }
+        });
+
+        $('#google-scrambler-switch').on('switch-change', function (e, data) {
+            if (data.value) {
+                $.post('/google-scrambler/enable');
+            } else {
+                $.post('/google-scrambler/disable');
+            }
+        });
+
+        $('#https-enforcer-switch').on('switch-change', function (e, data) {
+            if (data.value) {
+                $.post('/https-enforcer/enable');
+            } else {
+                $.post('/https-enforcer/disable');
+            }
+        });
+
+        $('#china-shortcut-switch').on('switch-change', function (e, data) {
+            if (data.value) {
+                $.post('/china-shortcut/enable');
+            } else {
+                $.post('/china-shortcut/disable');
+            }
+        });
+
+        $('#direct-access-switch').on('switch-change', function (e, data) {
+            if (data.value) {
+                $.post('/direct-access/enable');
+            } else {
+                $.post('/direct-access/disable');
+            }
+        });
+
+        $('#hosted-domain-switch').on('switch-change', function (e, data) {
+            if (data.value) {
+                $.post('/hosted-domain/enable');
+            } else {
+                $.post('/hosted-domain/disable');
+            }
+        });
+
+        function showAddProxy() {
+            _gaq.push(['_trackEvent', 'Add Proxy', 'Show', '']);
+            $('#proxy-dialog .alert').addClass('hide');
+            $('#proxy-dialog form')[0].reset();
+            selectedProxyType("{{ _('Please Select...', '请选择...') }}");
+            $('#proxy-dialog').data('proxyId', '');
+            $('#proxy-dialog').removeClass('update-mode').addClass('add-mode');
+            $('#proxy-dialog').modal('show');
+        }
+
+        $('#nav-add-proxy').click(function() {
+            showAddProxy();
+            window.location.href = '#proxy-list';
+        });
+
+        $('#show-add-proxy').click(function() {
+            showAddProxy();
+        });
+
+        $('#proxy-dialog [name=host]').blur(function() {
+            $('#proxy-dialog #ssh-host').html('/sdcard/' + $(this).val());
+        });
+
+        $('#proxy-dialog [name=proxy_type]').change(function () {
+            var proxyType = $(this).val();
+            selectedProxyType(proxyType);
+        });
+
+        $('#proxy-dialog .advanced-toggle button').click(function() {
+            if ($('#proxy-dialog .advanced').hasClass('hide')) {
+                $('#proxy-dialog .advanced').removeClass('hide');
+                $(this).find('span').removeClass('glyphicon-collapse-down').addClass('glyphicon-collapse-up');
+            } else {
+                $('#proxy-dialog .advanced').addClass('hide');
+                $(this).find('span').removeClass('glyphicon-collapse-up').addClass('glyphicon-collapse-down');
+            }
+        });
+
+        $('#proxies-dialog .advanced-toggle button').click(function() {
+            if ($('#proxies-dialog .advanced').hasClass('hide')) {
+                $('#proxies-dialog .advanced').removeClass('hide');
+                $(this).find('span').removeClass('glyphicon-collapse-down').addClass('glyphicon-collapse-up');
+            } else {
+                $('#proxies-dialog .advanced').addClass('hide');
+                $(this).find('span').removeClass('glyphicon-collapse-up').addClass('glyphicon-collapse-down');
+            }
+        });
+
+        $('#proxy-dialog #add-proxy').click(function() {
+            var args = {};
+            $('#proxy-dialog input,select').each(function(i, $input) {
+                $input = $($input);
+                args[$input.attr('name')] = $input.val();
+            });
+            if (!args.proxy_type) {
+                $('#proxy-dialog .alert').html("{{ _('Please select proxy type', '请选择代理类型') }}");
+                $('#proxy-dialog .alert').removeClass('hide');
+                return;
+            }
+            $.post('/proxies/add', args, function(error) {
+                if (error) {
+                    $('#proxy-dialog .alert').html(error);
+                    $('#proxy-dialog .alert').removeClass('hide');
+                } else {
+                    _gaq.push(['_trackEvent', 'Add Proxy', 'Added', '']);
+                    $('#proxy-dialog').modal('hide');
+                }
+            });
+        });
+
+        $('#proxy-dialog #update-proxy').click(function() {
+            var args = {
+                proxy_id: $('#proxy-dialog').data('proxyId'),
+                proxy_type: $('#proxy-dialog #proxy-type').html()
+            };
+            $('#proxy-dialog input,select').each(function(i, $input) {
+                $input = $($input);
+                args[$input.attr('name')] = $input.val();
+            });
+            $.post('/proxies/update', args, function(error) {
+                if (error) {
+                    $('#proxy-dialog .alert').html(error);
+                    $('#proxy-dialog .alert').removeClass('hide');
+                } else {
+                    $('#proxy-dialog').modal('hide');
+                }
+            });
+        });
+
+        $('#proxy-dialog #delete-proxy').click(function() {
+            $.post('/proxies/delete?proxy_id=' + $('#proxy-dialog').data('proxyId'), function() {
+                $('#proxy-dialog').modal('hide');
+            });
+        });
+
+        $('#http-manager-dialog-save').click(function () {
+            $('#http-manager-dialog form').submit();
+        });
+
+        $('#http-manager-dialog form').submit(function (e) {
+            e.preventDefault();
+            var newConfig = {
+                port: $('#http-manager-port').val()
+            };
+            $.post('/http-manager/config/update', newConfig, function (error) {
+                if (error) {
+                    $('#http-manager-dialog .alert').html(error).removeClass('hide');
+                } else {
+                    window.location.href = 'http://{{ default_interface_ip }}:' + newConfig.port;
+                }
+            });
+        });
+
+        function refreshHttpGatewayInfo() {
+            if ($('#http-gateway-switch').bootstrapSwitch('status')) {
+                $('#http-gateway-info').find('.off').addClass('hide');
+                $('#http-gateway-info').find('.on').removeClass('hide');
+            } else {
+                $('#http-gateway-info').find('.on').addClass('hide');
+                $('#http-gateway-info').find('.off').removeClass('hide');
+            }
+        }
+
+        $('#http-gateway-switch').on('switch-change', function (e, data) {
+            if (data.value) {
+                _gaq.push(['_trackEvent', 'Http Gateway', 'Enable', '']);
+                $.post('/http-gateway/enable');
+                refreshHttpGatewayInfo();
+            } else {
+                _gaq.push(['_trackEvent', 'Http Gateway', 'Disable', '']);
+                $.post('/http-gateway/disable');
+                refreshHttpGatewayInfo();
+            }
+        });
+        refreshHttpGatewayInfo();
+
+
+        $('#http-gateway-dialog-save').click(function () {
+            $('#http-gateway-dialog form').submit();
+        });
+
+        $('#http-gateway-dialog form').submit(function (e) {
+            e.preventDefault();
+            var newConfig = {
+                port: $('#http-gateway-port').val()
+            };
+            $.post('/http-gateway/config/update', newConfig, function (error) {
+                if (error) {
+                    $('#http-gateway-dialog .alert').html(error).removeClass('hide');
+                } else {
+                    window.location.reload();
+                }
+            });
+        });
+
+        if ($('#lan-devices table').length) {
+            var lan_tablesort = new Tablesort($('#lan-devices table')[0]);
+
+            var timerId;
+
+            function refreshLanDevices() {
+                $.get('/lan/devices', function (html) {
+                    if ($(html).find('tr').length == 0) {
+                        return;
+                    }
+                    $('#lan-devices').removeClass('hide');
+                    $('#lan-devices tbody').replaceWith(html);
+                    lan_tablesort.refresh();
+                    if ($('#lan-devices tbody').data('isScanCompleted')) {
+                        $('#lan-devices .busy-indicator').addClass('hide');
+                        Visibility.stop(timerId);
+                        timerId = null;
+                    }
+                });
+            }
+            refreshLanDevices();
+
+            $('#lan-devices').on('click', 'tr input[type=checkbox]', function () {
+                var ip = $(this).parents('tr').data('ip');
+                $.post('/lan/update', {ip: ip, is_picked: $(this).is(':checked')}, function () {
+                    _gaq.push(['_trackEvent', 'Pick And Play', 'Picked', '']);
+                    refreshLanDevices();
+                });
+            });
+
+            $('#scan').click(function () {
+                _gaq.push(['_trackEvent', 'Pick And Play', 'Scan', '']);
+                $('#lan-devices').removeClass('hide');
+                $('#lan-devices .busy-indicator').removeClass('hide');
+                $.post('/lan/scan');
+                refreshLanDevices();
+                if (!timerId) {
+                    timerId = Visibility.every(3000, refreshLanDevices);
+                }
+            });
+        }
+
+        $('#wifi-repeater-switch').on('switch-change', function (e, data) {
+            $('#wifi-repeater-switch').addClass('hide');
+            $('#wifi-repeater-busy-indicator-container').removeClass('hide');
+            if (data.value) {
+                _gaq.push(['_trackEvent', 'Wifi Repeater', 'Start', '']);
+                $.post('/wifi-repeater/enable', function (error) {
+                    _gaq.push(['_trackEvent', 'Wifi Repeater', 'Started', '']);
+                    $('#wifi-repeater-busy-indicator-container').addClass('hide');
+                    $('#wifi-repeater-switch').removeClass('hide');
+                    if (error) {
+                        bootbox.alert('{{ _("Failed to start wifi repeater: ","无线中继启动失败：") }}' + error, function () {
+                            window.location.reload();
+                        });
+                    }
+                });
+            } else {
+                $.post('/wifi-repeater/disable', function (error) {
+                    $('#wifi-repeater-busy-indicator-container').addClass('hide');
+                    $('#wifi-repeater-switch').removeClass('hide');
+                    if (error) {
+                        bootbox.alert('{{ _("Failed to stop wifi repeater: ","无线中继停止失败：") }}' + error, function () {
+                            window.location.reload();
+                        });
+                    }
+                });
+            }
+        });
+
+
+        $('#wifi-repeater-dialog-reset').click(function () {
+            $('#wifi-repeater-dialog').modal('hide');
+            bootbox.confirm('{{ _("Are you sure? It will reset your wifi configuration to fix problem caused by wifi repeater failure. THEN YOU PHONE WILL BE REBOOTED. Use report error button if it does not fix your problem.", "你确定要重置吗？重置无线配置是为了修复无线中继失败导致的无线无法连接的问题。接着会重启你的手机，特别注意！！！使用后如果问题依旧，请点主界面的报告错误按钮") }}',
+                    function (result) {
+                        if (result) {
+                            $.post('/wifi-repeater/reset');
+                        }
+                    })
+        });
+
+        $('#wifi-repeater-dialog-save').click(function () {
+            $('#wifi-repeater-dialog form').submit();
+        });
+
+        $('#wifi-repeater-dialog form').submit(function (e) {
+            e.preventDefault();
+            var newConfig = {
+                ssid: $('#wifi-repeater-ssid').val(),
+                password: $('#wifi-repeater-password').val()
+            };
+            $.post('/wifi-repeater/config/update', newConfig, function (error) {
+                if (error) {
+                    $('#wifi-repeater-dialog .alert').html(error).removeClass('hide');
+                } else {
+                    window.location.reload();
+                }
+            });
+        });
+
+        $('#config-upnp').click(function() {
+            $('#config-upnp').attr('disabled', 'disabled');
+            $('#config-upnp').html('{{ _("Please wait...", "请稍侯……") }}');
+            $.get('/upnp/status', function(status) {
+                $('#config-upnp').removeAttr('disabled');
+                $('#config-upnp').html("{{ _('Want to use fqrouter anytime anywhere?', '想要随时随地使用fqrouter？') }}");
+                if (status.external_ip_address) {
+                    if (status.is_enabled) {
+                        $('#external-http').html(status.external_ip_address + ':' + status.port);
+                        $('#external-pac').html('http://' + status.external_ip_address + ':' + status.port);
+                    } else {
+                        $('#external-http').html("{{ _('Please turn on the switch', '请先打开开关') }}");
+                        $('#external-pac').html("{{ _('Please turn on the switch', '请先打开开关') }}");
+                    }
+                    $('#upnp-switch').bootstrapSwitch('setState', status.is_enabled);
+                    onUpdateUpnpPasswordProtectedChanged();
+                    $('#upnp-dialog').modal('show');
+                } else {
+                    bootbox.alert('{{ _("Sorry, network environment does not support UPNP", "很抱歉，你的网络环境不支持外网访问，需要在无线路由器上打开UPNP才可以，如果不知道什么是UPNP就别折腾了。") }}');
+                }
+            });
+        });
+
+        $('#upnp-switch').on('switch-change', function (e, data) {
+            if (!$('#upnp-dialog').data('bs.modal')) {
+                return;
+            }
+            if (!$('#upnp-dialog').data('bs.modal').isShown) {
+                return;
+            }
+            if (data.value) {
+                _gaq.push(['_trackEvent', 'UPNP', 'Enable', '']);
+                $.post('/upnp/enable', {
+                    'upnp_port': $('#upnp-port').val(),
+                    'upnp_is_password_protected': $('#upnp-password-protected').is(':checked'),
+                    'upnp_username': $('#upnp-username').val(),
+                    'upnp_password': $('#upnp-password').val()
+                }, function(status) {
+                    _gaq.push(['_trackEvent', 'UPNP', 'Enabled', '']);
+                    $('#external-http').html(status.external_ip_address + ':' + status.port);
+                    $('#external-pac').html('http://' + status.external_ip_address + ':' + status.port);
+                });
+            } else {
+                _gaq.push(['_trackEvent', 'UPNP', 'Disable', '']);
+                $.post('/upnp/disable', function() {
+                    $('#external-http').html("{{ _('Please turn on the switch', '请先打开开关') }}");
+                    $('#external-pac').html("{{ _('Please turn on the switch', '请先打开开关') }}");
+                });
+            }
+        });
+
+        $('#upnp-password-protected').change(function() {
+            onUpdateUpnpPasswordProtectedChanged();
+        });
+
+        function onUpdateUpnpPasswordProtectedChanged() {
+            if ($('#upnp-password-protected').is(':checked')) {
+                $('#upnp-username').removeAttr('disabled');
+                $('#upnp-password').removeAttr('disabled');
+            } else {
+                $('#upnp-username').attr('disabled', 'disabled');
+                $('#upnp-password').attr('disabled', 'disabled');
+            }
+        }
+
+        $('#disable-wifi-p2p').click(function() {
+            $.post('/wifi-p2p/disable', function() {
+                bootbox.alert('{{ _("Done. Now you may try wifi repeater again","Done. 试试无线中继可以用了不？") }}');
+            })
+        });
+
+        $('#enable-wifi-p2p').click(function() {
+            $.post('/wifi-p2p/enable', function() {
+                bootbox.alert('{{ _("Restored", "复原了") }}');
+            })
+        });
+
+
+        showHideSpeed();
+        refreshProxyList();
+        var refreshProxyListTimerId = Visibility.every(5000, refreshProxyList);
+        window.onPause = function() {
+            Visibility.stop(refreshProxyListTimerId);
+            refreshProxyListTimerId = null;
+        };
+        window.onResume = function() {
+            window.onPause();
+            refreshProxyList();
+            refreshProxyListTimerId = Visibility.every(5000, refreshProxyList);
+        };
+    });
+</script>
+</body>
+</html>

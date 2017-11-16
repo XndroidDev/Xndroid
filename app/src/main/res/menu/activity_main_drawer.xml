@@ -17,6 +17,12 @@
         android:icon="@mipmap/ic_browser_white"
         android:title="Lightning browser" />
 
+
+    <item
+        android:id="@+id/nav_fqrouter"
+        android:icon="@mipmap/ic_help_white"
+        android:title="fqrouter" />
+
     <item
         android:id="@+id/nav_about"
         android:icon="@mipmap/ic_help_white"

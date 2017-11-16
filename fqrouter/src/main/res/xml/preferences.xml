@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <Preference
+            android:key="OpenManager"
+            android:title="@string/open_manager"
+            android:summary="@string/open_manager_summary"/>
+    <CheckBoxPreference
+            android:key="NotificationEnabled"
+            android:title="@string/pref_general_notification_enabled"
+            android:defaultValue="true"/>
+    <CheckBoxPreference
+            android:key="AutoUpdateEnabled"
+            android:title="@string/pref_general_auto_update"
+            android:summary="@string/pref_general_auto_update_summary"
+            android:defaultValue="true"/>
+    <CheckBoxPreference
+            android:key="AutoLaunchEnabled"
+            android:title="@string/pref_general_launch_after_booted"
+            android:defaultValue="false"/>
+</PreferenceScreen>

@@ -104,7 +104,8 @@ public class ShellUtil {
     }
 
 
-    static synchronized private String exec(String cmd, boolean wait)//remember synchronized
+    //remember synchronized for multi-thread call
+    static synchronized private String exec(String cmd, boolean wait)
     {
         LogUtil.defaultLogWrite("ShIn",cmd);
         StringBuffer strBuff = new StringBuffer();

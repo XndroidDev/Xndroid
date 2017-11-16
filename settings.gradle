@@ -1,1 +1,1 @@
-include ':app',':lightning'
+include ':app',':lightning',':fqrouter'

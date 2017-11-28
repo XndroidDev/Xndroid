@@ -444,11 +444,14 @@ def analyze_protocol(peeked_data):
     return 'UNKNOWN', ''
 
 
+domain_pattern = re.compile(r'\x00\x00(.)([\w\.-]{1,220}\.\w{2,25})', re.S)
+
 def parse_sni_domain(data):
     domain = ''
     try:
         # extrace SNI from ClientHello packet, quick and dirty.
-        domain = (m.group(2) for m in re.finditer('\x00\x00(.)([\\w\\.]{4,255})', data)
+        # domain = (m.group(2) for m in re.finditer('\x00\x00(.)([\\w\\.]{4,255})', data)
+        domain = (m.group(2) for m in re.finditer(domain_pattern, data)
                   if ord(m.group(1)) == len(m.group(2))).next()
     except StopIteration:
         pass

@@ -329,8 +329,8 @@ class teredo_client(object):
         gevent.spawn(teredo_client.maintain_forever, self)
         gevent.spawn(teredo_client.retry_connectivity_test_forever, self)
 
-        return self.inet_ntop(self.teredo_ip)
-        # return socket.inet_ntop(socket.AF_INET6, self.teredo_ip)
+        # return self.inet_ntop(self.teredo_ip)
+        return socket.inet_ntop(socket.AF_INET6, self.teredo_ip)
 
     def getaddr_ipv6(self, data):
         return struct.unpack('!16s16s', data[8:40])

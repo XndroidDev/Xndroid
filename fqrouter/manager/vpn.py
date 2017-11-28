@@ -22,6 +22,7 @@ import config
 import traceback
 import urllib2
 import fqsocks.httpd
+import teredo
 
 
 current_path = os.path.dirname(os.path.abspath(__file__))
@@ -35,7 +36,51 @@ TUN_IP = None
 FAKE_USER_MODE_NAT_IP = None
 nat_map = {} # sport => (dst, dport), src always be 10.25.1.1
 default_dns_server = config.get_default_dns_server()
-# DNS_HANDLER = fqdns.DnsHandler(
+
+
+def send_message(message):
+    fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    with contextlib.closing(fdsock):
+        fdsock.connect('\0fdsock2')
+        fdsock.sendall('%s\n' % message)
+
+
+def create_udp_socket(keep_alive=False):
+    fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    with contextlib.closing(fdsock):
+        fdsock.connect('\0fdsock2')
+        if keep_alive:
+            fdsock.sendall('OPEN PERSIST UDP\n')
+        else:
+            fdsock.sendall('OPEN UDP\n')
+        gevent.socket.wait_read(fdsock.fileno())
+        fd = _multiprocessing.recvfd(fdsock.fileno())
+        if fd <= 2:
+            LOGGER.error('failed to create udp socket')
+            raise socket.error('failed to create udp socket')
+        sock = socket.fromfd(fd, socket.AF_INET, socket.SOCK_DGRAM)
+        os.close(fd)
+        return sock
+
+def create_tcp_socket(server_ip, server_port, connect_timeout):
+    fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    with contextlib.closing(fdsock):
+        fdsock.connect('\0fdsock2')
+        fdsock.sendall('OPEN TCP,%s,%s,%s\n' % (server_ip, server_port, connect_timeout * 1000))
+        gevent.socket.wait_read(fdsock.fileno())
+        fd = _multiprocessing.recvfd(fdsock.fileno())
+        if fd <=2 :
+            LOGGER.error('failed to create tcp socket: %s:%s' % (server_ip, server_port))
+            raise socket.error('failed to create tcp socket: %s:%s' % (server_ip, server_port))
+        sock = socket.fromfd(fd, socket.AF_INET, socket.SOCK_STREAM)
+        os.close(fd)
+        return sock
+
+fqsocks.networking.SPI['create_tcp_socket'] = create_tcp_socket
+fqdns.SPI['create_udp_socket'] = create_udp_socket
+fqdns.SPI['create_tcp_socket'] = create_tcp_socket
+
+teredo_client = None
 
 def handle_ping(environ, start_response):
     try:
@@ -70,11 +115,14 @@ def redirect_tun_traffic(tun_fd):
 def redirect_ip_packet(tun_fd):
     gevent.socket.wait_read(tun_fd)
     try:
-        ip_packet = dpkt.ip.IP(os.read(tun_fd, 8192))
+        data = os.read(tun_fd, 8192)
     except OSError, e:
         LOGGER.error('read packet failed: %s' % e)
         gevent.sleep(3)
         return
+    if ord(data[0]) & 0xf0 == 0x60:
+        return teredo_client.transmit(data)
+    ip_packet = dpkt.ip.IP(data)
     src = socket.inet_ntoa(ip_packet.src)
     dst = socket.inet_ntoa(ip_packet.dst)
     if hasattr(ip_packet, 'udp'):
@@ -118,43 +166,6 @@ def get_original_destination(sock, src_ip, src_port):
 fqsocks.networking.SPI['get_original_destination'] = get_original_destination
 
 
-def create_tcp_socket(server_ip, server_port, connect_timeout):
-    fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    with contextlib.closing(fdsock):
-        fdsock.connect('\0fdsock2')
-        fdsock.sendall('OPEN TCP,%s,%s,%s\n' % (server_ip, server_port, connect_timeout * 1000))
-        gevent.socket.wait_read(fdsock.fileno())
-        fd = _multiprocessing.recvfd(fdsock.fileno())
-        if fd == 1 or fd < 0:
-            LOGGER.error('failed to create tcp socket: %s:%s' % (server_ip, server_port))
-            raise socket.error('failed to create tcp socket: %s:%s' % (server_ip, server_port))
-        sock = socket.fromfd(fd, socket.AF_INET, socket.SOCK_STREAM)
-        os.close(fd)
-        return sock
-
-
-fqsocks.networking.SPI['create_tcp_socket'] = create_tcp_socket
-
-
-def create_udp_socket():
-    fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    with contextlib.closing(fdsock):
-        fdsock.connect('\0fdsock2')
-        fdsock.sendall('OPEN UDP\n')
-        gevent.socket.wait_read(fdsock.fileno())
-        fd = _multiprocessing.recvfd(fdsock.fileno())
-        if fd == 1 or fd < 0:
-            LOGGER.error('failed to create udp socket')
-            raise socket.error('failed to create udp socket')
-        sock = socket.fromfd(fd, socket.AF_INET, socket.SOCK_DGRAM)
-        os.close(fd)
-        return sock
-
-
-fqdns.SPI['create_udp_socket'] = create_udp_socket
-fqdns.SPI['create_tcp_socket'] = create_tcp_socket
-
-
 def setup_logging():
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s')
     handler = logging.handlers.RotatingFileHandler(
@@ -165,7 +176,10 @@ def setup_logging():
         FQDNS_LOG_FILE, maxBytes=1024 * 256, backupCount=0)
     handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
     logging.getLogger('fqdns').addHandler(handler)
-
+    handler = logging.handlers.RotatingFileHandler(
+        os.path.join(LOG_DIR, 'teredo.log'), maxBytes=1024 * 256, backupCount=0)
+    handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+    logging.getLogger('teredo').addHandler(handler)
 
 def exit_later():
     gevent.sleep(0.5)
@@ -191,26 +205,22 @@ def read_tun_fd():
             fdsock.sendall('TUN\n')
             gevent.socket.wait_read(fdsock.fileno(), timeout=3)
             tun_fd = _multiprocessing.recvfd(fdsock.fileno())
-            if tun_fd == 1:
-                LOGGER.error('received invalid tun fd')
+            if tun_fd == 1 or tun_fd < 0:
+                LOGGER.error('received invalid tun fd:%d' % tun_fd)
                 return None
             return tun_fd
         except:
             return None
 
 
-# class VpnUdpHandler(object):
-class VpnUdpHandler(fqdns.DnsHandler):
-    # def __init__(self, dns_handler):
-    #     self.dns_handler = dns_handler
 
+class VpnUdpHandler(fqdns.DnsHandler):
     def __call__(self, sendto, request, address):
         try:
             src_ip, src_port = address
             dst_ip, dst_port = get_original_destination(None, src_ip, src_port)
             if 53 ==  get_original_destination(None, src_ip, src_port)[1]:
                 super(VpnUdpHandler, self).__call__( sendto, request, address)
-                # self.dns_handler(sendto, request, address)
             else:
                 sock = fqdns.create_udp_socket()
                 try:
@@ -225,10 +235,11 @@ class VpnUdpHandler(fqdns.DnsHandler):
 DNS_HANDLER = VpnUdpHandler(
     enable_china_domain=True, enable_hosted_domain=True,
     original_upstream=('udp', default_dns_server, 53) if default_dns_server else None)
-# fqsocks.fqsocks.DNS_HANDLER = VpnUdpHandler(DNS_HANDLER)
+
 fqsocks.networking.DNS_HANDLER = DNS_HANDLER
 
 if '__main__' == __name__:
+    global teredo_client
     setup_logging()
     LOGGER.info('environment: %s' % os.environ.items())
     LOGGER.info('default dns server: %s' % default_dns_server)
@@ -237,6 +248,19 @@ if '__main__' == __name__:
         gevent.monkey.patch_ssl()
     except:
         LOGGER.exception('failed to patch ssl')
+
+    teredo_sock = create_udp_socket(True)
+    if not teredo_sock:
+        raise Exception('create teredo socket fail')
+    teredo_client = teredo.teredo_client(teredo_sock)
+    teredo_ip = teredo_client.start()
+    if not teredo_ip:
+        LOGGER.error('start teredo client fail')
+    else:
+        LOGGER.info('teredo start succeed, teredo ip:%s' % teredo_ip)
+        send_message('TEREDO READY,%s' % teredo_ip)
+
+
     TUN_IP = sys.argv[1]
     FAKE_USER_MODE_NAT_IP = sys.argv[2]
     args = [
@@ -257,7 +281,8 @@ if '__main__' == __name__:
             LOGGER.critical('!!! find previous instance, exiting !!!')
             gevent.sleep(3)
     except:
-        LOGGER.exception('failed to exit previous')
+        LOGGER.warning('try to exit previous fail')
+
     fqsocks.httpd.LISTEN_IP, fqsocks.httpd.LISTEN_PORT = '', http_manager_port
     fqsocks.httpd.server_greenlet = gevent.spawn(fqsocks.httpd.serve_forever)
     try:
@@ -266,6 +291,9 @@ if '__main__' == __name__:
     except:
         LOGGER.exception('failed to get tun fd')
         sys.exit(1)
+
+    teredo.tun_fd = tun_fd
+
     gevent.spawn(fqsocks.fqsocks.main)
     greenlet = gevent.spawn(redirect_tun_traffic, tun_fd)
     greenlet.join()

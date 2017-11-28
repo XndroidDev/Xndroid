@@ -42,11 +42,11 @@ _sock_options = {socket.SO_REUSEADDR, socket.SO_LINGER, socket.SO_RCVBUF,
                  socket.TCP_NODELAY, socket.SO_KEEPALIVE, socket.SO_SNDBUF}
 
 def sock_connect_vpn(self, addr):
-    if LOGGER.isEnabledFor(logging.DEBUG):
-        LOGGER.info('vpn socket connect %s' % str(addr))
+    # if LOGGER.isEnabledFor(logging.DEBUG):
+    #     LOGGER.info('vpn socket connect %s' % str(addr))
     if protect_socket == False or vpn_mode == False or self.type != socket.SOCK_STREAM:
         return original_socket_connect(self, addr)
-    if self.family != socket.AF_INET and self.family != socket.AF_INET6 :
+    if self.family != socket.AF_INET:
         return original_socket_connect(self, addr)
     host,port = addr
     if host == '127.0.0.1':
@@ -62,7 +62,7 @@ def sock_connect_vpn(self, addr):
         fd = _multiprocessing.recvfd(fdsock.fileno())
         # if LOGGER.isEnabledFor(logging.DEBUG):
         #     LOGGER.debug("vpn tcp %s:%s,rev fd, fd=%s, timeout=%s" % (host, port, fd, timeout))
-        if fd == 1 or fd < 0:
+        if fd <= 2:
             if LOGGER.isEnabledFor(logging.DEBUG):
                 LOGGER.error('vpn fail to create tcp socket: %s:%s, wrong fd' % (host, port))
             raise socket.error('vpn fail to create tcp socket: %s:%s' % (host, port))
@@ -91,7 +91,7 @@ def sock_init_vpn(self, family=socket.AF_INET, type=socket.SOCK_STREAM, proto=0,
     if protect_socket == False or vpn_mode == False or type != socket.SOCK_DGRAM:
         original_socket_init(self, family, type, proto, _sock)
         return
-    if family != socket.AF_INET and family != socket.AF_INET6:
+    if family != socket.AF_INET:
         original_socket_init(self, family, type, proto, _sock)
         return
     fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -99,7 +99,7 @@ def sock_init_vpn(self, family=socket.AF_INET, type=socket.SOCK_STREAM, proto=0,
         fdsock.connect('\0fdsock2')
         fdsock.sendall('OPEN UDP\n')
         fd = _multiprocessing.recvfd(fdsock.fileno())
-        if fd == 1 or fd < 0:
+        if fd <= 2:
             if LOGGER.isEnabledFor(logging.DEBUG):
                 LOGGER.error('vpn fail to create udp socket')
             raise socket.error('vpn fail to create udp socket')

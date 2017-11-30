@@ -1,0 +1,280 @@
+package net.xndroid.xxnet;
+
+import android.content.Context;
+import android.content.Intent;
+import android.security.KeyChain;
+
+import net.xndroid.AppModel;
+import net.xndroid.R;
+import net.xndroid.utils.HttpJson;
+import net.xndroid.utils.LogUtils;
+import net.xndroid.utils.ShellUtils;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.HashMap;
+import java.util.Map;
+
+import static net.xndroid.AppModel.sActivity;
+import static net.xndroid.AppModel.sXndroidFile;
+import static net.xndroid.AppModel.showToast;
+import static net.xndroid.LaunchService.unzipRawFile;
+import static net.xndroid.utils.ShellUtils.execBusybox;
+
+public class XXnetManager {
+    public static String sAppid = " ";
+    public static int sIpNum = -1;
+    public static int sIpQuality = -1;
+    public static String sIPV4State = "UNKNOW";
+    public static String sIPV6State = "UNKNOW";
+    public static String sIpv6 = "force_ipv6";
+    public static String sXXversion = "";
+    public static int sWorkerH1 = 0;
+    public static int sWorkerH2 = 0;
+    public static boolean sLastupdateOK = false;
+    private static int sThreadNum = -1;
+
+    public static final int IMPORT_CERT_REQUEST = 102;
+
+    public static String sStateSummary = sActivity.getString(R.string.initializing);
+    public static final int SUMMARY_LEVEL_OK = 0;
+    public static final int SUMMARY_LEVEL_WARNING = 1;
+    public static final int SUMMARY_LEVEL_ERROR = 2;
+    public static int sSummaryLevel = SUMMARY_LEVEL_OK;
+
+    private static final String PER_CA_MD5 = "XNDROID_CA_MD5";
+
+
+    private static boolean checkNetwork(){
+        String url = "https://www.baidu.com/duty/copyright.html";
+        String response = HttpJson.get(url);
+        if(response.length() > 0)
+            return true;
+        else{
+            if(HttpJson.get(url).length() > 0)
+                return true;
+            return false;
+        }
+    }
+
+// 可能因为联网权限导致无法连接网络,却可以ping通
+//    private static boolean checkNetwork(){
+//        String res = ShellUtils.execBusybox("timeout -t 4 ping -c 3 114.114.114.114 |" +
+//                AppModel.sXndroidFile + "/busybox grep 'time='");
+//        if(res.length() > 5)
+//            return true;
+//        return false;
+//    }
+
+
+    private static int sFailTime = 0;
+    private static final int RETRY_TIME = 7;
+    public static boolean updateState()
+    {
+        if(updateAttribute()){
+            sFailTime = 0;
+            if(!XXnetManager.sIPV4State.equals("OK") && !XXnetManager.sIPV6State.equals("OK")){
+                if(!checkNetwork()) {
+                    sStateSummary = sActivity.getString(R.string.no_internet);
+                }else {
+                    sStateSummary = "Can't use IPV6 through teredo";
+                }
+                sSummaryLevel = SUMMARY_LEVEL_ERROR;
+            }else if(XXnetManager.sIpQuality > 1200) {
+                sSummaryLevel = SUMMARY_LEVEL_WARNING;
+                sStateSummary = sActivity.getString(R.string.no_ip);
+            }else if(sWorkerH2 == 0 && sWorkerH1 ==0){
+                sStateSummary = sActivity.getString(R.string.connect_no_establish);
+                sSummaryLevel = SUMMARY_LEVEL_WARNING;
+            } else {
+                sSummaryLevel = SUMMARY_LEVEL_OK;
+                sStateSummary = sActivity.getString(R.string.running_normally);
+            }
+            return true;
+        }else if(!checkNetwork()){
+            sStateSummary = sActivity.getString(R.string.no_internet);;
+            sSummaryLevel = SUMMARY_LEVEL_ERROR;
+            return false;
+        } else
+        {
+            if(++sFailTime >= RETRY_TIME){
+                sStateSummary = sActivity.getString(R.string.no_respond);
+                sSummaryLevel = SUMMARY_LEVEL_ERROR;
+            }else {
+                sStateSummary = sActivity.getString(R.string.waitting_respond);
+                sSummaryLevel = SUMMARY_LEVEL_WARNING;
+            }
+
+        }
+        return false;
+    }
+
+
+    public static boolean quit(){
+        String response = HttpJson.get("http://127.0.0.1:8085/quit");
+        return response.contains("success");
+    }
+
+
+    private static boolean updateAttribute()
+    {
+        sLastupdateOK = false;
+        JSONObject json = HttpJson.getJson("http://127.0.0.1:8085/module/gae_proxy/control/status");
+        if(json == null) {
+            LogUtils.d("get json fail.");
+            return false;
+        }
+        try {
+            sXXversion = json.getString("xxnet_version").trim();
+            sAppid = json.getString("gae_appid");
+            sIpNum = json.getInt("good_ipv4_num") + json.getInt("good_ipv6_num");
+            sIpQuality = json.getInt("ip_quality");
+            sIPV4State = json.getString("ipv4_state");
+            sIPV6State = json.getString("ipv6_state");
+            sIpv6 = json.getString("use_ipv6");
+            sWorkerH1 = json.getInt("worker_h1");
+            sWorkerH2 = json.getInt("worker_h2");
+//            LogUtils.defaultLogWrite("info", "xxnet state refreshed: Appid=" + sAppid
+//            + ",good_ip=" + sIpNum + ",ip_quality=" + sIpQuality + ",net_state="
+//            + sIPV4State + ",ipv6=" + sIpv6 + ",xxnet_version=" + sXXversion);
+            sLastupdateOK = true;
+            return true;
+        } catch (JSONException e) {
+            LogUtils.e("XX-Net update attributes fail ", e);
+        }
+        return false;
+    }
+
+
+    private static String sIpRange;
+    public static boolean setThreadNum(int threadNum)
+    {
+        if(threadNum == sThreadNum)
+            return true;
+        if(sIpRange == null || sIpRange.length() < 6)
+            sIpRange = HttpJson.get("http://127.0.0.1:8085/module/gae_proxy/control/scan_ip?cmd=get_range");
+        if(sIpRange.length() < 6)
+            return false;
+        LogUtils.i("setThreadNum:" + threadNum);
+        Map<String,String> map = new HashMap<>();
+        map.put("auto_adjust_scan_ip_thread_num","1");
+        map.put("scan_ip_thread_num","" + threadNum);
+        map.put("ip_range",sIpRange);
+        map.put("use_ipv6",sIpv6);
+        String response = HttpJson.post("http://127.0.0.1:8085/module/gae_proxy/control/scan_ip?cmd=update",map);
+        if(response.contains("success")){
+            sThreadNum = threadNum;
+            return true;
+        }
+        LogUtils.e("setThreadNum fail:\n" + response);
+        return false;
+    }
+
+
+    public static boolean setAppid(String appid)
+    {
+        if(appid == null)
+            return false;
+        Map<String,String> map = new HashMap<>();
+        map.put("appid",appid);
+        map.put("host_appengine_mode","direct");
+        map.put("use_ipv6",sIpv6);
+        map.put("proxy_enable","0");
+        map.put("proxy_type","HTTP");
+        map.put("proxy_port","0");
+        map.put("proxy_host","");
+        map.put("proxy_passwd","");
+        map.put("proxy_user","");
+        String response = HttpJson.post("http://127.0.0.1:8085/module/gae_proxy/control/config?cmd=set_config",map);
+        if(response.indexOf("success") > 0)
+            return true;
+        LogUtils.e("setAppid fail:\n" + response);
+        return false;
+    }
+
+
+    public static void import_ip(String path){
+        if(path == null){
+            showToast(sActivity.getString(R.string.err_no_file));
+        }else if(!path.endsWith("good_ip.txt")){
+            showToast(sActivity.getString(R.string.err_file_name));
+        }else {
+            String destPath = sXndroidFile + "/xxnet/data/gae_proxy/good_ip.txt";
+            execBusybox("cat \"" + path + "\" >" + destPath);
+            execBusybox("chmod 777 " + destPath);
+            showToast(sActivity.getString(R.string.import_over));
+        }
+    }
+
+    public static void prepare(){
+        if(new File(sXndroidFile + "/xxnet/code/default/launcher/start.py").exists())
+            return;
+        if(!unzipRawFile(R.raw.xxnet, sXndroidFile))
+            AppModel.fatalError("prepare XX-Net fail");
+    }
+
+    public static void startXXnet(Context context){
+        Intent intent = new Intent(context,XXnetService.class);
+        context.startService(intent);
+    }
+
+    public static boolean waitReady(){
+        for(int i=0;i < 15;i++){
+            if(updateAttribute()) {
+                autoImportCA();
+                return true;
+            }
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        AppModel.fatalError("wait ready for XX-Net timeout");
+        return false;
+    }
+
+    private static void autoImportCA(){
+        String certPath = AppModel.sXndroidFile + "/xxnet/data/gae_proxy/CA.crt";
+        if(!new File(certPath).exists())
+            return;
+        String md5 = ShellUtils.execBusybox("md5sum " + certPath + " | " + ShellUtils.sBusyBox + " cut -c 1-32").trim();
+        String lastMd5 = AppModel.sPreferences.getString(PER_CA_MD5, "");
+        if(lastMd5.isEmpty() || !lastMd5.equals(md5))
+            importCert();
+
+    }
+
+    public static void importCert(){
+        AppModel.showToast(AppModel.sService.getString(R.string.import_cert_tip));
+        String certPath = AppModel.sXndroidFile + "/xxnet/data/gae_proxy/CA.crt";
+        if(!new File(certPath).exists()){
+            LogUtils.e("importCert fail, file not exist");
+            AppModel.showToast("import CA fail, file not exist");
+            return;
+        }
+        byte[] keychain;
+        try{
+            BufferedInputStream input =new BufferedInputStream(new FileInputStream(certPath));
+            keychain = new byte[input.available()];
+            input.read(keychain);
+        }catch (Exception e){
+            LogUtils.e("read certificate fail!", e);
+            return;
+        }
+        Intent installIntent = KeyChain.createInstallIntent();
+        //Android支持两种证书文件格式，一种是PKCS12，一种是X.509证书
+        installIntent.putExtra(KeyChain.EXTRA_CERTIFICATE, keychain);
+        installIntent.putExtra(KeyChain.EXTRA_NAME,"XX-net Chain");
+        AppModel.sActivity.startActivityForResult(installIntent, IMPORT_CERT_REQUEST);
+
+        String md5 = ShellUtils.execBusybox("md5sum " + certPath + " | " + ShellUtils.sBusyBox + " cut -c 1-32").trim();
+        AppModel.sPreferences.edit().putString(PER_CA_MD5, md5).apply();
+
+    }
+
+}

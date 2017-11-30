@@ -181,7 +181,7 @@ def load_xxnet():
     launcher_main()
 
 def setup_logging():
-    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s')
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG if os.getenv('DEBUG') else logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
     handler = logging.handlers.RotatingFileHandler(
         current_path + "/xxnet_start.log", maxBytes=1024 * 256, backupCount=0)
     handler.setFormatter(logging.Formatter('%(asctime)s [android_start]%(levelname)s %(message)s'))

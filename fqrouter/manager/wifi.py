@@ -15,7 +15,7 @@ import hostapd_template
 
 current_path = os.path.dirname(os.path.abspath(__file__))
 home_path = os.path.abspath(current_path + "/..")
-pkg_name = "net.xx.xndroid"
+pkg_name = "net.xndroid"
 
 try:
     WIFI_INTERFACE = subprocess.check_output(['getprop', 'wifi.interface']).strip() or 'wlan0'

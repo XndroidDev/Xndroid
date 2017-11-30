@@ -2,203 +2,351 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="net.xx.xndroid.XndroidFragment">
+    tools:context="net.xndroid.XndroidFragment">
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-       <LinearLayout
-           android:layout_width="match_parent"
-           android:layout_height="match_parent"
-           android:orientation="vertical">
-           <TextView
-               android:layout_width="match_parent"
-               android:layout_height="wrap_content"
-               android:id="@+id/xndroid_xxnet_state"
-               android:text="@string/initializing"
-               android:layout_margin="20dp"
-               android:padding="10dp"
-               android:background="#b3f6b8"/>
-           <TextView
-               android:layout_width="wrap_content"
-               android:layout_height="wrap_content"
-               android:text="@string/state"
-               android:layout_marginBottom="10dp"
-               android:layout_marginLeft="10dp"
-               android:textStyle="bold"/>
-           <TableLayout
-               android:background="#bbb"
-               android:layout_width="match_parent"
-               android:layout_height="wrap_content"
-               android:layout_marginLeft="20dp"
-               android:layout_marginRight="20dp"
-               android:padding="0.5px"
-               android:shrinkColumns="1"
-               android:stretchColumns="0,1,2">
-               <TableRow>
-                   <LinearLayout android:orientation="horizontal" style="@style/BoaderTableCell">
-                       <TextView android:text="@string/ip_number"
-                           android:layout_height="wrap_content"
-                           android:layout_width="wrap_content"/>
-                       <TextView android:text="@string/import_u"
-                           android:textColor="@color/colorLinkText"
-                           android:layout_marginLeft="10dp"
-                           android:layout_width="match_parent"
-                           android:layout_height="wrap_content"
-                           android:id="@+id/xndroid_import_ip"/>
-                   </LinearLayout>
-                   <TextView android:text="@string/getting" android:id="@+id/xndroid_ip_num" style="@style/BoaderTableCell"/>
-               </TableRow>
-               <TableRow>
-                   <TextView android:text="@string/ip_quality"  style="@style/BoaderTableCell"/>
-                   <TextView android:text="@string/getting" android:id="@+id/xndroid_ip_quality" style="@style/BoaderTableCell"/>
-               </TableRow>
-               <TableRow>
-                   <TextView android:text="@string/xx_net_version" style="@style/BoaderTableCell" />
-                   <TextView android:text="@string/getting" android:id="@+id/xndroid_xxnet_version" style="@style/BoaderTableCell"/>
-               </TableRow>
-               <TableRow>
-                   <LinearLayout android:orientation="horizontal" style="@style/BoaderTableCell">
-                       <TextView android:text="@string/appid"
-                           android:layout_height="wrap_content"
-                           android:layout_width="wrap_content"/>
-                       <TextView android:text="@string/set_u"
-                           android:textColor="@color/colorLinkText"
-                           android:layout_marginLeft="10dp"
-                           android:layout_width="match_parent"
-                           android:layout_height="wrap_content"
-                           android:id="@+id/xndroid_set_appid"/>
-                   </LinearLayout>
-                   <TextView android:text="@string/getting" android:id="@+id/xndroid_appid" style="@style/BoaderTableCell"/>
-               </TableRow>
 
-           </TableLayout>
-           <Space
-               android:layout_width="match_parent"
-               android:layout_height="20dp" />
-           <LinearLayout
-               android:layout_width="match_parent"
-               android:layout_height="wrap_content"
-               android:orientation="horizontal">
-               <TextView
-                   android:layout_width="wrap_content"
-                   android:layout_height="wrap_content"
-                   android:text="@string/configuration"
-                   android:layout_marginBottom="10dp"
-                   android:layout_marginLeft="10dp"
-                   android:textStyle="bold"/>
-               <ImageView
-                   android:id="@+id/xndroid_config_tip"
-                   android:layout_width="20dp"
-                   android:layout_height="20dp"
-                   android:layout_marginLeft="10dp"
-                   android:src="@mipmap/ic_help_button"/>
-           </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
-           <TableLayout
-               android:background="#bbb"
-               android:layout_width="match_parent"
-               android:layout_height="wrap_content"
-               android:layout_marginLeft="20dp"
-               android:layout_marginRight="20dp"
-               android:padding="0.5px"
-               android:shrinkColumns="1"
-               android:stretchColumns="0,1,2">
+            <TextView
+                android:id="@+id/xndroid_xxnet_state"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="20dp"
+                android:background="#b3f6b8"
+                android:padding="10dp"
+                android:text="@string/initializing" />
 
-               <TableRow>
-                   <TextView android:text="@string/global_proxy"  style="@style/BoaderTableCell"/>
-                   <TextView android:text="@string/set_u"
-                       android:id="@+id/xndroid_proxy"
-                       style="@style/BoaderTableCell"
-                       android:textColor="@color/colorLinkText"/>
-               </TableRow>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:layout_marginLeft="10dp"
+                android:text="XX-Net"
+                android:textStyle="bold" />
 
-               <TableRow>
-                   <LinearLayout
-                       android:orientation="horizontal"
-                       style="@style/BoaderTableCell">
-                       <TextView android:text="@string/certificate"
-                           android:layout_height="wrap_content"
-                           android:layout_width="wrap_content"/>
-                       <ImageView
-                           android:id="@+id/xndroid_cert_tip"
-                           android:layout_width="20dp"
-                           android:layout_height="20dp"
-                           android:layout_marginLeft="10dp"
-                           android:src="@mipmap/ic_help_button"/>
-                   </LinearLayout>
-                   <TextView android:text="@string/import_u"
-                       android:id="@+id/xndroid_cert"
-                       style="@style/BoaderTableCell"
-                       android:textColor="@color/colorLinkText"/>
-               </TableRow>
+            <TableLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="20dp"
+                android:layout_marginRight="20dp"
+                android:background="#bbb"
+                android:padding="0.5px"
+                android:shrinkColumns="1"
+                android:stretchColumns="0,1,2">
 
-               <TableRow>
-                   <LinearLayout
-                       android:orientation="horizontal"
-                       style="@style/BoaderTableCell">
-                       <TextView android:text="@string/auto_scan_thread"
-                           android:layout_height="wrap_content"
-                           android:layout_width="wrap_content"/>
-                       <ImageView
-                           android:id="@+id/xndroid_thread_tip"
-                           android:layout_width="20dp"
-                           android:layout_height="20dp"
-                           android:layout_marginLeft="10dp"
-                           android:src="@mipmap/ic_help_button"/>
-                   </LinearLayout>
-                   <LinearLayout
-                       android:orientation="horizontal"
-                       style="@style/BoaderTableCell">
-                       <Switch android:id="@+id/xndroid_auto_thread"
-                           android:layout_width="wrap_content"
-                           android:layout_height="wrap_content"
-                           android:checked="true"/>
-                   </LinearLayout>
-               </TableRow>
+                <TableRow>
 
-           </TableLayout>
+                    <LinearLayout
+                        style="@style/BoaderTableCell"
+                        android:orientation="horizontal">
 
-           <Space
-               android:layout_width="match_parent"
-               android:layout_height="20dp" />
-           <LinearLayout
-               android:layout_width="match_parent"
-               android:layout_height="wrap_content"
-               android:id="@+id/xndroid_xxnet_tip"
-               android:orientation="horizontal">
-               <ImageView
-                   android:layout_width="20dp"
-                   android:layout_height="20dp"
-                   android:layout_marginLeft="10dp"
-                   android:layout_marginRight="10dp"
-                   android:src="@mipmap/ic_tip_gray"/>
-               <TextView
-                   android:layout_width="wrap_content"
-                   android:layout_height="wrap_content"
-                   android:text="@string/xndroid_tip_xxnet"/>
-           </LinearLayout>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/ip_number" />
 
-           <Space
-               android:layout_width="match_parent"
-               android:layout_height="10dp" />
-           <LinearLayout
-               android:layout_width="match_parent"
-               android:layout_height="wrap_content"
-               android:id="@+id/xndroid_browser_tip"
-               android:orientation="horizontal">
-               <ImageView
-                   android:layout_width="20dp"
-                   android:layout_height="20dp"
-                   android:layout_marginLeft="10dp"
-                   android:layout_marginRight="10dp"
-                   android:src="@mipmap/ic_tip_gray"/>
-               <TextView
-                   android:layout_width="wrap_content"
-                   android:layout_height="wrap_content"
-                   android:text="@string/xndroid_browser_tip"/>
-           </LinearLayout>
-       </LinearLayout>
+                        <TextView
+                            android:id="@+id/xndroid_import_ip"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="10dp"
+                            android:text="@string/import_u"
+                            android:textColor="@color/colorLinkText" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/xndroid_ip_num"
+                        style="@style/BoaderTableCell"
+                        android:text="@string/getting" />
+                </TableRow>
+
+                <TableRow>
+
+                    <TextView
+                        style="@style/BoaderTableCell"
+                        android:text="@string/ip_quality" />
+
+                    <TextView
+                        android:id="@+id/xndroid_ip_quality"
+                        style="@style/BoaderTableCell"
+                        android:text="@string/getting" />
+                </TableRow>
+
+                <TableRow>
+
+                    <TextView
+                        style="@style/BoaderTableCell"
+                        android:text="@string/xx_net_version" />
+
+                    <TextView
+                        android:id="@+id/xndroid_xxnet_version"
+                        style="@style/BoaderTableCell"
+                        android:text="@string/getting" />
+                </TableRow>
+
+                <TableRow>
+
+                    <LinearLayout
+                        style="@style/BoaderTableCell"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/appid" />
+
+                        <TextView
+                            android:id="@+id/xndroid_set_appid"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="10dp"
+                            android:text="@string/set_u"
+                            android:textColor="@color/colorLinkText" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/xndroid_appid"
+                        style="@style/BoaderTableCell"
+                        android:text="@string/getting" />
+                </TableRow>
+
+                <TableRow>
+
+                    <LinearLayout
+                        style="@style/BoaderTableCell"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/certificate" />
+
+                        <ImageView
+                            android:id="@+id/xndroid_cert_tip"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_marginLeft="10dp"
+                            android:src="@mipmap/ic_help_button" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/xndroid_cert"
+                        style="@style/BoaderTableCell"
+                        android:text="@string/import_u"
+                        android:textColor="@color/colorLinkText" />
+                </TableRow>
+
+                <TableRow>
+
+                    <LinearLayout
+                        style="@style/BoaderTableCell"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/auto_scan_thread" />
+
+                        <ImageView
+                            android:id="@+id/xndroid_thread_tip"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_marginLeft="10dp"
+                            android:src="@mipmap/ic_help_button" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        style="@style/BoaderTableCell"
+                        android:orientation="horizontal">
+
+                        <Switch
+                            android:id="@+id/xndroid_auto_thread"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="true" />
+                    </LinearLayout>
+                </TableRow>
+
+            </TableLayout>
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="20dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:layout_marginLeft="10dp"
+                    android:text="teredo"
+                    android:textStyle="bold" />
+                <!--<ImageView-->
+                <!--android:id="@+id/xndroid_config_tip"-->
+                <!--android:layout_width="20dp"-->
+                <!--android:layout_height="20dp"-->
+                <!--android:layout_marginLeft="10dp"-->
+                <!--android:src="@mipmap/ic_help_button"/>-->
+            </LinearLayout>
+
+            <TableLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="20dp"
+                android:layout_marginRight="20dp"
+                android:background="#bbb"
+                android:padding="0.5px"
+                android:shrinkColumns="1"
+                android:stretchColumns="0,1,2">
+
+                <TableRow>
+
+                    <TextView
+                        style="@style/BoaderTableCell"
+                        android:text="Teredo state" />
+
+                    <TextView
+                        android:id="@+id/xndroid_teredo_state"
+                        style="@style/BoaderTableCell"
+                        android:text="UNKNOW" />
+                </TableRow>
+
+                <TableRow>
+
+                    <TextView
+                        style="@style/BoaderTableCell"
+                        android:text="NAT type" />
+
+                    <TextView
+                        android:id="@+id/xndroid_NAT_type"
+                        style="@style/BoaderTableCell"
+                        android:text="UNKNOW" />
+                </TableRow>
+
+                <TableRow>
+
+                    <LinearLayout
+                        style="@style/BoaderTableCell"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Teredo IP" />
+
+                        <ImageView
+                            android:id="@+id/xndroid_teredo_changed_warning"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_marginLeft="10dp"
+                            android:src="@mipmap/ic_warning"
+                            android:visibility="invisible" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/xndroid_teredo_ip"
+                        style="@style/BoaderTableCell"
+                        android:text="UNKNOW" />
+                </TableRow>
+
+            </TableLayout>
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="20dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:layout_marginBottom="10dp"
+                android:text="fqrouter"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/xndroid_fqrouter_info"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="10dp"
+                android:textSize="12sp"
+                android:layout_marginLeft="20dp"
+                android:layout_marginRight="20dp"
+                android:background="#f0f0f0"
+                android:text="getting..."/>
+
+
+            <!--<Space-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="20dp" />-->
+            <!--<LinearLayout-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:id="@+id/xndroid_xxnet_tip"-->
+            <!--android:orientation="horizontal">-->
+            <!--<ImageView-->
+            <!--android:layout_width="20dp"-->
+            <!--android:layout_height="20dp"-->
+            <!--android:layout_marginLeft="10dp"-->
+            <!--android:layout_marginRight="10dp"-->
+            <!--android:src="@mipmap/ic_tip_gray"/>-->
+            <!--<TextView-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:text="@string/xndroid_tip_xxnet"/>-->
+            <!--</LinearLayout>-->
+
+            <!--<Space-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="10dp" />-->
+            <!--<LinearLayout-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:id="@+id/xndroid_browser_tip"-->
+            <!--android:orientation="horizontal">-->
+            <!--<ImageView-->
+            <!--android:layout_width="20dp"-->
+            <!--android:layout_height="20dp"-->
+            <!--android:layout_marginLeft="10dp"-->
+            <!--android:layout_marginRight="10dp"-->
+            <!--android:src="@mipmap/ic_tip_gray"/>-->
+            <!--<TextView-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:text="@string/xndroid_browser_tip"/>-->
+            <!--</LinearLayout>-->
+
+            <!--<Space-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="10dp" />-->
+            <!--<LinearLayout-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:id="@+id/xndroid_teredo_changed_warning"-->
+            <!--android:visibility="invisible"-->
+            <!--android:orientation="horizontal">-->
+            <!--<ImageView-->
+            <!--android:layout_width="20dp"-->
+            <!--android:layout_height="20dp"-->
+            <!--android:layout_marginLeft="10dp"-->
+            <!--android:layout_marginRight="10dp"-->
+            <!--android:src="@android:drawable/stat_sys_warning"/>-->
+            <!--<TextView-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:text="The mapped IP and port of this device have changed!"/>-->
+            <!--</LinearLayout>-->
+
+        </LinearLayout>
     </ScrollView>
 
 </FrameLayout>

@@ -27,7 +27,7 @@ import fqdns
 
 current_path = os.path.dirname(os.path.abspath(__file__))
 home_path = os.path.abspath(current_path + "/..")
-FQROUTER_VERSION = 'UNKNOWN'
+FQROUTER_VERSION = 'ultimate'
 LOGGER = logging.getLogger('fqrouter')
 LOG_DIR = home_path + "/log"
 MANAGER_LOG_FILE = os.path.join(LOG_DIR, 'manager.log')
@@ -80,7 +80,7 @@ fqsocks.httpd.HANDLERS[('GET', 'ping')] = handle_ping
 
 
 def setup_logging():
-    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s')
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG if os.getenv('DEBUG') else logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
     handler = logging.handlers.RotatingFileHandler(
         MANAGER_LOG_FILE, maxBytes=1024 * 256, backupCount=0)
     handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
@@ -115,7 +115,7 @@ def run():
     shutdown_hook.add(functools.partial(iptables.delete_rules, SOCKS_RULES))
     wifi.setup_lo_alias()
     args = [
-        '--log-level', 'INFO',
+        '--log-level', 'DEBUG' if os.getenv('DEBUG') else 'INFO',
         '--log-file', LOG_DIR + '/fqsocks.log',
         '--ifconfig-command', home_path + '/../busybox',
         '--ip-command', home_path + '/../busybox',
@@ -209,7 +209,7 @@ if '__main__' == __name__:
     setup_logging()
     LOGGER.info('environment: %s' % os.environ.items())
     LOGGER.info('default dns server: %s' % default_dns_server)
-    FQROUTER_VERSION = os.getenv('FQROUTER_VERSION')
+    # FQROUTER_VERSION = os.getenv('FQROUTER_VERSION')
     action = sys.argv[1]
     if 'clean' == action:
         shell.USE_SU = needs_su()

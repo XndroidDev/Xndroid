@@ -129,22 +129,17 @@ blank_rs_packet = b'\x60\x00\x00\x00\x00\x08\x3a\xff\xfe\x80\x00\x00\x00\x00\x00
 
 tun_fd = None
 
-def write_packet(data):
-    if not tun_fd:
-        LOGGER.error('tun_fd is None')
-    else:
-        gevent.socket.wait_write(tun_fd)
-        os.write(tun_fd, data)
 
 class teredo_client(object):
-    def __init__(self, sock, server_ip='83.170.6.76', server_second_ip='83.170.6.77', refresh_interval=30):
+    def __init__(self, sock, server_ip='83.170.6.76', server_second_ip='83.170.6.77', refresh_interval=29):
         self.server_ip = server_ip
         self.server_second_ip = server_second_ip
         self.refresh_interval = refresh_interval
         self.random_refresh_interval = self.refresh_interval*(random.random()*0.25+0.75)
-        self.last_time_with_server = time.time()
+        self.last_time_with_server = time.time() - 30
         self.nat_type = 'UNKNOWN'
-        self.old_teredo_ip = None
+        self.old_teredo_ip = ''
+        self.local_teredo_ip = ''
         self.teredo_ip = ''
         self.obfuscated_port = ''
         self.obfuscated_ip = ''
@@ -156,6 +151,28 @@ class teredo_client(object):
         self.teredo_sock = sock
         self.rs_packet,self.rs_nonce = self.create_rs_packet()
 
+    def write_packet(self, data):
+        if not tun_fd:
+            LOGGER.error('tun_fd is None')
+        else:
+            gevent.socket.wait_write(tun_fd)
+            if self.teredo_ip == self.local_teredo_ip:
+                return os.write(tun_fd, data)
+            src,dst = self.getaddr_ipv6(data)
+            if dst == self.teredo_ip and dst != self.local_teredo_ip:
+                pkt = dpkt.ip6.IP6(data)
+                pkt.dst = self.local_teredo_ip
+                if hasattr(pkt, 'tcp'):
+                    pkt.tcp.sum = 0
+                elif hasattr(pkt, 'udp'):
+                    pkt.udp.sum = 0
+                elif hasattr(pkt, 'icmp6'):
+                    pkt.icmp6.sum = 0
+                return os.write(tun_fd, str(pkt))
+            return os.write(tun_fd, data)
+
+
+
 
     def stopself(self):
         raise Exception('stopself called')
@@ -163,24 +180,30 @@ class teredo_client(object):
 
     def maintain_forever(self):
         while True:
-            if self.wait_check_qualified:
-                self.wait_check_qualified = False
-                if time.time() - self.last_time_with_server < 5:
-                    # qualify succeed
-                    self.qualified = True
-                    self.random_refresh_interval = self.refresh_interval*(random.random()*0.25+0.75)
-                    gevent.sleep(self.last_time_with_server + self.random_refresh_interval - time.time() + 0.5)
+            try:
+                if self.wait_check_qualified:
+                    self.wait_check_qualified = False
+                    if time.time() - self.last_time_with_server < 7:
+                        # qualify succeed
+                        self.qualified = True
+                        self.random_refresh_interval = self.refresh_interval*(random.random()*0.25+0.75)
+                        gevent.sleep(self.last_time_with_server + self.random_refresh_interval - time.time() + 1)
+                        continue
+                    else:
+                        self.qualified = False
+                        LOGGER.warning("teredo offline")
+                if time.time() > self.last_time_with_server + self.random_refresh_interval:
+                    self.wait_check_qualified = True
+                    self.send_qualify(self.server_ip)
+                    if LOGGER.isEnabledFor(logging.DEBUG):
+                        LOGGER.debug('refresh time is up, send_qualify')
+                    gevent.sleep(3)
                     continue
-                else:
-                    self.qualified = False
-            if time.time() > self.last_time_with_server + self.random_refresh_interval:
-                self.wait_check_qualified = True
-                self.send_qualify(self.server_ip)
+                self.random_refresh_interval = self.refresh_interval*(random.random()*0.25+0.75)
+                gevent.sleep(self.last_time_with_server + self.random_refresh_interval - time.time() + 1)
+            except:
+                LOGGER.error('maintain fail!')
                 gevent.sleep(3)
-                continue
-            self.random_refresh_interval = self.refresh_interval*(random.random()*0.25+0.75)
-            gevent.sleep(self.last_time_with_server + self.random_refresh_interval - time.time() + 0.5)
-
 
 
     def receive_forever(self):
@@ -267,7 +290,7 @@ class teredo_client(object):
 
     def qualify(self, dst_ip):
         self.send_qualify(dst_ip)
-        self.teredo_sock.settimeout(2)
+        self.teredo_sock.settimeout(1.5)
         begin_recv = time.time()
         data = ''
         while time.time() < 2 + begin_recv:
@@ -306,11 +329,16 @@ class teredo_client(object):
             LOGGER.error('teredo qualify fail, local_addr %s:%s' % self.teredo_sock.getsockname())
             return None
         t_ip, port, ip = res
+        self.teredo_ip = t_ip
+        self.obfuscated_port = port
+        self.obfuscated_ip = ip
+        self.server_ip = socket.inet_ntoa(t_ip[4:8])
+        self.qualified = True
         res = self.qualify_retry(self.server_second_ip)
+        self.teredo_sock.settimeout(None)
         if not res:
-            self.qualified = False
-            LOGGER.error('teredo qualify fail, local_addr %s:%s' % self.teredo_sock.getsockname())
-            return None
+            LOGGER.error('teredo second ip qualify fail, local_addr %s:%s' % self.teredo_sock.getsockname())
+            return socket.inet_ntop(socket.AF_INET6, self.teredo_ip)
         t,p,i = res
         if ip == i and port == p:
             self.nat_type = 'Cone NAT'
@@ -318,19 +346,19 @@ class teredo_client(object):
         else:
             self.nat_type = 'Symmetric NAT'
             LOGGER.warning('this device is behind one or more Symmetric NAT')
-        self.teredo_ip = t_ip
-        self.obfuscated_port = port
-        self.obfuscated_ip = ip
-        self.server_ip = socket.inet_ntoa(t_ip[4:8])
-        self.qualified = True
+
 
         LOGGER.info('teredo qualify succeed, local_addr %s:%s' % self.teredo_sock.getsockname())
+        # return self.inet_ntop(self.teredo_ip)
+        return socket.inet_ntop(socket.AF_INET6, self.teredo_ip)
+
+
+    def server_forever(self, local_teredo_ip):
+        self.local_teredo_ip = socket.inet_pton(socket.AF_INET6, local_teredo_ip)
         gevent.spawn(teredo_client.receive_forever, self)
         gevent.spawn(teredo_client.maintain_forever, self)
         gevent.spawn(teredo_client.retry_connectivity_test_forever, self)
 
-        # return self.inet_ntop(self.teredo_ip)
-        return socket.inet_ntop(socket.AF_INET6, self.teredo_ip)
 
     def getaddr_ipv6(self, data):
         return struct.unpack('!16s16s', data[8:40])
@@ -338,8 +366,8 @@ class teredo_client(object):
     def receive(self):
         data,addr = self.teredo_sock.recvfrom(10240)
         ip,port = addr
-        if LOGGER.isEnabledFor(logging.DEBUG):
-            LOGGER.debug('receive a packet from %s:%s' % (ip,port))
+        # if LOGGER.isEnabledFor(logging.DEBUG):
+        #     LOGGER.debug('receive a packet from %s:%s' % (ip,port))
         auth_pkt,indicate_pkt,ipv6_pkt = self.check_split_teredo_packet(data)
 
         if ip == self.server_ip and port == teredo_port:
@@ -348,13 +376,14 @@ class teredo_client(object):
                 if len(ipv6_pkt) > 80 and ord(ipv6_pkt[6]) == icmpv6:
                     # router advertisement
                     teredo_ip,obfuscated_port,obfuscated_ip = self.handle_qualify(indicate_pkt, ipv6_pkt)
+                    self.qualified = True
                     if obfuscated_ip != self.obfuscated_ip or obfuscated_port != self.obfuscated_port:
                         LOGGER.warning('mapped ip and port changed')
-                        self.stopself()
-                        # self.old_teredo_ip = self.teredo_ip
-                        # self.teredo_ip = teredo_ip
-                        # self.obfuscated_port = obfuscated_port
-                        # self.obfuscated_ip = obfuscated_ip
+                        # self.stopself()
+                        self.old_teredo_ip = self.teredo_ip
+                        self.teredo_ip = teredo_ip
+                        self.obfuscated_port = obfuscated_port
+                        self.obfuscated_ip = obfuscated_ip
                 else:
                     # a bubble from repeat
                     indic_port,indic_ip = self.get_addr_indication(indicate_pkt)
@@ -362,10 +391,12 @@ class teredo_client(object):
                     bubble_pkt.dst = bubble_pkt.src
                     bubble_pkt.src = self.teredo_ip
                     self.teredo_sock.sendto(str(bubble_pkt), (indic_ip,indic_port))
+                    if LOGGER.isEnabledFor(logging.DEBUG):
+                        LOGGER.debug('receive a bubble %s:%s' % (indic_ip, indic_port))
             return
 
         src,dst = self.getaddr_ipv6(ipv6_pkt)
-        if dst != self.teredo_ip and (True if not self.old_teredo_ip else dst != self.old_teredo_ip):
+        if dst != self.teredo_ip and dst != self.old_teredo_ip:
             if LOGGER.isEnabledFor(logging.DEBUG):
                 LOGGER.debug("receive a packet who's destination(%s) is not this device, drop it" % hexlify(dst))
             return
@@ -385,26 +416,47 @@ class teredo_client(object):
         if peer:
             # a ipv6 packet forwarded by a trusted repeat
             peer['last_recv'] = time.time()
-            return write_packet(ipv6_pkt)
+            return self.write_packet(ipv6_pkt)
 
         # TODO rfc4380 5.2.3 3)If the source IPv6 address is a Teredo address
         # TODO rfc4380 5.2.3 4)If the IPv4 destination address is the Teredo IPv4 Discovery Address
         # TODO rfc4380 5.2.3 5)If the source IPv6 address is a Teredo address, and the mapped IPv4 in address do not match the source IPv4 address
         # accept the ipv6 packet by default
-        return write_packet(ipv6_pkt)
+        return self.write_packet(ipv6_pkt)
 
     def is_teredo_ip(self, ip):
         return ip[0:4] == global_teredo_prefix
 
-    def transmit(self, data):
+
+    def send_ipv6_packet(self, data, addr):
+        if self.local_teredo_ip == self.teredo_ip:
+            return self.teredo_sock.sendto(data, addr)
         src,dst = self.getaddr_ipv6(data)
-        if LOGGER.isEnabledFor(logging.DEBUG):
-            LOGGER.debug('transmit, dst=%s' % hexlify(dst))
+        if src == self.local_teredo_ip and src != self.teredo_ip:
+            pkt = dpkt.ip6.IP6(data)
+            pkt.src = self.teredo_ip
+            if hasattr(pkt, 'tcp'):
+                pkt.tcp.sum = 0
+            elif hasattr(pkt, 'udp'):
+                pkt.udp.sum = 0
+            elif hasattr(pkt, 'icmp6'):
+                pkt.icmp6.sum = 0
+            return self.teredo_sock.sendto(str(pkt), addr)
+        return self.teredo_sock.sendto(data, addr)
+
+
+    def transmit(self, data):
+        if not self.teredo_ip:
+            return
+        src,dst = self.getaddr_ipv6(data)
+        # if LOGGER.isEnabledFor(logging.DEBUG):
+        #     LOGGER.debug('transmit, dst=%s' % hexlify(dst))
         peer = self.trusted_peer_list.find(dst)
         if peer:
             if time.time() < peer['last_recv'] + 30:
                 # peer['last_send'] = time.time()
-                return self.teredo_sock.sendto(data, (peer['ip'], peer['port']))
+                return self.send_ipv6_packet(data, (peer['ip'], peer['port']))
+                # return self.teredo_sock.sendto(data, (peer['ip'], peer['port']))
             # else:
             #     self.trusted_peer_list.remove(peer)
         if not self.is_teredo_ip(dst):
@@ -418,13 +470,15 @@ class teredo_client(object):
 
 
     def ipv6_connectivity_test(self, peer):
-        if LOGGER.isEnabledFor(logging.DEBUG):
-            LOGGER.debug('ipv6_connectivity_test,dst:%s try_time:%d' % (hexlify(peer['id']), peer['try_time']))
+        # if LOGGER.isEnabledFor(logging.DEBUG):
+        #     LOGGER.debug('ipv6_connectivity_test,dst:%s try_time:%d' % (hexlify(peer['id']), peer['try_time']))
         try_time = peer['try_time'] + 1
         if try_time > 3:
             self.untrusted_peer_list.remove(peer)
             if LOGGER.isEnabledFor(logging.DEBUG):
                 LOGGER.debug('ipv6_connectivity_test fail for %s' % hexlify(peer['id']))
+            return
+        if not self.qualified:
             return
         peer['try_time'] = try_time
         ip6_pkt = dpkt.ip6.IP6(blank_echo_packet)
@@ -449,7 +503,8 @@ class teredo_client(object):
 
     def deque_packet(self, id, ip, port):
         def deque_send(peer):
-            self.teredo_sock.sendto(peer['data'], (ip, port))
+            # self.teredo_sock.sendto(peer['data'], (ip, port))
+            self.send_ipv6_packet(peer['data'], (ip, port))
             self.packet_list.remove(peer)
         self.packet_list.findall(id, do_func=deque_send)
 

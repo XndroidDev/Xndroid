@@ -15,6 +15,7 @@ import urlparse
 import gevent
 import dpkt
 
+from ..proxies.xxnet_gae import XXnetGAE
 from ..proxies.sock5 import Sock5Proxy
 from .. import networking
 from .. import stat
@@ -450,7 +451,6 @@ def parse_sni_domain(data):
     domain = ''
     try:
         # extrace SNI from ClientHello packet, quick and dirty.
-        # domain = (m.group(2) for m in re.finditer('\x00\x00(.)([\\w\\.]{4,255})', data)
         domain = (m.group(2) for m in re.finditer(domain_pattern, data)
                   if ord(m.group(1)) == len(m.group(2))).next()
     except StopIteration:
@@ -629,6 +629,10 @@ def init_private_proxies(config):
             elif 'Sock5' == proxy_type:
                 proxy = Sock5Proxy(
                     private_server['host'], private_server['port'])
+                proxy.proxy_id = proxy_id
+                proxies.append(proxy)
+            elif 'XXnetGAE' == proxy_type:
+                proxy = XXnetGAE()
                 proxy.proxy_id = proxy_id
                 proxies.append(proxy)
             elif 'Shadowsocks' == proxy_type:

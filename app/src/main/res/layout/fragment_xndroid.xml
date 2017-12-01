@@ -52,6 +52,7 @@
                             android:text="@string/ip_number" />
 
                         <TextView
+                            android:visibility="invisible"
                             android:id="@+id/xndroid_import_ip"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -93,6 +94,7 @@
                 <TableRow>
 
                     <LinearLayout
+                        android:id="@+id/xndroid_set_appid"
                         style="@style/BoaderTableCell"
                         android:orientation="horizontal">
 
@@ -102,7 +104,6 @@
                             android:text="@string/appid" />
 
                         <TextView
-                            android:id="@+id/xndroid_set_appid"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginLeft="10dp"
@@ -119,6 +120,7 @@
                 <TableRow>
 
                     <LinearLayout
+                        android:id="@+id/xndroid_cert_tip"
                         style="@style/BoaderTableCell"
                         android:orientation="horizontal">
 
@@ -128,7 +130,6 @@
                             android:text="@string/certificate" />
 
                         <ImageView
-                            android:id="@+id/xndroid_cert_tip"
                             android:layout_width="20dp"
                             android:layout_height="20dp"
                             android:layout_marginLeft="10dp"
@@ -145,6 +146,7 @@
                 <TableRow>
 
                     <LinearLayout
+                        android:id="@+id/xndroid_thread_tip"
                         style="@style/BoaderTableCell"
                         android:orientation="horizontal">
 
@@ -154,7 +156,6 @@
                             android:text="@string/auto_scan_thread" />
 
                         <ImageView
-                            android:id="@+id/xndroid_thread_tip"
                             android:layout_width="20dp"
                             android:layout_height="20dp"
                             android:layout_marginLeft="10dp"
@@ -189,7 +190,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="10dp"
                     android:layout_marginLeft="10dp"
-                    android:text="teredo"
+                    android:text="Teredo"
                     android:textStyle="bold" />
                 <!--<ImageView-->
                 <!--android:id="@+id/xndroid_config_tip"-->
@@ -213,24 +214,24 @@
 
                     <TextView
                         style="@style/BoaderTableCell"
-                        android:text="Teredo state" />
+                        android:text="@string/teredo_state" />
 
                     <TextView
                         android:id="@+id/xndroid_teredo_state"
                         style="@style/BoaderTableCell"
-                        android:text="UNKNOW" />
+                        android:text="@string/unknow" />
                 </TableRow>
 
                 <TableRow>
 
                     <TextView
                         style="@style/BoaderTableCell"
-                        android:text="NAT type" />
+                        android:text="@string/nat_type" />
 
                     <TextView
                         android:id="@+id/xndroid_NAT_type"
                         style="@style/BoaderTableCell"
-                        android:text="UNKNOW" />
+                        android:text="@string/unknow" />
                 </TableRow>
 
                 <TableRow>
@@ -242,7 +243,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Teredo IP" />
+                            android:text="@string/teredo_ip" />
 
                         <ImageView
                             android:id="@+id/xndroid_teredo_changed_warning"
@@ -256,7 +257,7 @@
                     <TextView
                         android:id="@+id/xndroid_teredo_ip"
                         style="@style/BoaderTableCell"
-                        android:text="UNKNOW" />
+                        android:text="@string/unknow" />
                 </TableRow>
 
             </TableLayout>

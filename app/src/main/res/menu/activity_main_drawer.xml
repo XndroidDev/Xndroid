@@ -4,7 +4,7 @@
     <group android:checkableBehavior="single">
         <item
             android:id="@+id/nav_xndroid"
-            android:icon="@mipmap/ic_android"
+            android:icon="@mipmap/ic_home"
             android:title="Xndroid" />
         <item
             android:id="@+id/nav_xxnet"
@@ -12,19 +12,19 @@
             android:title="XX-net" />
         <item
             android:id="@+id/nav_fqrouter"
-            android:icon="@mipmap/ic_help_white"
+            android:icon="@mipmap/ic_fqrouter"
             android:title="fqrouter" />
     </group>
 
     <item
         android:id="@+id/nav_lightning"
-        android:icon="@mipmap/ic_browser_white"
+        android:icon="@mipmap/ic_lightning"
         android:title="Lightning browser" />
 
 
     <item
         android:id="@+id/nav_about"
-        android:icon="@mipmap/ic_help_white"
+        android:icon="@mipmap/ic_info"
         android:title="@string/about" />
 
     <item

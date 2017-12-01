@@ -21,6 +21,7 @@ import java.io.OutputStreamWriter;
 
 import static android.app.Activity.RESULT_OK;
 import static net.xndroid.AppModel.sActivity;
+import static net.xndroid.AppModel.sContext;
 import static net.xndroid.AppModel.sXndroidFile;
 
 public class FqrouterManager {
@@ -70,7 +71,7 @@ public class FqrouterManager {
             sRequestApproved = true;
             activity.startService(new Intent(activity, SocksVpnService.class));
         } else {
-            AppModel.fatalError("vpn request is rejected");
+            AppModel.fatalError(sContext.getString(R.string.vpn_reject));
         }
     }
 
@@ -131,7 +132,7 @@ public class FqrouterManager {
                 mProcess = null;
                 LogUtils.i("fqrouter exit.");
                 if(!AppModel.sAppStoped)
-                    AppModel.fatalError("fqrouter exit unexpectedly");
+                    AppModel.fatalError(sContext.getString(R.string.fqrouter_exit_un));
 
 
             }
@@ -172,20 +173,21 @@ public class FqrouterManager {
             public void run() {
                 while(true)
                 {
-                    if(AppModel.sAppStoped)
-                        return;
-                    if (AppModel.sUpdateInfoUI != null) {
-                        updateAttribute();
-                        sActivity.runOnUiThread(AppModel.sUpdateInfoUI);
-                    }
                     try {
+                        if(AppModel.sAppStoped)
+                            return;
+                        if (AppModel.sUpdateInfoUI != null && sActivity != null) {
+                            updateAttribute();
+                            sActivity.runOnUiThread(AppModel.sUpdateInfoUI);
+                        }
+
                         if(AppModel.sDevScreenOff || !AppModel.sIsForeground)
                             Thread.sleep(8000);
                         else
                             Thread.sleep(4000);
 
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+                    } catch (Exception e) {
+                        LogUtils.e("watchFqrouter error ", e);
                     }
                 }
             }
@@ -206,7 +208,7 @@ public class FqrouterManager {
                 e.printStackTrace();
             }
         }
-        AppModel.fatalError("wait ready for fqrouter timeout");
+        AppModel.fatalError(sContext.getString(R.string.fqrouter_timeout));
         return false;
     }
 
@@ -220,7 +222,9 @@ public class FqrouterManager {
         context.stopService(new Intent(context, SocksVpnService.class));
         if(mProcess != null)
             if(!quit()) {
-                mProcess.destroy();
+                if(mProcess != null) {
+                    mProcess.destroy();
+                }
                 mProcess = null;
             }
     }

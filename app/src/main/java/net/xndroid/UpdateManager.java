@@ -66,8 +66,8 @@ public class UpdateManager {
                 ("https://raw.githubusercontent.com/XndroidDev/Xndroid/master/update/app-release.apk"));
         request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI);
         request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
-        request.setTitle(AppModel.sActivity.getString(R.string.updating_xndroid));
-        request.setDescription(AppModel.sActivity.getString(R.string.downloading_xndroid));
+        request.setTitle(AppModel.sContext.getString(R.string.updating_xndroid));
+        request.setDescription(AppModel.sContext.getString(R.string.downloading_xndroid));
         String dir = "update";
         String apk = "Xndroid.apk";
         request.setDestinationInExternalFilesDir(AppModel.sActivity, dir ,apk);
@@ -98,12 +98,12 @@ public class UpdateManager {
             public void run() {
                 AlertDialog.Builder builder = new AlertDialog.Builder(AppModel.sActivity);
                 if(version > AppModel.sVersionCode){
-                    builder.setTitle(AppModel.sActivity.getString(R.string.find_new_version) + finalVersionName);
+                    builder.setTitle(AppModel.sContext.getString(R.string.find_new_version) + finalVersionName);
                     builder.setMessage(finalVersionLog);
                     builder.setPositiveButton(R.string.update, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            AppModel.showToast(AppModel.sActivity.getString(R.string.update_xndroid_to) + finalVersionName);
+                            AppModel.showToast(AppModel.sContext.getString(R.string.update_xndroid_to) + finalVersionName);
                             LogUtils.i("update Xndroid to " + version);
                             doUpdate();
                         }
@@ -111,7 +111,7 @@ public class UpdateManager {
                     builder.setNeutralButton(R.string.ignore, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            AppModel.showToast(AppModel.sActivity.getString(R.string.ignore_version) + finalVersionName);
+                            AppModel.showToast(AppModel.sContext.getString(R.string.ignore_version) + finalVersionName);
                             LogUtils.i("ignore version " + version);
                             AppModel.sPreferences.edit().putInt(PER_IGNORE_VERSION, version).commit();
                         }
@@ -131,18 +131,23 @@ public class UpdateManager {
     }
 
     /**
-     *Can't call it in main thread!
+     *Don not call it in main thread!
      * */
     public static void checkUpdate(boolean checkall){
-        int version = getXndroidLatestVersion();
-        if(!checkall) {
-            if(version <= AppModel.sVersionCode)
-                return;
-            int ignoreVersion = AppModel.sPreferences.getInt(PER_IGNORE_VERSION, 0);
-            if (ignoreVersion == version)
-                return;
+        try {
+            int version = getXndroidLatestVersion();
+            if (!checkall) {
+                if (version <= AppModel.sVersionCode)
+                    return;
+                int ignoreVersion = AppModel.sPreferences.getInt(PER_IGNORE_VERSION, 0);
+                if (ignoreVersion == version)
+                    return;
+            }
+            showUpdate(version);
+        }catch (Exception e){
+            AppModel.showToast("checkUpdate error");
+            LogUtils.e("checkUpdate error ", e);
         }
-        showUpdate(version);
 
     }
 

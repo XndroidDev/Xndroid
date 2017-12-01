@@ -7,7 +7,6 @@ import net.xndroid.AppModel;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -27,27 +26,29 @@ public class LogUtils {
         public void run() {
             byte[] buf;
             while(true) {
-                if(!mRunning)
-                    break;
-                if(mOutputStream==null)
-                    break;
-                checkSize();
                 try {
+                    if(!mRunning)
+                        break;
+                    if(mOutputStream==null)
+                        break;
+                    checkSize();
+
                     synchronized(mBuffer) {
                         if (mBuffer.size() == 0) {
                             mOutputStream.flush();
                             mBuffer.wait();
                         }
-                        assert mBuffer.size() > 0;
+                        if(mBuffer.size() <= 0){
+                            Log.e("xndroid_log", "mBuffer.size() <= 0 after wait");
+                            mRunning = false;
+                            break;
+                        }
                         buf = mBuffer.poll().getBytes();
                     }
                     if(mOutputStream == null)
                         return;
                     mOutputStream.write(buf);
-                } catch (InterruptedException e) {
-                    mRunning = false;
-                    e.printStackTrace();
-                } catch (IOException e) {
+                } catch (Exception e) {
                     mRunning = false;
                     e.printStackTrace();
                 }
@@ -57,7 +58,7 @@ public class LogUtils {
     }
 
     private String mPath;
-    private Queue<String> mBuffer = new LinkedList<>();
+    private final Queue<String> mBuffer = new LinkedList<>();
     private File mFile;
     private long mLogSize = 2*1024*1024;
     private FileOutputStream mOutputStream;
@@ -75,8 +76,6 @@ public class LogUtils {
             output = new FileOutputStream(newFile);
             output.getChannel().transferFrom(input.getChannel(),fileLen - len , len);
 
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -116,6 +115,10 @@ public class LogUtils {
     {
         if(mOutputStream==null)
             return;
+        if(mBuffer.size() > 500) {
+            Log.w("xndroid_log", "too many logs in the buffer, drop his log:\n" + log);
+            return;
+        }
         if(tag == null)
             tag = "";
         String time = new SimpleDateFormat("HH:mm:ss").format(new Date());
@@ -131,6 +134,7 @@ public class LogUtils {
     {
         if(mThread != null) {
             mThread.close();
+            Log.i("xndroid_log", "LogUtils close");
             logWrite("INFO","LogUtils exiting");//logThread my be sleeping, write this log to awake it.
             mThread = null;
         }
@@ -165,8 +169,8 @@ public class LogUtils {
         mFile = new File(mPath);
         try {
             File dir = new File(mPath).getParentFile();
-            if(!dir.isDirectory())
-                dir.mkdir();
+            if(!dir.exists())
+                dir.mkdirs();
             mOutputStream = new FileOutputStream(mPath,true);
             mOutputStream.write(("\n[   INFO] LogUtils start at " + new Date().toString()
                     + " write to " + mPath + "\n").getBytes());
@@ -200,33 +204,33 @@ public class LogUtils {
     }
     public static void i(String msg)
     {
-        defaultLogWrite("INFO", msg);
         Log.i("xndroid_log", msg);
+        defaultLogWrite("INFO", msg);
     }
 
     public static void d(String msg)
     {
+        Log.d("xndroid_log", msg);
         if(AppModel.sDebug || AppModel.sLastFail) {
             defaultLogWrite("DEBUG", msg);
         }
-        Log.d("xndroid_log", msg);
     }
     public static void w(String msg)
     {
-        defaultLogWrite("WARNING", msg);
         Log.w("xndroid", msg);
+        defaultLogWrite("WARNING", msg);
     }
 
     public static void e(String msg)
     {
-        defaultLogWrite("ERROR", msg);
         Log.e("xndroid_log", msg);
+        defaultLogWrite("ERROR", msg);
     }
 
     public static void e(String msg, Throwable exception)
     {
-        defaultLogWrite("ERROR", msg + "\n" + formatException(exception));
         Log.e("xndroid_log", msg, exception);
+        defaultLogWrite("ERROR", msg + "\n" + formatException(exception));
     }
 
     private static String formatException(Throwable e) {

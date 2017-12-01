@@ -18,8 +18,11 @@ import android.widget.Toast;
 import net.xndroid.utils.LogUtils;
 import net.xndroid.utils.ShellUtils;
 
+import java.io.OutputStreamWriter;
+
 public class AppModel {
     public static String sAppPath;
+    /*use sActivity carefully, it may be null!*/
     public static MainActivity sActivity;
     public static LaunchService sService;
     public static String sFilePath;
@@ -30,6 +33,7 @@ public class AppModel {
     public static int sVersionCode;
     public static int sLastVersion;
     public static String sVersionName;
+    public static Context sContext;
 
     public static boolean sDebug = false;
     public static boolean sLastFail = false;
@@ -41,65 +45,92 @@ public class AppModel {
     public static final String PER_LAST_FAIL = "XNDROID_LAST_FAIL";
 
     public static void showToast(final String msg) {
-        if(sActivity != null) {
-            sActivity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(sActivity, msg, Toast.LENGTH_LONG).show();
-                }
-            });
-            return;
+        try {
+            if(sActivity != null) {
+                sActivity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(sActivity, msg, Toast.LENGTH_LONG).show();
+                    }
+                });
+                return;
+            }
+            if(sService != null){
+                Looper.prepare();
+                Toast.makeText(sService.getApplicationContext(), msg, Toast.LENGTH_LONG).show();
+                Looper.loop();
+            }
+        }catch (Exception e){
+            e.printStackTrace();
         }
-        if(sService != null){
-            Looper.prepare();
-            Toast.makeText(sService.getApplicationContext(), msg, Toast.LENGTH_LONG).show();
-            Looper.loop();
-        }
+
     }
 
     public static void exportLogs(){
-        ShellUtils.execBusybox("tar -czf /sdcard/xndroid-logs.tar.gz log/ fqrouter/log/");
+        ShellUtils.execBusybox("tar -czf /sdcard/xndroid-logs.tar.gz -C " + sXndroidFile + " log/ fqrouter/log/");
+        showToast(sContext.getString(R.string.log_exported));
     }
 
     public static void forceStop(){
-//        android.os.Process.killProcess(android.os.Process.myPid());
-
         String cmd = "busybox ps |busybox grep net.xndroid | busybox cut -c 1-6 |busybox xargs kill -9";
-        cmd = cmd.replace("busybox", ShellUtils.sBusyBox );
-        ShellUtils.exec(cmd);
+        cmd = cmd.replace("busybox", sXndroidFile + "/busybox");
+        try {
+            ShellUtils.exec(cmd);
+        }catch (Exception e){
+            e.printStackTrace();
+            try {
+                Process process = Runtime.getRuntime().exec(sXndroidFile + "/busybox sh");
+                OutputStreamWriter sInStream = new OutputStreamWriter(process.getOutputStream());
+                sInStream.write(cmd);
+                sInStream.write('\n');
+                sInStream.flush();
+                process.waitFor();
+            }catch (Exception ee){
+                ee.printStackTrace();
+                android.os.Process.killProcess(android.os.Process.myPid());
+            }
+        }
+
     }
 
 
     public static void fatalError(final String msg){
-        LogUtils.e("FatalError: " + msg);
-        exportLogs();
+        try {
+            LogUtils.e("FatalError: " + msg);
+            exportLogs();
 
-        if(sActivity != null) {
-            sActivity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    new AlertDialog.Builder(AppModel.sActivity)
-                            .setTitle("FatalError")
-                            .setMessage(msg + "\n\nlogs will be exported to /sdcard/xndroid-logs.tar.gz")
-                            .setNegativeButton("exit", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    forceStop();
-                                }
-                            }).create().show();
+            if (sActivity != null) {
+                sActivity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        new AlertDialog.Builder(AppModel.sActivity)
+                                .setTitle(R.string.fatalerror)
+                                .setMessage(msg)
+                                .setCancelable(false)
+                                .setNegativeButton(R.string.exit, new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        forceStop();
+                                    }
+                                }).create().show();
+                    }
+                });
+            } else {
+                showToast(sContext.getString(R.string.fatalerror) + ": " + msg);
+                forceStop();
+            }
+            while (true) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
-            });
-        }else{
-            showToast("FatalError: " + msg + "   logs will be exported to /sdcard/xndroid-logs.tar.gz");
+            }
+        }catch (Exception e){
+            e.printStackTrace();
             forceStop();
         }
-        while (true){
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+
     }
 
 
@@ -109,6 +140,7 @@ public class AppModel {
             ApplicationInfo info = context.getApplicationInfo();
             return (info.flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
         } catch (Exception e) {
+            e.printStackTrace();
             return false;
         }
     }
@@ -119,27 +151,30 @@ public class AppModel {
         if(sAppStoped)
             return;
         sAppStoped = true;
-        sPreferences.edit().putBoolean(PER_LAST_FAIL, false).commit();
-        if(sActivity != null) {
-            sActivity.runOnUiThread(new Runnable() {
+        try {
+            sPreferences.edit().putBoolean(PER_LAST_FAIL, false).commit();
+            if(sActivity != null) {
+                sActivity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        sActivity.postStop();
+                    }
+                });
+            }
+
+            new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    sActivity.postStop();
+                    LogUtils.i("appStop");
+                    LaunchService.postStop();
+                    forceStop();
                 }
-            });
+            }).start();
+        }catch (Exception e){
+            e.printStackTrace();
+            forceStop();
         }
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-//                XXnetService service = XXnetService.getDefaultService();
-//                if(service != null)
-//                    service.postStop();
-                LogUtils.i("appStop");
-                LaunchService.postStop();
-                forceStop();
-            }
-        }).start();
 
     }
 
@@ -149,17 +184,19 @@ public class AppModel {
     public static boolean sDevScreenOff = false;
     public static boolean sIsForeground = true;
 
-    public static void checkNetwork(){
+    private static ConnectivityManager sConnectivityManager;
+    public static void getNetworkState(){
+        if(sConnectivityManager == null){
+            sConnectivityManager = (ConnectivityManager)sContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+        }
         sDevMobileWork = false;
-        ConnectivityManager connectivityManager = (ConnectivityManager)AppModel
-                .sActivity.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        NetworkInfo activeNetworkInfo = sConnectivityManager.getActiveNetworkInfo();
         if (activeNetworkInfo != null && activeNetworkInfo.isConnected()) {
             if (activeNetworkInfo.getType() == (ConnectivityManager.TYPE_MOBILE)) {
                 sDevMobileWork = true;
             }
         }
-        LogUtils.i("network change, use_mobile_network=" + AppModel.sDevMobileWork);
+        LogUtils.i("network change, use_mobile_network=" + sDevMobileWork);
     }
 
     private static void updataEnv(int lastVersion){
@@ -172,6 +209,7 @@ public class AppModel {
             return;
         sAppStoped = false;
         sActivity = activity;
+        sContext = activity.getApplicationContext();
         sFilePath = activity.getFilesDir().getAbsolutePath();
         sAppPath = activity.getFilesDir().getParent();
         sXndroidFile = sFilePath + "/xndroid_files";

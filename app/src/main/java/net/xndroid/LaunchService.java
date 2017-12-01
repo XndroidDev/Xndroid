@@ -24,9 +24,9 @@ import java.io.InputStream;
 import java.util.ArrayList;
 
 import static android.os.Build.VERSION_CODES.M;
-import static net.xndroid.AppModel.checkNetwork;
 import static net.xndroid.AppModel.sActivity;
 import static net.xndroid.AppModel.sAutoThread;
+import static net.xndroid.AppModel.sContext;
 import static net.xndroid.AppModel.sDebug;
 import static net.xndroid.AppModel.sDevMobileWork;
 import static net.xndroid.AppModel.sLang;
@@ -69,7 +69,7 @@ public class LaunchService extends Service {
             if (preToDo.size() == 0)
                 return;
             if (tip)
-                showToast(sActivity.getString(R.string.permissions_need));
+                showToast(sContext.getString(R.string.permissions_need));
             activity.requestPermissions(preToDo.toArray(new String[preToDo.size()]), 0);
         }
     }
@@ -78,7 +78,7 @@ public class LaunchService extends Service {
 
     private static boolean writeRawFile(int id, String destPath)
     {
-        InputStream input = sActivity.getResources().openRawResource(id);
+        InputStream input = sContext.getResources().openRawResource(id);
         byte[] buff = new byte[512*1024];
         try {
             FileOutputStream output = new FileOutputStream(destPath);
@@ -190,40 +190,42 @@ public class LaunchService extends Service {
     @Override
     public void onDestroy() {
         this.unregisterReceiver(mReceiver);
+        if(!AppModel.sAppStoped)
+            AppModel.fatalError("Launch service exit unexpectedly!");
         sDefaultService = null;
         AppModel.sService = null;
         super.onDestroy();
     }
 
     private void launch(){
-        new WorkingDlg(AppModel.sActivity, sActivity.getString(R.string.xndroid_launching)) {
+        new WorkingDlg(AppModel.sActivity, getString(R.string.xndroid_launching)) {
             @Override
             public void work() {
-                updateMsg(sActivity.getString(R.string.request_permission));
+                updateMsg(getString(R.string.request_permission));
                 getPermission(sPermissions,sActivity);
-                updateMsg(sActivity.getString(R.string.initializing));
+                updateMsg(getString(R.string.initializing));
                 LogUtils.sSetDefaultLog(new LogUtils(sXndroidFile+"/log/java_main.log"));
                 LogUtils.i("APP start, sVersionCode: " + sVersionCode + ",sVersionName: " + sVersionName
-                        + ",sAutoThread" + sAutoThread + ",sLastVersion" + sLastVersion + ",sDebug" + sDebug
-                        + ",sLastFail" + sLastFail + ",sLang" + sLang + ",sXndroidFile" + sXndroidFile);
+                        + ",sAutoThread:" + sAutoThread + ",sLastVersion:" + sLastVersion + ",sDebug:" + sDebug
+                        + ",sLastFail:" + sLastFail + ",sLang:" + sLang + ",sXndroidFile:" + sXndroidFile);
 
-                checkNetwork();
-                checkXndroidUpdate();
+                AppModel.getNetworkState();
                 shellInit();
-                updateMsg("prepare environment for python...");
+                updateMsg(getString(R.string.prepare_python));
                 pythonInit();
-                updateMsg("prepare environment for fqrouter...");
+                updateMsg(getString(R.string.prepare_fqrouter));
                 FqrouterManager.prepareFqrouter();
-                updateMsg("start vpn service, please authorize...");
+                updateMsg(getString(R.string.start_vpn));
                 FqrouterManager.startVpnService();
-                updateMsg("waiting for fqrouter to be ready...");
+                updateMsg(getString(R.string.wait_fqrouter));
                 FqrouterManager.startFqrouter();
                 FqrouterManager.waitReady();
-                updateMsg("prepare environment for XX-Net...");
+                updateMsg(getString(R.string.prepare_xxnet));
                 XXnetManager.prepare();
-                updateMsg("waiting for XX-Net to be ready...");
+                updateMsg(getString(R.string.wait_xxnet));
                 XXnetManager.startXXnet(LaunchService.this);
                 XXnetManager.waitReady();
+                checkXndroidUpdate();
             }
         };
         regReceiver();
@@ -242,6 +244,8 @@ public class LaunchService extends Service {
             }
         }
 
+        if(sDefaultService != null)
+            sDefaultService.stopSelf();
 //        ShellUtils.close();//AppModle.forceStop need it
         LogUtils.sGetDefaultLog().close();
     }

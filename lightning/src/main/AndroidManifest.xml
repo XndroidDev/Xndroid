@@ -38,6 +38,7 @@
             android:value="2.1"/>
 
         <activity
+            android:process="acr.browser.lightning"
             android:name=".MainActivity"
             android:alwaysRetainTaskState="true"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard"
@@ -122,6 +123,7 @@
             </intent-filter>
         </activity>
         <activity
+            android:process="acr.browser.lightning"
             android:name=".settings.activity.SettingsActivity"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard"
             android:label="@string/settings"
@@ -133,6 +135,7 @@
             </intent-filter>
         </activity>
         <activity
+            android:process="acr.browser.lightning"
             android:name=".IncognitoActivity"
             android:alwaysRetainTaskState="true"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard"
@@ -147,6 +150,7 @@
             </intent-filter>
         </activity>
         <activity
+            android:process="acr.browser.lightning"
             android:name=".reading.activity.ReadingActivity"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard"
             android:label="@string/reading_mode"
@@ -159,6 +163,7 @@
         </activity>
 
         <provider
+            android:process="acr.browser.lightning"
             android:name="android.support.v4.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
             android:grantUriPermissions="true"

@@ -23,6 +23,13 @@ public class WebViewFragment extends Fragment {
     public void onStart() {
         super.onStart();
         mWebView.onResume();
+        //For:  cr_BindingManager: Cannot call determinedVisibility() - never saw a connection for the pid:
+//        mWebView.postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
+//                mWebView.loadUrl(mURL);
+//            }
+//        }, 500);
         mWebView.loadUrl(mURL);
     }
 
@@ -52,14 +59,8 @@ public class WebViewFragment extends Fragment {
         webSettings.setJavaScriptCanOpenWindowsAutomatically(true); //支持通过JS打开新窗口
         webSettings.setLoadsImagesAutomatically(true); //支持自动加载图片
         webSettings.setDefaultTextEncodingName("utf-8");//设置编码格式
-        mWebView.setWebViewClient(new WebViewClient(){
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                view.loadUrl(url);
-                //如果不需要其他对点击链接事件的处理返回true，否则返回false
-                return true;
-            }
-        });
+        webSettings.setDomStorageEnabled(true);
+        mWebView.setWebViewClient(new WebViewClient());
     }
 
     @Override

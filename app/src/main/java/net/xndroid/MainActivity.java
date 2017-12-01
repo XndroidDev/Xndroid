@@ -22,6 +22,7 @@ import android.view.ViewGroup;
 
 import net.xndroid.fqrouter.FqrouterManager;
 import net.xndroid.utils.LogUtils;
+import net.xndroid.xxnet.XXnetManager;
 
 import static net.xndroid.fqrouter.FqrouterManager.ASK_VPN_PERMISSION;
 
@@ -58,6 +59,7 @@ public class MainActivity extends AppCompatActivity
     protected void onPause() {
         super.onPause();
         AppModel.sIsForeground = false;
+        AppModel.sUpdateInfoUI = null;
         mXXnetFragment.postPause();
         mFqrouterFragment.postPause();
     }
@@ -103,7 +105,7 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if(AppModel.sAppStoped){
-            Log.d("xndroid", "Xndroid is exiting, restart the activity.");
+            Log.w("xndroid_log", "Xndroid is exiting, restart the activity.");
             restart();
             try {
                 Thread.sleep(8000);
@@ -112,8 +114,11 @@ public class MainActivity extends AppCompatActivity
             }
             return;
         }
-        if(AppModel.sActivity == null && AppModel.sService == null) {
-            AppModel.sActivity = this;
+        if(AppModel.sContext != null && AppModel.sService == null){
+            AppModel.fatalError("error: App is launched but LaunchService exit");
+            return;
+        }
+        if(AppModel.sContext == null) {
             AppModel.appInit(this);
         }
         AppModel.sActivity = this;
@@ -159,7 +164,7 @@ public class MainActivity extends AppCompatActivity
     public void launchUrl(String url){
         Intent intent =new Intent(Intent.ACTION_VIEW);
         intent.setData(Uri.parse(url));
-        AppModel.sActivity.startActivity(intent);
+        startActivity(intent);
     }
 
     @Override
@@ -176,7 +181,7 @@ public class MainActivity extends AppCompatActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.xndroid_main, menu);
-        return false;
+        return true;
     }
 
     @Override
@@ -187,11 +192,23 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+        if (id == R.id.action_export_log) {
+            AppModel.exportLogs();
+        }else if(id == R.id.action_import_cert){
+            XXnetManager.importCert();
+        }else if(id == R.id.action_check_update){
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    AppModel.showToast(getString(R.string.getting_version));
+                    UpdateManager.checkUpdate(true);
+                }
+            }).start();
         }
-
-        return super.onOptionsItemSelected(item);
+        else {
+            return super.onOptionsItemSelected(item);
+        }
+        return true;
     }
 
     public void showXXnet(){

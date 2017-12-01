@@ -28,17 +28,22 @@ public class XndroidReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        String action = intent.getAction();
-        if(action == Intent.ACTION_BATTERY_CHANGED){
-            handleBattery(intent);
-        }else if(action == ConnectivityManager.CONNECTIVITY_ACTION){
-            AppModel.checkNetwork();
-        }else if(action == Intent.ACTION_SCREEN_ON){
-            AppModel.sDevScreenOff = false;
-            LogUtils.i("screen on");
-        }else if(action == Intent.ACTION_SCREEN_OFF){
-            AppModel.sDevScreenOff = true;
-            LogUtils.i("screen off");
+        try {
+            String action = intent.getAction();
+            if(action == Intent.ACTION_BATTERY_CHANGED){
+                handleBattery(intent);
+            }else if(action == ConnectivityManager.CONNECTIVITY_ACTION){
+                AppModel.getNetworkState();
+            }else if(action == Intent.ACTION_SCREEN_ON){
+                AppModel.sDevScreenOff = false;
+                LogUtils.i("screen on");
+            }else if(action == Intent.ACTION_SCREEN_OFF){
+                AppModel.sDevScreenOff = true;
+                LogUtils.i("screen off");
+            }
+        }catch (Exception e){
+            LogUtils.e("onReceive error ", e);
         }
+
     }
 }

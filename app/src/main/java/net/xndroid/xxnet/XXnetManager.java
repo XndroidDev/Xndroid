@@ -19,7 +19,7 @@ import java.io.FileInputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-import static net.xndroid.AppModel.sActivity;
+import static net.xndroid.AppModel.sContext;
 import static net.xndroid.AppModel.sXndroidFile;
 import static net.xndroid.AppModel.showToast;
 import static net.xndroid.LaunchService.unzipRawFile;
@@ -32,7 +32,7 @@ public class XXnetManager {
     public static String sIPV4State = "UNKNOW";
     public static String sIPV6State = "UNKNOW";
     public static String sIpv6 = "force_ipv6";
-    public static String sXXversion = "";
+    public static String sXXversion = "UNKNOW";
     public static int sWorkerH1 = 0;
     public static int sWorkerH2 = 0;
     public static boolean sLastupdateOK = false;
@@ -40,7 +40,7 @@ public class XXnetManager {
 
     public static final int IMPORT_CERT_REQUEST = 102;
 
-    public static String sStateSummary = sActivity.getString(R.string.initializing);
+    public static String sStateSummary = sContext.getString(R.string.initializing);
     public static final int SUMMARY_LEVEL_OK = 0;
     public static final int SUMMARY_LEVEL_WARNING = 1;
     public static final int SUMMARY_LEVEL_ERROR = 2;
@@ -79,33 +79,33 @@ public class XXnetManager {
             sFailTime = 0;
             if(!XXnetManager.sIPV4State.equals("OK") && !XXnetManager.sIPV6State.equals("OK")){
                 if(!checkNetwork()) {
-                    sStateSummary = sActivity.getString(R.string.no_internet);
+                    sStateSummary = sContext.getString(R.string.no_internet);
                 }else {
-                    sStateSummary = "Can't use IPV6 through teredo";
+                    sStateSummary = sContext.getString(R.string.no_ipv6);
                 }
                 sSummaryLevel = SUMMARY_LEVEL_ERROR;
-            }else if(XXnetManager.sIpQuality > 1200) {
+            }else if(XXnetManager.sIpQuality > 1400) {
                 sSummaryLevel = SUMMARY_LEVEL_WARNING;
-                sStateSummary = sActivity.getString(R.string.no_ip);
+                sStateSummary = sContext.getString(R.string.no_ip);
             }else if(sWorkerH2 == 0 && sWorkerH1 ==0){
-                sStateSummary = sActivity.getString(R.string.connect_no_establish);
+                sStateSummary = sContext.getString(R.string.connect_no_establish);
                 sSummaryLevel = SUMMARY_LEVEL_WARNING;
             } else {
                 sSummaryLevel = SUMMARY_LEVEL_OK;
-                sStateSummary = sActivity.getString(R.string.running_normally);
+                sStateSummary = sContext.getString(R.string.running_normally);
             }
             return true;
         }else if(!checkNetwork()){
-            sStateSummary = sActivity.getString(R.string.no_internet);;
+            sStateSummary = sContext.getString(R.string.no_internet);;
             sSummaryLevel = SUMMARY_LEVEL_ERROR;
             return false;
         } else
         {
             if(++sFailTime >= RETRY_TIME){
-                sStateSummary = sActivity.getString(R.string.no_respond);
+                sStateSummary = sContext.getString(R.string.no_respond);
                 sSummaryLevel = SUMMARY_LEVEL_ERROR;
             }else {
-                sStateSummary = sActivity.getString(R.string.waitting_respond);
+                sStateSummary = sContext.getString(R.string.waitting_respond);
                 sSummaryLevel = SUMMARY_LEVEL_WARNING;
             }
 
@@ -175,7 +175,7 @@ public class XXnetManager {
     }
 
 
-    public static boolean setAppid(String appid)
+    public static boolean setAppId(String appid)
     {
         if(appid == null)
             return false;
@@ -192,21 +192,21 @@ public class XXnetManager {
         String response = HttpJson.post("http://127.0.0.1:8085/module/gae_proxy/control/config?cmd=set_config",map);
         if(response.indexOf("success") > 0)
             return true;
-        LogUtils.e("setAppid fail:\n" + response);
+        LogUtils.e("setAppId fail:\n" + response);
         return false;
     }
 
 
-    public static void import_ip(String path){
+    public static void importIp(String path){
         if(path == null){
-            showToast(sActivity.getString(R.string.err_no_file));
+            showToast(sContext.getString(R.string.err_no_file));
         }else if(!path.endsWith("good_ip.txt")){
-            showToast(sActivity.getString(R.string.err_file_name));
+            showToast(sContext.getString(R.string.err_file_name));
         }else {
             String destPath = sXndroidFile + "/xxnet/data/gae_proxy/good_ip.txt";
             execBusybox("cat \"" + path + "\" >" + destPath);
             execBusybox("chmod 777 " + destPath);
-            showToast(sActivity.getString(R.string.import_over));
+            showToast(sContext.getString(R.string.import_over));
         }
     }
 
@@ -234,7 +234,7 @@ public class XXnetManager {
                 e.printStackTrace();
             }
         }
-        AppModel.fatalError("wait ready for XX-Net timeout");
+        AppModel.fatalError(sContext.getString(R.string.xxnet_timeout));
         return false;
     }
 
@@ -254,7 +254,7 @@ public class XXnetManager {
         String certPath = AppModel.sXndroidFile + "/xxnet/data/gae_proxy/CA.crt";
         if(!new File(certPath).exists()){
             LogUtils.e("importCert fail, file not exist");
-            AppModel.showToast("import CA fail, file not exist");
+            AppModel.showToast("import certificate fail, file not exist");
             return;
         }
         byte[] keychain;
@@ -269,11 +269,12 @@ public class XXnetManager {
         Intent installIntent = KeyChain.createInstallIntent();
         //Android支持两种证书文件格式，一种是PKCS12，一种是X.509证书
         installIntent.putExtra(KeyChain.EXTRA_CERTIFICATE, keychain);
-        installIntent.putExtra(KeyChain.EXTRA_NAME,"XX-net Chain");
+        installIntent.putExtra(KeyChain.EXTRA_NAME,"XX-Net Chain");
         AppModel.sActivity.startActivityForResult(installIntent, IMPORT_CERT_REQUEST);
 
         String md5 = ShellUtils.execBusybox("md5sum " + certPath + " | " + ShellUtils.sBusyBox + " cut -c 1-32").trim();
         AppModel.sPreferences.edit().putString(PER_CA_MD5, md5).apply();
+        ShellUtils.execBusybox("cp -f " + certPath + " /sdcard/XX-Net.crt");
 
     }
 

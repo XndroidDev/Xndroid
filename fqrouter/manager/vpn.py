@@ -181,7 +181,7 @@ def setup_logging():
     handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
     logging.getLogger('fqdns').addHandler(handler)
     handler = logging.handlers.RotatingFileHandler(
-        os.path.join(LOG_DIR, 'teredo.log'), maxBytes=1024 * 512, backupCount=0)
+        os.path.join(LOG_DIR, 'teredo.log'), maxBytes=1024 * 256, backupCount=0)
     handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
     logging.getLogger('teredo').addHandler(handler)
 

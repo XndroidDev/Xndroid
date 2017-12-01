@@ -118,7 +118,7 @@ public class XXnetService extends Service {
         if(XXnetManager.sIpNum >=0 && XXnetManager.sXXversion.indexOf(".") > 0){
             String version = XXnetManager.sXXversion;
             String codePath = sXndroidFile + "/xxnet/code";
-            LogUtils.i("XX-net version is " + version + ", remove useless files");
+            LogUtils.i("XX-Net version is " + version + ", remove useless files");
             for(File file : new File(codePath).listFiles()){
                 String fileName = file.getName();
                 if(!fileName.equals(version) && !fileName.equals("version.txt")){
@@ -147,7 +147,7 @@ public class XXnetService extends Service {
 
 
     private final int IP_QUALITY_LIMIT = 500;
-    private final int IP_NUM_LIMIT = 40;
+    private final int IP_NUM_LIMIT = 60;
     public static int MAX_THREAD_NUM = 12;
 
     private int giveThreadNum(){
@@ -193,7 +193,7 @@ public class XXnetService extends Service {
         }
         if(!AppModel.sDevScreenOff) {
             XXnetManager.updateState();
-            if (AppModel.sUpdateInfoUI != null)
+            if (AppModel.sUpdateInfoUI != null && sActivity != null)
                 sActivity.runOnUiThread(AppModel.sUpdateInfoUI);
             String mesg = getString(R.string.ip_number) + ":" + XXnetManager.sIpNum
                     + "            " + getString(R.string.ip_quality) + ":" + XXnetManager.sIpQuality;
@@ -211,16 +211,16 @@ public class XXnetService extends Service {
             public void run() {
                 while(true)
                 {
-                    if(mExitFlag)
-                        return;
-                    doWatch();
                     try {
+                        if(mExitFlag)
+                            return;
+                        doWatch();
                         if(AppModel.sDevScreenOff || !AppModel.sIsForeground)
                             Thread.sleep(6000);
                         else
                             Thread.sleep(3000);
 
-                    } catch (InterruptedException e) {
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
@@ -254,7 +254,7 @@ public class XXnetService extends Service {
                 mProcess = null;
                 LogUtils.i("XX-Net exit.");
                 if(!AppModel.sAppStoped)
-                    AppModel.fatalError("XX-Net exit unexpectedly");
+                    AppModel.fatalError(getString(R.string.xxnet_exit_un));
             }
         }).start();
 
@@ -278,7 +278,9 @@ public class XXnetService extends Service {
         mExitFlag = true;
         if(mProcess != null)
             if(!XXnetManager.quit()){
-                mProcess.destroy();
+                if(mProcess != null) {
+                    mProcess.destroy();
+                }
                 mProcess = null;
             }
         stopForeground(true);

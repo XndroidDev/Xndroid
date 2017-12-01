@@ -35,7 +35,7 @@ public class XndroidFragment extends Fragment implements View.OnClickListener
 //    private TextView mProxySet;
     private TextView mCertSet;
     private Switch mAutoScanSet;
-    private TextView mAppIdSet;
+    private View mAppIdSet;
 
 //    private View mConfigTip;
     private View mThreadTip;
@@ -111,7 +111,7 @@ public class XndroidFragment extends Fragment implements View.OnClickListener
                     mXXState.setBackgroundColor(0xFFFFC0C0);
                 }
 
-                mTeredoState.setText(FqrouterManager.sIsQualified?"qualified":"offline");
+                mTeredoState.setText(FqrouterManager.sIsQualified?getString(R.string.qualified):getString(R.string.offline));
                 mNatType.setText(FqrouterManager.sNATType);
                 mTeredoIP.setText(FqrouterManager.sTeredoIP);
                 if(FqrouterManager.sTeredoIP.equals(FqrouterManager.sLocalTeredoIP))
@@ -194,7 +194,7 @@ public class XndroidFragment extends Fragment implements View.OnClickListener
                 }
             }).start();
         }
-        AppModel.sPreferences.edit().putBoolean(AppModel.PER_AUTO_THREAD, checked).commit();
+        AppModel.sPreferences.edit().putBoolean(AppModel.PER_AUTO_THREAD, checked).apply();
     }
 
     private void doAppIdSet(){
@@ -210,7 +210,7 @@ public class XndroidFragment extends Fragment implements View.OnClickListener
                         new Thread(new Runnable() {
                             @Override
                             public void run() {
-                                XXnetManager.setAppid(appId);
+                                XXnetManager.setAppId(appId);
                             }
                         }).start();
 
@@ -255,7 +255,7 @@ public class XndroidFragment extends Fragment implements View.OnClickListener
             String path = dataCont.getPath();
             if(path == null)
                 return;
-            XXnetManager.import_ip(path);
+            XXnetManager.importIp(path);
         }
     }
 
@@ -274,7 +274,7 @@ public class XndroidFragment extends Fragment implements View.OnClickListener
     }
 
     private void doChangedWarning(){
-        showDlg("Teredo IP changed", "The mapped IP and port changed, teredo client will modify the address field of each IPV6 packet.");
+        showDlg(getString(R.string.ip_changed), getString(R.string.ip_changed_msg));
     }
 
     @Override

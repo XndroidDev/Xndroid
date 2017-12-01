@@ -10,6 +10,7 @@ import android.os.ParcelFileDescriptor;
 import android.widget.Toast;
 
 import net.xndroid.MainActivity;
+import net.xndroid.R;
 import net.xndroid.utils.LogUtils;
 
 import java.io.BufferedReader;
@@ -316,7 +317,7 @@ public class SocksVpnService extends VpnService {
                     this.startVpn(parts[1]);
             } else if ("TEREDO FAIL".equals(parts[0])) {
                 LogUtils.e("start teredo fail");
-                showToast("start teredo fail");
+                showToast(getString(R.string.teredo_fail));
                 if(tunPFD == null)
                     this.startVpn(parts[1]);
             } else {

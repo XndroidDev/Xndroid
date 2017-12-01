@@ -36,7 +36,6 @@ public class HttpJson {
                 stringBuffer.append(buff, 0, count);
             }
         } catch (IOException e) {
-            e.printStackTrace();
             LogUtils.e("streamToString:" + e.getMessage(), e);
             return "";
         } finally {

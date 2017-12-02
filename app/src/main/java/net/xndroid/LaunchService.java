@@ -129,7 +129,8 @@ public class LaunchService extends Service {
             AppModel.fatalError("setExecutable for busybox fail!");
         }
         ShellUtils.init(sXndroidFile);
-
+        ShellUtils.execBusybox("ln -s " + ShellUtils.sBusyBox + " " + sXndroidFile + "/dirname");
+        ShellUtils.exec("export PATH=" + sXndroidFile + ":$PATH");
 
 //        if(!new File(busybox).exists())
 //        {

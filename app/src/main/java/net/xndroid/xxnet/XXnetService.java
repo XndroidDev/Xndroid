@@ -236,9 +236,10 @@ public class XXnetService extends Service {
             @Override
             public void run() {
                 String cmd = "export LANG=" + AppModel.sLang + " \n"
+                        + "export PATH=" + sXndroidFile + ":$PATH\n"
                         + ((AppModel.sDebug || AppModel.sLastFail)?"export DEBUG=TRUE\n":"")
                         + "cd " + sXndroidFile + " \n"
-                        + sXndroidFile + "/python/bin"
+                        + ShellUtils.sBusyBox + " sh "  + sXndroidFile + "/python/bin"
                         + (Build.VERSION.SDK_INT >=19?"/python-launcher.sh ":"python-launcher-nopie.sh ")
                         + sXndroidFile + "/xxnet/android_start.py > " + sXndroidFile + "/log/xxnet-output.log 2>&1 \nexit\n";
                 LogUtils.i("try to start xxnet, cmd: " + cmd);

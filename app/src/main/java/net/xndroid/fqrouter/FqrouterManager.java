@@ -12,6 +12,7 @@ import net.xndroid.LaunchService;
 import net.xndroid.R;
 import net.xndroid.utils.HttpJson;
 import net.xndroid.utils.LogUtils;
+import net.xndroid.utils.ShellUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -77,12 +78,18 @@ public class FqrouterManager {
 
     private static String _startVpnService(){
         String[] fds = new File("/proc/self/fd").list();
-        if (null == fds) {
-            return  "failed to list /proc/self/fd";
+        if(fds == null){
+            LogUtils.e("fdtest: fds is null");
+        }else {
+            LogUtils.i("fdtest: fds.length=" + fds.length);
         }
-        if (fds.length > 500) {
-            return  "too many fds before start: " + fds.length;
-        }
+        LogUtils.i("fdtest: ls -l /proc/self/fd\n" + ShellUtils.execBusybox("ls -l /proc/self/fd"));
+//        if (null == fds) {
+//            return  "failed to list /proc/self/fd";
+//        }
+//        if (fds.length > 500) {
+//            return  "too many fds before start: " + fds.length;
+//        }
         Intent intent = VpnService.prepare(sActivity);
         if (intent == null) {
             onRequestResult(RESULT_OK, sActivity);
@@ -112,8 +119,9 @@ public class FqrouterManager {
             @Override
             public void run() {
                 String cmd = "cd " + sXndroidFile + " \n" +
+                        "export PATH=" + sXndroidFile + ":$PATH\n" +
                         ((AppModel.sDebug || AppModel.sLastFail)?"export DEBUG=TRUE\n":"") +
-                        sXndroidFile + "/python/bin" +
+                        ShellUtils.sBusyBox + " sh " + sXndroidFile + "/python/bin" +
                         (Build.VERSION.SDK_INT >=19?"/python-launcher.sh ":"python-launcher-nopie.sh ") +
                         sXndroidFile + "/fqrouter/manager/vpn.py " +
                         (Build.VERSION.SDK_INT >= 20?" 26.26.26.1 26.26.26.2 ":" 10.25.1.1 10.25.1.2 ") +

@@ -11,6 +11,7 @@ import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
+import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.widget.Toast;
@@ -55,10 +56,14 @@ public class AppModel {
                 });
                 return;
             }
-            if(sService != null){
-                Looper.prepare();
-                Toast.makeText(sService.getApplicationContext(), msg, Toast.LENGTH_LONG).show();
-                Looper.loop();
+            if(sContext != null){
+                Handler handler = new Handler(Looper.getMainLooper());
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(sContext, msg, Toast.LENGTH_LONG).show();
+                    }
+                });
             }
         }catch (Exception e){
             e.printStackTrace();

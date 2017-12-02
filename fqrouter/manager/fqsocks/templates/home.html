@@ -437,7 +437,8 @@
             """
             把翻墙网络共享给周围的朋友（同一个局域网内）。TA们只需要把设备上的HTTP代理设置为下面的值就可以了。搞不明白的朋友请自行Google。
             如果你可以把你的<a href='http://zh.wikipedia.org/wiki/Root_(Android%E7%B3%BB%E7%BB%9F)'>手机ROOT了</a>，
-            那么就可以有更多的方式来共享翻墙网络了，而且fqrouter也会工作得更稳定。哪天可以试试。
+            那么就可以有更多的方式来共享翻墙网络了。哪天可以试试。
+            不过目前Xndroid默认以VPN模式启动fqrouter, 后续再添加ROOT模式。
             """) }}
             <ul class="list-group" style="margin-top: 8px; margin-bottom: 0;" id="http-gateway-info">
                 <li class="list-group-item">
@@ -506,13 +507,12 @@
                 {{ _("""
                 The list are the proxies fqrouter using. Built-in public proxies might not satisfy your needs.
                 You can add your private proxy by clicking Add Proxy button.
-                Notice that, fqrouter does not use GoAgent to proxy HTTPS website.
                 Public proxy CAN NOT watch youtube video or download from google play.
                 """, """
-                下面的列表中列出了fqrouter正在使用的代理。默认设置的公共代理可能不能满足你对速度和稳定性的要求。
-                如果你有个人代理（比如说自己注册的GoAgent帐号），可以点“添加代理”按钮。
-                特别提示，fqrouter只使用GoAgent代理HTTP，也就是说twitter这样的HTTPS网站是无法只使用GoAgent就能访问的。
-                公共代理无法观看 Youtube 视频，也不能用于从 Google Play 上下载软件。
+                下面的列表中列出了fqrouter正在使用的代理,默认加入了XX-Net GAE (127.0.0.1:8087) 的HTTP代理。
+                鉴于当前国内网络状态,fqrouter自带的公共代理已经无法使用,已默认禁用。
+                如果你有个人代理（比如说自己的ShadowSocks帐号），可以点“添加代理”按钮。
+                公共代理访问将受到限制。
                 """) }}
             </div>
             <table class="table table-striped" id="proxies">
@@ -581,7 +581,7 @@
                             <div class="input-group hide" data-for-type="GoAgent">
                                 {{ _(
                                 'appid is the xxx of xxx.appspot.com. Multiple appid can be separated by pipe(|). /sdcard/goagent-google-ip.txt can be used to customize the google ip to connect, one ip per line.',
-                                'appid 只需要填xxx.appspot.com中的xxx不要填appspot.com。多个appid可以用竖线（|）分隔。GoAgent只被用来代理HTTP，需要配合其他代理才能完整翻墙。对于速度有特别要求的用户，可以在/sdcard/goagent-google-ip.txt里写上你使用的ip，一个ip一行。')
+                                'Xndroid自带的XX-Net模块更加好用,建议添加到XX-Net模块,不推荐添加此代理项。appid 只需要填xxx.appspot.com中的xxx不要填appspot.com。多个appid可以用竖线（|）分隔。')
                                 }}
                             </div>
                         </div>
@@ -842,7 +842,7 @@
                             """,
                             """
                             如果服务器的IP是中国的，就不走代理。禁用此选项会使得网速慢很多！
-                            一旦禁用，公共代理也不再起作用，必须添加个人代理。
+                            一旦禁用，公共代理也不再起作用，必须添加个人代理, 强烈建议开启。
                             """) }}
                         </div>
                         <div class="form-group">

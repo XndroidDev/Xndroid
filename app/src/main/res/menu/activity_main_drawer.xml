@@ -9,7 +9,7 @@
         <item
             android:id="@+id/nav_xxnet"
             android:icon="@mipmap/ic_xxnet"
-            android:title="XX-net" />
+            android:title="XX-Net" />
         <item
             android:id="@+id/nav_fqrouter"
             android:icon="@mipmap/ic_fqrouter"

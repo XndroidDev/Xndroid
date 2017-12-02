@@ -26,7 +26,6 @@ import teredo
 import json
 
 
-
 current_path = os.path.dirname(os.path.abspath(__file__))
 home_path = os.path.abspath(current_path + "/..")
 FQROUTER_VERSION = 'ultimate'
@@ -41,6 +40,22 @@ default_dns_server = config.get_default_dns_server()
 
 default_loacl_teredo_ip = '2001:0:53aa:64c:0:1234:1234:1234'
 
+def setup_logging():
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG if os.getenv('DEBUG') else logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
+    handler = logging.handlers.RotatingFileHandler(
+        MANAGER_LOG_FILE, maxBytes=1024 * 256, backupCount=0)
+    handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+    logging.getLogger('fqrouter').addHandler(handler)
+    handler = logging.handlers.RotatingFileHandler(
+        FQDNS_LOG_FILE, maxBytes=1024 * 256, backupCount=0)
+    handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+    logging.getLogger('fqdns').addHandler(handler)
+    handler = logging.handlers.RotatingFileHandler(
+        os.path.join(LOG_DIR, 'teredo.log'), maxBytes=1024 * 256, backupCount=0)
+    handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+    logging.getLogger('teredo').addHandler(handler)
+
+setup_logging()
 
 def send_message(message):
     fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -80,11 +95,48 @@ def create_tcp_socket(server_ip, server_port, connect_timeout):
         os.close(fd)
         return sock
 
+def create_teredo_sock_until_ready():
+    while True:
+        try:
+            sock = create_udp_socket(True)
+            return sock
+        except:
+            LOGGER.info('create_teredo_sock_until_ready:get fd fail, retry in 1 seconds')
+        gevent.sleep(1)
+
+
+teredo_sock = create_teredo_sock_until_ready()
+teredo_client = teredo.teredo_client(teredo_sock)
+
 fqsocks.networking.SPI['create_tcp_socket'] = create_tcp_socket
 fqdns.SPI['create_udp_socket'] = create_udp_socket
 fqdns.SPI['create_tcp_socket'] = create_tcp_socket
 
-teredo_client = None
+
+def read_tun_fd_until_ready():
+    while True:
+        tun_fd = read_tun_fd()
+        if tun_fd:
+            return tun_fd
+        else:
+            LOGGER.info('read_tun_fd_until_ready: get fd fail, retry in 1 seconds')
+            gevent.sleep(1)
+
+
+def read_tun_fd():
+    fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    with contextlib.closing(fdsock):
+        try:
+            fdsock.connect('\0fdsock2')
+            fdsock.sendall('TUN\n')
+            gevent.socket.wait_read(fdsock.fileno(), timeout=3)
+            tun_fd = _multiprocessing.recvfd(fdsock.fileno())
+            if tun_fd == 1 or tun_fd < 0:
+                LOGGER.error('received invalid tun fd:%d' % tun_fd)
+                return None
+            return tun_fd
+        except:
+            return None
 
 def handle_ping(environ, start_response):
     try:
@@ -170,61 +222,9 @@ def get_original_destination(sock, src_ip, src_port):
 fqsocks.networking.SPI['get_original_destination'] = get_original_destination
 
 
-def setup_logging():
-    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG if os.getenv('DEBUG') else logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
-    handler = logging.handlers.RotatingFileHandler(
-        MANAGER_LOG_FILE, maxBytes=1024 * 256, backupCount=0)
-    handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
-    logging.getLogger('fqrouter').addHandler(handler)
-    handler = logging.handlers.RotatingFileHandler(
-        FQDNS_LOG_FILE, maxBytes=1024 * 256, backupCount=0)
-    handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
-    logging.getLogger('fqdns').addHandler(handler)
-    handler = logging.handlers.RotatingFileHandler(
-        os.path.join(LOG_DIR, 'teredo.log'), maxBytes=1024 * 256, backupCount=0)
-    handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
-    logging.getLogger('teredo').addHandler(handler)
-
 def exit_later():
     gevent.sleep(0.5)
     os._exit(1)
-
-
-def create_teredo_sock_until_ready():
-    while True:
-        try:
-            sock = create_udp_socket(True)
-            return sock
-        except:
-            LOGGER.info('create_teredo_sock_until_ready:get fd fail, retry in 1 seconds')
-        gevent.sleep(1)
-
-
-def read_tun_fd_until_ready():
-    while True:
-        tun_fd = read_tun_fd()
-        if tun_fd:
-            return tun_fd
-        else:
-            LOGGER.info('read_tun_fd_until_ready: get fd fail, retry in 1 seconds')
-            gevent.sleep(1)
-
-
-def read_tun_fd():
-    fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    with contextlib.closing(fdsock):
-        try:
-            fdsock.connect('\0fdsock2')
-            fdsock.sendall('TUN\n')
-            gevent.socket.wait_read(fdsock.fileno(), timeout=3)
-            tun_fd = _multiprocessing.recvfd(fdsock.fileno())
-            if tun_fd == 1 or tun_fd < 0:
-                LOGGER.error('received invalid tun fd:%d' % tun_fd)
-                return None
-            return tun_fd
-        except:
-            return None
-
 
 
 class VpnUdpHandler(fqdns.DnsHandler):
@@ -256,14 +256,11 @@ def handle_teredo_state(environ, start_response):
     start_response(httplib.OK, [('Content-Type', 'text/json')])
     return [json.dumps({'qualified': teredo_client.qualified,
                         'nat_type': teredo_client.nat_type,
-                        'teredo_ip': socket.inet_ntop(socket.AF_INET6,teredo_client.teredo_ip),
+                        'teredo_ip': socket.inet_ntop(socket.AF_INET6,teredo_client.teredo_ip) if teredo_client.teredo_ip else 'None',
                         'local_teredo_ip': socket.inet_ntop(socket.AF_INET6,teredo_client.local_teredo_ip)})]
 
 
-
 if '__main__' == __name__:
-    global teredo_client
-    setup_logging()
     LOGGER.info('environment: %s' % os.environ.items())
     LOGGER.info('default dns server: %s' % default_dns_server)
     # FQROUTER_VERSION = os.getenv('FQROUTER_VERSION')
@@ -272,8 +269,6 @@ if '__main__' == __name__:
     except:
         LOGGER.exception('failed to patch ssl')
 
-    teredo_sock = create_teredo_sock_until_ready()
-    teredo_client = teredo.teredo_client(teredo_sock)
     teredo_ip = None
     try:
         teredo_ip = teredo_client.start()
@@ -287,7 +282,6 @@ if '__main__' == __name__:
         LOGGER.info('teredo start succeed, teredo ip:%s' % teredo_ip)
         teredo_client.server_forever(teredo_ip)
         send_message('TEREDO READY,%s' % teredo_ip)
-
 
     TUN_IP = sys.argv[1]
     FAKE_USER_MODE_NAT_IP = sys.argv[2]

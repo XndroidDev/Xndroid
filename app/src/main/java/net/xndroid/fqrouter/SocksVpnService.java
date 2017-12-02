@@ -5,8 +5,11 @@ import android.content.Intent;
 import android.net.LocalServerSocket;
 import android.net.LocalSocket;
 import android.net.VpnService;
+import android.os.Build;
+import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
+import android.util.Log;
 import android.widget.Toast;
 
 import net.xndroid.MainActivity;
@@ -33,6 +36,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static android.icu.lang.UCharacter.GraphemeClusterBreak.L;
 import static net.xndroid.AppModel.sService;
 
 /**
@@ -97,11 +101,15 @@ public class SocksVpnService extends VpnService {
     }
 
 
-    private void showToast(String msg){
+    private void showToast(final String msg){
         try {
-            Looper.prepare();
-            Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
-            Looper.loop();
+            Handler handler = new Handler(Looper.getMainLooper());
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
+                }
+            });
         }
         catch (Exception e){
             LogUtils.e("show toast error", e);
@@ -313,13 +321,19 @@ public class SocksVpnService extends VpnService {
                 int connectTimeout = (int)Float.parseFloat(parts[3]);
                 passTcpFileDescriptor(fdSocket, outputStream, dstIp, dstPort, connectTimeout);
             } else if ("TEREDO READY".equals(parts[0])) {
-                if(tunPFD == null)
+                if(tunPFD == null) {
                     this.startVpn(parts[1]);
+                }else {
+                    LogUtils.e("receive message 'TEREDO READY', but tunPFD is not null" );
+                }
             } else if ("TEREDO FAIL".equals(parts[0])) {
                 LogUtils.e("start teredo fail");
                 showToast(getString(R.string.teredo_fail));
-                if(tunPFD == null)
+                if(tunPFD == null) {
                     this.startVpn(parts[1]);
+                }else{
+                    LogUtils.e("receive message 'TEREDO FAIL', but tunPFD is not null" );
+                }
             } else {
                 throw new UnsupportedOperationException("fdsock unable to handle: " + request);
             }

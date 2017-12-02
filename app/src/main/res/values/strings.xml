@@ -55,7 +55,7 @@
     <string name="getting_version">getting Xndroid version…</string>
     <string name="xxnet_running">XX-Net running</string>
     <string name="no_internet">Can\'t access Internet, check your network setting!</string>
-    <string name="running_normally">XX-Net is running normally, you can access the free Internet</string>
+    <string name="running_normally">Everything is OK, you can access the free Internet</string>
     <string name="no_ip">No enough IP, wait to scan</string>
     <string name="no_respond">XX-Net not respond, it maybe crashed!</string>
     <string name="waitting_respond">Waiting for XX-net to respond</string>

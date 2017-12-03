@@ -114,10 +114,12 @@ public class XndroidFragment extends Fragment implements View.OnClickListener
                 mTeredoState.setText(FqrouterManager.sIsQualified?getString(R.string.qualified):getString(R.string.offline));
                 mNatType.setText(FqrouterManager.sNATType);
                 mTeredoIP.setText(FqrouterManager.sTeredoIP);
-                if(FqrouterManager.sTeredoIP.equals(FqrouterManager.sLocalTeredoIP))
+                if(FqrouterManager.sTeredoIP.length() < 8 || FqrouterManager.sTeredoIP.equals(FqrouterManager.sLocalTeredoIP)) {
                     mTeredoChangedWarning.setVisibility(View.INVISIBLE);
-                else
+                }
+                else {
                     mTeredoChangedWarning.setVisibility(View.VISIBLE);
+                }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     mFqrouterInfo.setText(Html.fromHtml(FqrouterManager.sFqrouterInfo, 0));
                 }else{

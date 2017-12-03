@@ -143,12 +143,15 @@ public class UpdateManager {
                 if (ignoreVersion == version)
                     return;
             }
-            showUpdate(version);
+            if(AppModel.sIsForeground) {
+                showUpdate(version);
+            }else {
+                AppModel.showToast(AppModel.sContext.getString(R.string.find_new_version) + version + AppModel.sContext.getString(R.string.update_tip));
+            }
         }catch (Exception e){
             AppModel.showToast("checkUpdate error");
             LogUtils.e("checkUpdate error ", e);
         }
-
     }
 
     private static int getXndroidLatestVersion(){

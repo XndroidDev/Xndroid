@@ -11,3 +11,4 @@
 /.gradle
 /gradle
 *.iml
+gradlew.bat

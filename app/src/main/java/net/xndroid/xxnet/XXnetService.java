@@ -240,7 +240,7 @@ public class XXnetService extends Service {
                         + ((AppModel.sDebug || AppModel.sLastFail)?"export DEBUG=TRUE\n":"")
                         + "cd " + sXndroidFile + " \n"
                         + ShellUtils.sBusyBox + " sh "  + sXndroidFile + "/python/bin"
-                        + (Build.VERSION.SDK_INT >=19?"/python-launcher.sh ":"python-launcher-nopie.sh ")
+                        + (Build.VERSION.SDK_INT >17?"/python-launcher.sh ":"/python-launcher-nopie.sh ")
                         + sXndroidFile + "/xxnet/android_start.py > " + sXndroidFile + "/log/xxnet-output.log 2>&1 \nexit\n";
                 LogUtils.i("try to start xxnet, cmd: " + cmd);
                 try {

@@ -129,27 +129,14 @@ public class LaunchService extends Service {
             AppModel.fatalError("setExecutable for busybox fail!");
         }
         ShellUtils.init(sXndroidFile);
+
+        /*for "line 1: dirname: Permission denied" in Android 4.x and Android 5.x*/
         ShellUtils.execBusybox("ln -s " + ShellUtils.sBusyBox + " " + sXndroidFile + "/dirname");
         ShellUtils.exec("export PATH=" + sXndroidFile + ":$PATH");
+        /*get device information*/
+        ShellUtils.exec("env");
+        ShellUtils.exec("getprop");
 
-//        if(!new File(busybox).exists())
-//        {
-//            File xndroidFile = new File(sXndroidFile);
-//            if(!xndroidFile.isDirectory())
-//                xndroidFile.mkdirs();
-//            writeRawFile(R.raw.busybox,busybox);
-//            writeRawFile(R.raw.xndroid_files,gzFile);
-//            if(!new File(busybox).setExecutable(true, false)){
-//                Log.d("xndroid_debug", "Error:setExecutable fail!");
-//            }
-//            ShellUtils.init(sXndroidFile);
-//            ShellUtils.execBusybox("tar -C "+ sXndroidFile +" -xvf "+gzFile);
-//            if(ShellUtils.stdErr !=null || !new File(sXndroidFile + "/xxnet/android_start.py").exists())
-//                throw new RuntimeException("unzip file fail!");
-//            new File(gzFile).delete();
-//        }else {
-//            ShellUtils.init(sXndroidFile);
-//        }
     }
 
 
@@ -172,7 +159,14 @@ public class LaunchService extends Service {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    UpdateManager.checkUpdate(false);
+                    try {
+                        /*XX-Net may be not really ready, wait for a moment*/
+                        Thread.sleep(4000);
+                        UpdateManager.checkUpdate(false);
+                    }catch (Exception e){
+                        LogUtils.e("checkXndroidUpdate fail", e);
+                    }
+
                 }
             }).start();
         }

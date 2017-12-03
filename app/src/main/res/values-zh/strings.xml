@@ -38,7 +38,7 @@
     <string name="config_tip">如果你想在其他应用中使用XX-net,就必须先导入证书并设置全局代理.</string>
     <string name="auto_scan">自动扫描线程</string>
     <string name="auto_scan_tip">如果启用,则IP扫描线程数会根据网络,电池,及其他信息自动调整.</string>
-    <string name="find_new_version">发现新版本:</string>
+    <string name="find_new_version">发现新版本 </string>
     <string name="update">更新</string>
     <string name="no_new_version">无新版本</string>
     <string name="get_version_fail">获取最新版本失败!</string>
@@ -97,4 +97,5 @@
     <string name="fqrouter_timeout">等待fqrouter响应超时</string>
     <string name="teredo_ip">Teredo地址</string>
     <string name="fatalerror">致命错误</string>
+    <string name="update_tip">点击菜单中的 \'检查更新\' 以更新</string>
 </resources>

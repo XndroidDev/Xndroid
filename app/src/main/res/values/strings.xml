@@ -38,7 +38,7 @@
     <string name="config_tip">If you want to use XX-net in other app, you must import certification and set global proxy first.It can configurate automatically with root permission.</string>
     <string name="auto_scan">auto scan thread</string>
     <string name="auto_scan_tip">The number of Ip scan threads can be adjust automatically according to the network, power and other device information.</string>
-    <string name="find_new_version">find new version:</string>
+    <string name="find_new_version">find new version </string>
     <string name="update">update</string>
     <string name="no_new_version">no new version</string>
     <string name="get_version_fail">get latest version fail!</string>
@@ -97,4 +97,5 @@
     <string name="fqrouter_timeout">wait ready for fqrouter timeout</string>
     <string name="teredo_ip">Teredo IP</string>
     <string name="fatalerror">FatalError</string>
+    <string name="update_tip">click \'check update\' in the menu to update</string>
 </resources>

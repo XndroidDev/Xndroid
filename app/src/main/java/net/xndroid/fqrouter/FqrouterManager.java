@@ -122,7 +122,7 @@ public class FqrouterManager {
                         "export PATH=" + sXndroidFile + ":$PATH\n" +
                         ((AppModel.sDebug || AppModel.sLastFail)?"export DEBUG=TRUE\n":"") +
                         ShellUtils.sBusyBox + " sh " + sXndroidFile + "/python/bin" +
-                        (Build.VERSION.SDK_INT >=19?"/python-launcher.sh ":"python-launcher-nopie.sh ") +
+                        (Build.VERSION.SDK_INT >17?"/python-launcher.sh ":"/python-launcher-nopie.sh ") +
                         sXndroidFile + "/fqrouter/manager/vpn.py " +
                         (Build.VERSION.SDK_INT >= 20?" 26.26.26.1 26.26.26.2 ":" 10.25.1.1 10.25.1.2 ") +
                         " > " + sXndroidFile + "/log/fqrouter-output.log 2>&1 \nexit\n";

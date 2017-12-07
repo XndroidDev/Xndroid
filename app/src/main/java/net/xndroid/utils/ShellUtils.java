@@ -56,7 +56,7 @@ public class ShellUtils {
             return;
         LogUtils.i("ShellUtils start, root=" + sRoot);
         try {
-            sProcess = Runtime.getRuntime().exec(sRoot ? "su" : sBusyBox + " sh");
+            sProcess = Runtime.getRuntime().exec(sRoot ? "su" : "sh");
             sInStream = new OutputStreamWriter(sProcess.getOutputStream());
             sOutStream = new InputStreamReader(sProcess.getInputStream());
             sErrStream = new InputStreamReader(sProcess.getErrorStream());

@@ -241,6 +241,7 @@ public class AppModel {
         }else {
             sLang = sActivity.getResources().getConfiguration().locale.toString();
         }
+        sLang = sLang.contains("zh_CN") ? "zh_CN" : sLang;
 
         Intent intent = new Intent(activity,LaunchService.class);
         activity.startService(intent);

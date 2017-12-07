@@ -12,8 +12,10 @@ import android.os.Build;
 import android.os.IBinder;
 
 import net.xndroid.fqrouter.FqrouterManager;
+import net.xndroid.utils.GZipUtils;
 import net.xndroid.utils.LogUtils;
 import net.xndroid.utils.ShellUtils;
+import net.xndroid.utils.TarUtils;
 import net.xndroid.xxnet.XXnetManager;
 import net.xndroid.xxnet.XXnetService;
 
@@ -36,6 +38,7 @@ import static net.xndroid.AppModel.sVersionCode;
 import static net.xndroid.AppModel.sVersionName;
 import static net.xndroid.AppModel.sXndroidFile;
 import static net.xndroid.AppModel.showToast;
+import static net.xndroid.utils.ShellUtils.execBusybox;
 
 public class LaunchService extends Service {
     public LaunchService() {
@@ -103,14 +106,35 @@ public class LaunchService extends Service {
         return writeRawFile(fileId, path);
     }
 
+    public static boolean unzipForO(String dirPath, String srcFile){
+        String tarFile = srcFile + ".tar";
+        try {
+            GZipUtils.decompress(srcFile, tarFile);
+            TarUtils.dearchive(tarFile,dirPath);
+            new File(tarFile).delete();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        return true;
+    }
+
     public static boolean unzipRawFile(int fileId, String dirPath){
         String filePath = sXndroidFile + "/tmp-" + fileId + ".tar.gz";
         if(!prepareRawFile(fileId, filePath))
             return false;
-        ShellUtils.execBusybox("tar -C " + dirPath + " -xvf " + filePath);
-        ShellUtils.execBusybox("chmod -R 777 " + dirPath);
+        boolean ret = true;
+//        if(Build.VERSION.SDK_INT >= 26){
+//            ret = unzipForO(dirPath, filePath);
+//        }
+        String out = ShellUtils.execBusybox("tar -C " + dirPath + " -xvf " + filePath);
+        if(ShellUtils.stdErr != null || out.length() < 20){
+            ret = unzipForO(dirPath, filePath);
+        }
+        execBusybox("chmod -R 777 " + dirPath);
         new File(filePath).delete();
-        return true;
+        return ret;
     }
 
     private static void pythonInit(){
@@ -118,7 +142,11 @@ public class LaunchService extends Service {
             return;
         if(!unzipRawFile(R.raw.python, sXndroidFile))
             AppModel.fatalError("prepare python fail");
+        for(File binFile:new File(sXndroidFile + "/python/bin").listFiles()){
+            binFile.setExecutable(true, false);
+        }
     }
+
 
     private static void shellInit()
     {
@@ -131,7 +159,7 @@ public class LaunchService extends Service {
         ShellUtils.init(sXndroidFile);
 
         /*for "line 1: dirname: Permission denied" in Android 4.x and Android 5.x*/
-        ShellUtils.execBusybox("ln -s " + ShellUtils.sBusyBox + " " + sXndroidFile + "/dirname");
+        execBusybox("ln -s " + ShellUtils.sBusyBox + " " + sXndroidFile + "/dirname");
         ShellUtils.exec("export PATH=" + sXndroidFile + ":$PATH");
         /*get device information*/
         ShellUtils.exec("env");

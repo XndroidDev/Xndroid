@@ -118,27 +118,35 @@ public class FqrouterManager {
         new Thread(new Runnable() {
             @Override
             public void run() {
+                byte[] output = new byte[1024];
+                int readLen = 0;
+                byte[] error = new byte[1024];
+                int errorLen = 0;
                 String cmd = "cd " + sXndroidFile + " \n" +
                         "export PATH=" + sXndroidFile + ":$PATH\n" +
                         ((AppModel.sDebug || AppModel.sLastFail)?"export DEBUG=TRUE\n":"") +
-                        ShellUtils.sBusyBox + " sh " + sXndroidFile + "/python/bin" +
+                        "sh " + sXndroidFile + "/python/bin" +
                         (Build.VERSION.SDK_INT >17?"/python-launcher.sh ":"/python-launcher-nopie.sh ") +
                         sXndroidFile + "/fqrouter/manager/vpn.py " +
                         (Build.VERSION.SDK_INT >= 20?" 26.26.26.1 26.26.26.2 ":" 10.25.1.1 10.25.1.2 ") +
                         " > " + sXndroidFile + "/log/fqrouter-output.log 2>&1 \nexit\n";
                 LogUtils.i("try to start fqrouter, cmd: " + cmd);
                 try {
-                    mProcess = Runtime.getRuntime().exec(sXndroidFile + "/busybox sh");
+                    mProcess = Runtime.getRuntime().exec("sh");
                     OutputStreamWriter sInStream = new OutputStreamWriter(mProcess.getOutputStream());
                     sInStream.write(cmd);
                     sInStream.flush();
                     mProcess.waitFor();
+                    readLen = mProcess.getInputStream().read(output);
+                    errorLen = mProcess.getErrorStream().read(error);
+                    mProcess = null;
                 } catch (Exception e) {
                     e.printStackTrace();
                     AppModel.fatalError("fqrouter process error: " + e.getMessage());
                 }
                 mProcess = null;
-                LogUtils.i("fqrouter exit.");
+                LogUtils.i("fqrouter exit output :\n" + (readLen < 0 ? "" : new String(output, 0, readLen)));
+                LogUtils.i("fqrouter exit error :\n" + (errorLen < 0 ? "" : new String(error, 0, errorLen)));
                 if(!AppModel.sAppStoped)
                     AppModel.fatalError(sContext.getString(R.string.fqrouter_exit_un));
 

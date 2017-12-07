@@ -59,7 +59,7 @@ public class UpdateManager {
 
     private static void doUpdate()
     {
-        AppModel.sActivity.registerReceiver(new DownloadReceiver(),
+        AppModel.sContext.registerReceiver(new DownloadReceiver(),
                 new IntentFilter("android.intent.action.DOWNLOAD_COMPLETE" ));
 
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse
@@ -70,12 +70,12 @@ public class UpdateManager {
         request.setDescription(AppModel.sContext.getString(R.string.downloading_xndroid));
         String dir = "update";
         String apk = "Xndroid.apk";
-        request.setDestinationInExternalFilesDir(AppModel.sActivity, dir ,apk);
-        sDownloadPath =AppModel.sActivity.getExternalFilesDir(null)+"/"+ dir+"/"+apk;
+        request.setDestinationInExternalFilesDir(AppModel.sContext, dir ,apk);
+        sDownloadPath =AppModel.sContext.getExternalFilesDir(null)+"/"+ dir+"/"+apk;
         File file = new File(sDownloadPath);
         if(file.isFile())
             file.delete();
-        DownloadManager downManager = (DownloadManager)AppModel.sActivity.getSystemService(Context.DOWNLOAD_SERVICE);
+        DownloadManager downManager = (DownloadManager)AppModel.sContext.getSystemService(Context.DOWNLOAD_SERVICE);
         sDownloadId = downManager.enqueue(request);
     }
 

@@ -235,25 +235,33 @@ public class XXnetService extends Service {
         new Thread(new Runnable() {
             @Override
             public void run() {
+                byte[] output = new byte[1024];
+                int readLen = 0;
+                byte[] error = new byte[1024];
+                int errorLen = 0;
                 String cmd = "export LANG=" + AppModel.sLang + " \n"
                         + "export PATH=" + sXndroidFile + ":$PATH\n"
                         + ((AppModel.sDebug || AppModel.sLastFail)?"export DEBUG=TRUE\n":"")
                         + "cd " + sXndroidFile + " \n"
-                        + ShellUtils.sBusyBox + " sh "  + sXndroidFile + "/python/bin"
+                        + "sh " + sXndroidFile + "/python/bin"
                         + (Build.VERSION.SDK_INT >17?"/python-launcher.sh ":"/python-launcher-nopie.sh ")
                         + sXndroidFile + "/xxnet/android_start.py > " + sXndroidFile + "/log/xxnet-output.log 2>&1 \nexit\n";
                 LogUtils.i("try to start xxnet, cmd: " + cmd);
                 try {
-                    mProcess = Runtime.getRuntime().exec(sXndroidFile + "/busybox sh");
+                    mProcess = Runtime.getRuntime().exec("sh");
                     OutputStreamWriter sInStream = new OutputStreamWriter(mProcess.getOutputStream());
                     sInStream.write(cmd);
                     sInStream.flush();
                     mProcess.waitFor();
+                    readLen = mProcess.getInputStream().read(output);
+                    errorLen = mProcess.getErrorStream().read(error);
+                    mProcess = null;
                 } catch (Exception e) {
                     AppModel.fatalError("XX-Net process fail:" + e.getMessage());
                 }
                 mProcess = null;
-                LogUtils.i("XX-Net exit.");
+                LogUtils.i("xxnet exit output :\n" + (readLen < 0 ? "" : new String(output, 0, readLen)));
+                LogUtils.i("xxnet exit error :\n" + (errorLen < 0 ? "" : new String(error, 0, errorLen)));
                 if(!AppModel.sAppStoped)
                     AppModel.fatalError(getString(R.string.xxnet_exit_un));
             }

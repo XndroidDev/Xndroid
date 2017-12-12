@@ -16,6 +16,7 @@ import android.widget.Switch;
 import android.widget.TextView;
 
 import net.xndroid.fqrouter.FqrouterManager;
+import net.xndroid.utils.ShellUtils;
 import net.xndroid.xxnet.XXnetManager;
 import net.xndroid.xxnet.XXnetService;
 
@@ -43,6 +44,7 @@ public class XndroidFragment extends Fragment implements View.OnClickListener
 //    private View mBrowserTip;
     private View mCertTip;
     private View mImportIp;
+    private View mRootTip;
 
     private TextView mTeredoState;
     private TextView mNatType;
@@ -81,6 +83,7 @@ public class XndroidFragment extends Fragment implements View.OnClickListener
 //        mBrowserTip = mRootView.findViewById(R.id.xndroid_browser_tip);
         mCertTip = mRootView.findViewById(R.id.xndroid_cert_tip);
         mImportIp = mRootView.findViewById(R.id.xndroid_import_ip);
+        mRootTip = mRootView.findViewById(R.id.xndroid_no_root_tip);
 
         mTeredoState = mRootView.findViewById(R.id.xndroid_teredo_state);
         mNatType = mRootView.findViewById(R.id.xndroid_NAT_type);
@@ -124,6 +127,11 @@ public class XndroidFragment extends Fragment implements View.OnClickListener
                     mFqrouterInfo.setText(Html.fromHtml(FqrouterManager.sFqrouterInfo, 0));
                 }else{
                     mFqrouterInfo.setText(Html.fromHtml(FqrouterManager.sFqrouterInfo));
+                }
+                if(!ShellUtils.isRoot()){
+                    mRootTip.setVisibility(View.VISIBLE);
+                }else {
+                    mRootTip.setVisibility(View.INVISIBLE);
                 }
             }
         };
@@ -180,7 +188,11 @@ public class XndroidFragment extends Fragment implements View.OnClickListener
 //    }
 
     private void doCertSet(){
-       XXnetManager.importCert();
+        if(ShellUtils.isRoot()){
+            XXnetManager.importSystemCert();
+        }else {
+            XXnetManager.importCert();
+        }
     }
 
     private void doAutoScanSet(){
@@ -242,7 +254,7 @@ public class XndroidFragment extends Fragment implements View.OnClickListener
 //    }
 
     private void doCertTip(){
-        showDlg(getString(R.string.import_cert) ,getString(R.string.import_cert_tip));
+        showDlg(getString(R.string.import_cert) ,getString(R.string.import_cert_full_tip));
     }
 
     @Override

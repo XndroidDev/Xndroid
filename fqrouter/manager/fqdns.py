@@ -145,7 +145,7 @@ class HandlerDatagramServer(gevent.server.DatagramServer):
 class DnsHandler(object):
     def __init__(
             self, upstreams=(), enable_china_domain=True, china_upstreams=(), original_upstream=None,
-            enable_hosted_domain=True, hosted_domains=(), hosted_at='no_available_host!',
+            enable_hosted_domain=False, hosted_domains=(), hosted_at='no_available_host!',
             fallback_timeout=None, strategy=None):
         super(DnsHandler, self).__init__()
         self.upstreams = []

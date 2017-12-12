@@ -13,6 +13,7 @@ import select
 import json
 import random
 import contextlib
+import shlex
 
 import gevent.monkey
 import dpkt
@@ -179,21 +180,25 @@ def scan(ip_range=None, should_resolve_hostname=True, mark=None, factor=1):
 def resolve_hostname(mark, default_gateway, ip, mac):
     sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
     with contextlib.closing(sock):
-        if mark:
-            sock.setsockopt(socket.SOL_SOCKET, SO_MARK, eval(mark))
-        sock.setblocking(0)
-        domain = '%s.in-addr.arpa' % ('.'.join(reversed(ip.split('.'))))
-        request = dpkt.dns.DNS(id=get_transaction_id(), qd=[dpkt.dns.DNS.Q(name=domain, type=dpkt.dns.DNS_PTR)])
-        sock.sendto(str(request), (default_gateway, 53))
-        ins, outs, errors = select.select([sock], [], [sock], timeout=1)
-        if errors:
-            raise Exception('socket error: %s' % errors)
-        if sock in ins:
-            response = dpkt.dns.DNS(sock.recv(8192))
-            if response.an:
-                hostname = response.an[0].ptrname
-                return ip, mac, hostname
-        return ip, mac, ''
+        try:
+            # maybe 'Network is unreachable' if set mark above Android 5.0
+            # if mark:
+            #     sock.setsockopt(socket.SOL_SOCKET, SO_MARK, eval(mark))
+            sock.setblocking(0)
+            domain = '%s.in-addr.arpa' % ('.'.join(reversed(ip.split('.'))))
+            request = dpkt.dns.DNS(id=get_transaction_id(), qd=[dpkt.dns.DNS.Q(name=domain, type=dpkt.dns.DNS_PTR)])
+            sock.sendto(str(request), (default_gateway, 53))
+            ins, outs, errors = select.select([sock], [], [sock], timeout=1)
+            if errors:
+                raise Exception('socket error: %s' % errors)
+            if sock in ins:
+                response = dpkt.dns.DNS(sock.recv(8192))
+                if response.an:
+                    hostname = response.an[0].ptrname
+                    return ip, mac, hostname
+        except:
+            LOGGER.exception("resolve_hostname fail")
+    return ip, mac, ''
 
 
 def get_transaction_id():
@@ -308,7 +313,7 @@ def get_default_ip_range():
 
 
 def get_default_gateway():
-    for line in get_ip_route_output().splitlines():
+    for line in get_ip_route_all_output().splitlines():
         if 'dev %s' % LAN_INTERFACE not in line:
             continue
         match = RE_DEFAULT_GATEWAY.search(line)
@@ -317,13 +322,24 @@ def get_default_gateway():
     raise Exception('failed to find default gateway')
 
 
+def get_ip_route_all_output():
+    if IP_COMMAND:
+        return subprocess.check_output(
+            [IP_COMMAND, 'ip' if 'busybox' in IP_COMMAND else '', 'route', 'list', 'table', '0'],
+            stderr=subprocess.STDOUT)
+    else:
+        # python assume "/bin/sh", keep shell=False
+        return subprocess.check_output(['ip', 'route', 'list', 'table', '0'], stderr=subprocess.STDOUT, shell=False)
+
+
 def get_ip_route_output():
     if IP_COMMAND:
         return subprocess.check_output(
             [IP_COMMAND, 'ip' if 'busybox' in IP_COMMAND else '', 'route'],
             stderr=subprocess.STDOUT)
     else:
-        return subprocess.check_output('ip route', stderr=subprocess.STDOUT, shell=True)
+        # python assume "/bin/sh", keep shell=False
+        return subprocess.check_output(['ip', 'route'], stderr=subprocess.STDOUT, shell=False)
 
 
 def get_ip_and_mac():
@@ -333,7 +349,8 @@ def get_ip_and_mac():
                 [IFCONFIG_COMMAND, 'ifconfig' if 'busybox' in IFCONFIG_COMMAND else '', get_lan_interface()],
                 stderr=subprocess.STDOUT)
         else:
-            output = subprocess.check_output('ifconfig %s' % get_lan_interface(), stderr=subprocess.STDOUT, shell=True)
+            cmd = 'ifconfig %s' % get_lan_interface()
+            output = subprocess.check_output(shlex.split(cmd) if isinstance(cmd, basestring) else cmd, stderr=subprocess.STDOUT, shell=False)
         output = output.lower()
         match = RE_MAC_ADDRESS.search(output)
         if match:
@@ -364,9 +381,14 @@ def get_lan_interface():
 
 
 def get_default_interface():
-    for line in get_ip_route_output().splitlines():
+    output = get_ip_route_output().splitlines()
+    for line in output:
         if 'default via' not in line:
             continue
+        match = RE_DEFAULT_INTERFACE.search(line)
+        if match:
+            return match.group(1)
+    for line in output:
         match = RE_DEFAULT_INTERFACE.search(line)
         if match:
             return match.group(1)
@@ -382,9 +404,10 @@ def get_ip_of_interface(interface):
                 [IFCONFIG_COMMAND, 'ifconfig' if 'busybox' in IFCONFIG_COMMAND else '', interface],
                 stderr=subprocess.STDOUT)
         else:
+            cmd = 'ifconfig %s' % get_default_interface()
             output = subprocess.check_output(
-                'ifconfig %s' % get_default_interface(),
-                stderr=subprocess.STDOUT, shell=True)
+                shlex.split(cmd) if isinstance(cmd, basestring) else cmd,
+                stderr=subprocess.STDOUT, shell=False)
         output = output.lower()
         match = RE_IFCONFIG_IP.search(output)
         if match:

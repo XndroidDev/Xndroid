@@ -8,6 +8,7 @@ import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
+import android.util.Log;
 
 import net.xndroid.AppModel;
 import net.xndroid.MainActivity;
@@ -17,14 +18,11 @@ import net.xndroid.utils.ShellUtils;
 
 import java.io.File;
 import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.ListIterator;
 
 import static net.xndroid.AppModel.sActivity;
 import static net.xndroid.AppModel.sDevMobileWork;
 import static net.xndroid.AppModel.sXndroidFile;
+import static net.xndroid.utils.FileUtils.rm;
 
 public class XXnetService extends Service {
 
@@ -60,62 +58,8 @@ public class XXnetService extends Service {
     }
 
 
-    public static void rm(String path, String[] postfixs){
-        LogUtils.i("rm path=" + path +",postfixs=" +
-                (postfixs == null ? "null" : postfixs.toString()));
-        File topFile = new File(path);
-        if(!topFile.exists())
-            return;
-        if(!topFile.isDirectory())
-            topFile.delete();
-        List<File> toHandle = new LinkedList<>();
-        List<File> toDelete = new ArrayList<>();
-        toHandle.add(topFile);
-        while (toHandle.size() > 0){
-            ListIterator<File> iterator = toHandle.listIterator();
-            while(iterator.hasNext()){
-                File parDir = iterator.next();
-                iterator.remove();
-                toDelete.add(parDir);
-                for(File file : parDir.listFiles()){
-                    if(file.isDirectory())
-                        iterator.add(file);
-                    else {
-                        if(postfixs == null) {
-                            file.delete();
-                            LogUtils.i("delete file:" + file.getAbsolutePath());
-                        }
-                        else{
-                            String[] parts = file.getName().split("\\.");
-                            if(parts.length >= 2)
-                                for(String postfix: postfixs)
-                                    if(postfix.equals(parts[parts.length-1]))
-                                    {
-                                        file.delete();
-                                        LogUtils.i("delete file:" + file.getAbsolutePath());
-                                        break;
-                                    }
-                        }
-                    }
-                }
-
-            }
-        }
-        ListIterator<File> iterator = toDelete.listIterator(toDelete.size() - 1);
-        while(iterator.hasPrevious())
-        {
-            File file = iterator.previous();
-            if(file.listFiles().length == 0) {
-                file.delete();
-                LogUtils.i("remove directory: " + file.getAbsolutePath());
-            }
-        }
-    }
-
-
-    private void removeUselessFiles()
-    {
-        if(XXnetManager.sIpNum >=0 && XXnetManager.sXXversion.indexOf(".") > 0){
+    private void removeUselessFiles() {
+        if(XXnetManager.sIpNum > 0 && XXnetManager.sXXversion.indexOf(".") > 0){
             String version = XXnetManager.sXXversion;
             String codePath = sXndroidFile + "/xxnet/code";
             LogUtils.i("XX-Net version is " + version + ", remove useless files");
@@ -125,7 +69,7 @@ public class XXnetService extends Service {
                     ShellUtils.execBusybox("rm -rf " + codePath + "/" +fileName);
                 }
             }
-            ShellUtils.execBusybox("ln -sf " + codePath + "/" + version + " " + codePath + "/default");
+            ShellUtils.execBusybox("ln -s " + codePath + "/" + version + " " + codePath + "/default");
 			ShellUtils.execBusybox("rm -r " + sXndroidFile + "/xxnet/data/downloads");
             ShellUtils.execBusybox("rm -r " + sXndroidFile + "/xxnet/SwitchyOmega");
 
@@ -140,7 +84,6 @@ public class XXnetService extends Service {
             }
 
             rm(codePath + "/" + version + "/python27",new String[] {"exe", "dll"});
-            ShellUtils.execBusybox("chmod -R 777 " + sXndroidFile + "/xxnet");
         }
 
     }
@@ -204,8 +147,7 @@ public class XXnetService extends Service {
 
 
     private boolean mExitFlag = false;
-    private void watchXXnet()
-    {
+    private void watchXXnet() {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -248,7 +190,7 @@ public class XXnetService extends Service {
                         + sXndroidFile + "/xxnet/android_start.py > " + sXndroidFile + "/log/xxnet-output.log 2>&1 \nexit\n";
                 LogUtils.i("try to start xxnet, cmd: " + cmd);
                 try {
-                    mProcess = Runtime.getRuntime().exec("sh");
+                    mProcess = Runtime.getRuntime().exec(ShellUtils.isRoot()?"su":"sh");
                     OutputStreamWriter sInStream = new OutputStreamWriter(mProcess.getOutputStream());
                     sInStream.write(cmd);
                     sInStream.flush();
@@ -260,8 +202,8 @@ public class XXnetService extends Service {
                     AppModel.fatalError("XX-Net process fail:" + e.getMessage());
                 }
                 mProcess = null;
-                LogUtils.i("xxnet exit output :\n" + (readLen < 0 ? "" : new String(output, 0, readLen)));
-                LogUtils.i("xxnet exit error :\n" + (errorLen < 0 ? "" : new String(error, 0, errorLen)));
+                LogUtils.i("xxnet exit output :\n" + (readLen <= 0 ? "" : new String(output, 0, readLen)));
+                LogUtils.i("xxnet exit error :\n" + (errorLen <= 0 ? "" : new String(error, 0, errorLen)));
                 if(!AppModel.sAppStoped)
                     AppModel.fatalError(getString(R.string.xxnet_exit_un));
             }
@@ -275,27 +217,33 @@ public class XXnetService extends Service {
         sDefaultService = this;
         startXXnet();
         watchXXnet();
-        return super.onStartCommand(intent, flags, startId);
+        return START_NOT_STICKY;
     }
 
 
-    //don't call it in main thread!
-    public void postStop()
-    {
+    //don't call it in main thread
+    public void postStop() {
         if(mExitFlag)
             return;
         mExitFlag = true;
+        stopXXnet();
+        removeUselessFiles();
+    }
+
+    public void stopXXnet(){
         if(mProcess != null)
             if(!XXnetManager.quit()){
+                Log.e("xndroid_log", "xxnet quit fail");
                 if(mProcess != null) {
+                    Log.w("xndroid_log", "destroy xxnet");
                     mProcess.destroy();
                 }
                 mProcess = null;
             }
         stopForeground(true);
         this.stopSelf();
-        removeUselessFiles();
     }
+
 
 
     public boolean exitFinished(){

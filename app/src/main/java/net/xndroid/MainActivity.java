@@ -22,6 +22,7 @@ import android.view.ViewGroup;
 
 import net.xndroid.fqrouter.FqrouterManager;
 import net.xndroid.utils.LogUtils;
+import net.xndroid.utils.ShellUtils;
 import net.xndroid.xxnet.XXnetManager;
 
 import static net.xndroid.fqrouter.FqrouterManager.ASK_VPN_PERMISSION;
@@ -108,7 +109,7 @@ public class MainActivity extends AppCompatActivity
             Log.w("xndroid_log", "Xndroid is exiting, restart the activity.");
             restart();
             try {
-                Thread.sleep(8000);
+                Thread.sleep(10000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -154,7 +155,7 @@ public class MainActivity extends AppCompatActivity
         }
         if(mFqrouterFragment == null) {
             mFqrouterFragment = new WebViewFragment();
-            mFqrouterFragment.setURL("http://127.0.0.1:2515");
+            mFqrouterFragment.setURL("http://127.0.0.1:" + FqrouterManager.getPort());
         }
         if(mAboutFragment == null)
             mAboutFragment = new AboutFragment();
@@ -167,6 +168,23 @@ public class MainActivity extends AppCompatActivity
         startActivity(intent);
     }
 
+    private void clear_cert_cache(){
+        ShellUtils.execBusybox("rm -r " + AppModel.sXndroidFile + "/xxnet/data/gae_proxy/certs");
+        AppModel.showToast(getString(R.string.restart_tip));
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                restart();
+                AppModel.appStop();
+                try {
+                    Thread.sleep(10000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -175,6 +193,15 @@ public class MainActivity extends AppCompatActivity
         } else {
             super.onBackPressed();
         }
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        int[] rootActions = new int[]{R.id.action_import_sys_cert, R.id.action_remove_sys_cert, R.id.action_launch_mode };
+        for(int id : rootActions){
+            menu.findItem(id).setEnabled(ShellUtils.isRoot());
+        }
+        return true;
     }
 
     @Override
@@ -204,6 +231,16 @@ public class MainActivity extends AppCompatActivity
                     UpdateManager.checkUpdate(true);
                 }
             }).start();
+        }else if(id == R.id.action_launch_mode){
+            LaunchService.chooseLaunchMode();
+        }else if(id == R.id.action_exit){
+            AppModel.appStop();
+        }else if(id == R.id.action_clear_cert){
+            clear_cert_cache();
+        }else if(id == R.id.action_import_sys_cert){
+            XXnetManager.importSystemCert();
+        }else if(id == R.id.action_remove_sys_cert){
+            XXnetManager.cleanSystemCert();
         }
         else {
             return super.onOptionsItemSelected(item);
@@ -220,8 +257,8 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void startLightning(){
-        Intent intent = new Intent(this, acr.browser.lightning.MainActivity.class);
-        this.startActivity(intent);
+        Intent intent = new Intent(AppModel.sContext, acr.browser.lightning.MainActivity.class);
+        AppModel.sContext.startActivity(intent);
     }
 
 

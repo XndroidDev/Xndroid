@@ -16,9 +16,12 @@ import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.widget.Toast;
 
+import net.xndroid.fqrouter.FqrouterManager;
+import net.xndroid.utils.FileUtils;
 import net.xndroid.utils.LogUtils;
 import net.xndroid.utils.ShellUtils;
 
+import java.io.File;
 import java.io.OutputStreamWriter;
 
 public class AppModel {
@@ -38,6 +41,7 @@ public class AppModel {
 
     public static boolean sDebug = false;
     public static boolean sLastFail = false;
+    public static boolean sIsRootMode = false;
 
     public static SharedPreferences sPreferences;
     public static boolean sAutoThread = true;
@@ -77,14 +81,14 @@ public class AppModel {
     }
 
     public static void forceStop(){
-        String cmd = "busybox ps |busybox grep net.xndroid | busybox cut -c 1-6 |busybox xargs kill -9";
+        String cmd = "busybox ps |busybox grep net.xndroid | busybox cut -c 1-6 |busybox xargs kill -15";
         cmd = cmd.replace("busybox", sXndroidFile + "/busybox");
         try {
             ShellUtils.exec(cmd);
         }catch (Exception e){
             e.printStackTrace();
             try {
-                Process process = Runtime.getRuntime().exec(sXndroidFile + "/busybox sh");
+                Process process = Runtime.getRuntime().exec("sh");
                 OutputStreamWriter sInStream = new OutputStreamWriter(process.getOutputStream());
                 sInStream.write(cmd);
                 sInStream.write('\n');
@@ -92,12 +96,22 @@ public class AppModel {
                 process.waitFor();
             }catch (Exception ee){
                 ee.printStackTrace();
+                FqrouterManager.postStop();
                 android.os.Process.killProcess(android.os.Process.myPid());
             }
         }
-
+        android.os.Process.killProcess(android.os.Process.myPid());
     }
 
+
+    private static void handleFatalError(){
+        try {
+            LaunchService.handleFatalError();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        forceStop();
+    }
 
     public static void fatalError(final String msg){
         try {
@@ -115,14 +129,14 @@ public class AppModel {
                                 .setNegativeButton(R.string.exit, new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
-                                        forceStop();
+                                        handleFatalError();
                                     }
                                 }).create().show();
                     }
                 });
             } else {
                 showToast(sContext.getString(R.string.fatalerror) + ": " + msg);
-                forceStop();
+                handleFatalError();
             }
             while (true) {
                 try {
@@ -133,7 +147,7 @@ public class AppModel {
             }
         }catch (Exception e){
             e.printStackTrace();
-            forceStop();
+            handleFatalError();
         }
 
     }
@@ -205,7 +219,9 @@ public class AppModel {
     }
 
     private static void updataEnv(int lastVersion){
-
+        FileUtils.rm(sXndroidFile + "/python", null);
+        FileUtils.rm(sXndroidFile + "/fqrouter", null);
+        new File(sXndroidFile + "/busybox").delete();
     }
 
 

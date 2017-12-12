@@ -19,7 +19,8 @@ def get_default_dns_server():
 
 def configure_fqsocks(args):
     args += ['--config-file', home_path + '/etc/fqsocks.json']
-    args += ['--ip-command', home_path + '/../busybox']
+    #args += ['--ip-command', home_path + '/../busybox']
+    #args += ['--ip-command', 'ip']
     args += ['--ifconfig-command', home_path + '/../busybox']
     # args += ['--google-host', 'goagent-google-ip.fqrouter.com']
     # args += ['--google-host', 'goagent-google-ip2.fqrouter.com']

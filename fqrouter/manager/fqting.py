@@ -10,6 +10,7 @@ import fqsocks.china_ip
 import fqsocks.lan_ip
 import socket
 import time
+import shlex
 
 import dpkt
 
@@ -24,35 +25,25 @@ syn_ack_ttls = {} # ip => ttl
 buffered_http_requests = {} # (ip, seq) => ip_packet
 scrambled_ips = []
 
+def check_call(cmd):
+    subprocess.check_call(shlex.split(cmd) if isinstance(cmd, basestring) else cmd,shell=False)
 
 def setup_development_env():
-    subprocess.check_call(
-        'iptables -I OUTPUT -p tcp --tcp-flags ALL SYN -j NFQUEUE', shell=True)
-    subprocess.check_call(
-        'iptables -I INPUT -p tcp --tcp-flags ALL SYN,ACK -j NFQUEUE', shell=True)
-    subprocess.check_call(
-        'iptables -I INPUT -p tcp --tcp-flags ALL RST -j NFQUEUE', shell=True)
-    subprocess.check_call(
-        'iptables -I INPUT -p icmp -j NFQUEUE', shell=True)
-    subprocess.check_call(
-        'iptables -I INPUT -p udp --sport 53 --dport 1 -j NFQUEUE', shell=True)
-    subprocess.check_call(
-        'iptables -I OUTPUT -p tcp -m mark --mark 0xbabe -j NFQUEUE', shell=True)
+    check_call('iptables -I OUTPUT -p tcp --tcp-flags ALL SYN -j NFQUEUE')
+    check_call('iptables -I INPUT -p tcp --tcp-flags ALL SYN,ACK -j NFQUEUE')
+    check_call('iptables -I INPUT -p tcp --tcp-flags ALL RST -j NFQUEUE')
+    check_call('iptables -I INPUT -p icmp -j NFQUEUE')
+    check_call('iptables -I INPUT -p udp --sport 53 --dport 1 -j NFQUEUE')
+    check_call('iptables -I OUTPUT -p tcp -m mark --mark 0xbabe -j NFQUEUE')
 
 
 def teardown_development_env():
-    subprocess.check_call(
-        'iptables -D OUTPUT -p tcp --tcp-flags ALL SYN -j NFQUEUE', shell=True)
-    subprocess.check_call(
-        'iptables -D INPUT -p tcp --tcp-flags ALL SYN,ACK -j NFQUEUE', shell=True)
-    subprocess.check_call(
-        'iptables -D INPUT -p tcp --tcp-flags ALL RST -j NFQUEUE', shell=True)
-    subprocess.check_call(
-        'iptables -D INPUT -p icmp -j NFQUEUE', shell=True)
-    subprocess.check_call(
-        'iptables -D INPUT -p udp --sport 53 --dport 1 -j NFQUEUE', shell=True)
-    subprocess.check_call(
-        'iptables -D OUTPUT -p tcp -m mark --mark 0xbabe -j NFQUEUE', shell=True)
+    check_call('iptables -D OUTPUT -p tcp --tcp-flags ALL SYN -j NFQUEUE')
+    check_call('iptables -D INPUT -p tcp --tcp-flags ALL SYN,ACK -j NFQUEUE')
+    check_call('iptables -D INPUT -p tcp --tcp-flags ALL RST -j NFQUEUE')
+    check_call('iptables -D INPUT -p icmp -j NFQUEUE')
+    check_call('iptables -D INPUT -p udp --sport 53 --dport 1 -j NFQUEUE')
+    check_call('iptables -D OUTPUT -p tcp -m mark --mark 0xbabe -j NFQUEUE')
 
 
 raw_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)

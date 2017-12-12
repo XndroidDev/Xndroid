@@ -38,11 +38,13 @@ IW_PATH = home_path + '/wifi-tools/iw'
 HOSTAPD_PATH = home_path + '/wifi-tools/hostapd'
 IWLIST_PATH = home_path + '/wifi-tools/iwlist'
 DNSMASQ_PATH = home_path + '/wifi-tools/dnsmasq'
+if not os.path.exists(DNSMASQ_PATH):
+    DNSMASQ_PATH = 'dnsmasq'
 KILLALL_PATH =  home_path + '/../busybox killall'
 IFCONFIG_PATH = home_path + '/../busybox ifconfig'
-IP_PATH = home_path + '/../busybox ip'
+IP_PATH = 'ip'
 CP_PATH = home_path + '/../busybox cp'
-SH_PATH = home_path + '/../busybox sh'
+SH_PATH = 'sh'
 WHICH_PATH =  home_path + '/../busybox which'
 FQROUTER_HOSTAPD_CONF_PATH = home_path + '/hostapd.conf'
 CHANNELS = {
@@ -68,12 +70,26 @@ RULES = [
         ('filter', 'FORWARD', '-j ACCEPT')
     )]
 
+def start_android_service(service):
+    env = os.environ.copy()
+    env['LD_LIBRARY_PATH'] = env['LD_LIBRARY_PATH'].replace('python','')
+    proc = subprocess.Popen(['am', 'startservice', '-n', service], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
+    output = proc.communicate()[0]
+    retcode = proc.poll()
+    if retcode:
+        LOGGER.error("start service %s fail (%s): %s" % (service, str(retcode), str(output)))
+    else:
+        LOGGER.info('start service %s success %s' % (service, str(output)))
+
 
 def stop_hotspot():
     try:
         am_path = shell_execute('%s am' % WHICH_PATH)
         if am_path:
-            shell_execute('%s %s startservice %s/fq.router2.wifi_repeater.ReleaseWifiLockService' % (SH_PATH, am_path, pkg_name))
+            try:
+                start_android_service('%s/%s.wifi_repeater.ReleaseWifiLockService' % (pkg_name ,pkg_name))
+            except:
+                LOGGER.exception('start ReleaseWifiLockService fail')
         working_hotspot_iface = get_working_hotspot_iface()
         try:
             shell_execute('%s dnsmasq' % KILLALL_PATH)
@@ -124,7 +140,10 @@ def start_hotspot(ssid, password):
     try:
         am_path = shell_execute('%s am' % WHICH_PATH).strip()
         if am_path:
-            shell_execute('%s %s startservice %s/fq.router2.wifi_repeater.ReleaseWifiLockService' % (SH_PATH, am_path, pkg_name))
+            try:
+                start_android_service('%s/%s.wifi_repeater.AcquireWifiLockService' % (pkg_name, pkg_name))
+            except:
+                LOGGER.exception("start AcquireWifiLockService fail")
         backup_config_files()
         working_hotspot_iface = get_working_hotspot_iface()
         if working_hotspot_iface:
@@ -983,3 +1002,5 @@ def shell_execute(command):
         LOGGER.error('failed, output: %s' % e.output)
         raise
     return output
+
+

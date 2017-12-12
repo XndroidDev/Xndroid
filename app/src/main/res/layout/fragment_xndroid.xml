@@ -286,26 +286,29 @@
                 android:text="getting..."/>
 
 
-            <!--<Space-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="20dp" />-->
-            <!--<LinearLayout-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:id="@+id/xndroid_xxnet_tip"-->
-            <!--android:orientation="horizontal">-->
-            <!--<ImageView-->
-            <!--android:layout_width="20dp"-->
-            <!--android:layout_height="20dp"-->
-            <!--android:layout_marginLeft="10dp"-->
-            <!--android:layout_marginRight="10dp"-->
-            <!--android:src="@mipmap/ic_tip_gray"/>-->
-            <!--<TextView-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:text="@string/xndroid_tip_xxnet"/>-->
-            <!--</LinearLayout>-->
-
+            <Space
+            android:layout_width="match_parent"
+            android:layout_height="20dp" />
+            <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="invisible"
+            android:id="@+id/xndroid_no_root_tip"
+            android:orientation="horizontal">
+            <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:src="@mipmap/ic_tip_gray"/>
+            <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/no_full_function"/>
+            </LinearLayout>
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="8dp" />
             <!--<Space-->
             <!--android:layout_width="match_parent"-->
             <!--android:layout_height="10dp" />-->

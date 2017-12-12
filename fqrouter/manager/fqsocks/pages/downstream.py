@@ -5,6 +5,7 @@ import json
 from gevent import subprocess
 import logging
 import re
+import shlex
 
 import gevent
 
@@ -268,7 +269,8 @@ def execute_upnpc(args):
         return spi_upnp['execute_upnpc'](args)
     LOGGER.info('upnpc %s' % args)
     try:
-        output = subprocess.check_output('upnpc %s' % args, shell=True)
+        cmd = 'upnpc %s' % args
+        output = subprocess.check_output(shlex.split(cmd) if isinstance(cmd, basestring) else cmd, shell=False)
         LOGGER.info('succeed, output: %s' % output)
     except subprocess.CalledProcessError, e:
         LOGGER.error('failed, output: %s' % e.output)

@@ -8,6 +8,7 @@ import urllib2
 
 import jinja2
 
+
 from .. import httpd
 from ..gateways import proxy_client
 from .. import config_file
@@ -17,6 +18,7 @@ from .. import networking
 from . import upstream
 HOME_HTML_FILE = os.path.join(os.path.dirname(__file__), '..', 'templates', 'home.html')
 LOGGER = logging.getLogger(__name__)
+is_root_mode = 0 == os.getuid()
 
 @httpd.http_handler('GET', '')
 @httpd.http_handler('GET', 'home')
@@ -24,7 +26,8 @@ def home_page(environ, start_response):
     with open(HOME_HTML_FILE) as f:
         template = jinja2.Template(unicode(f.read(), 'utf8'))
     start_response(httplib.OK, [('Content-Type', 'text/html')])
-    is_root = 0 == os.getuid()
+    # is_root = 0 == os.getuid()
+    is_root = is_root_mode
     args = dict(
         _=environ['select_text'],
         domain_name=environ.get('HTTP_HOST') or '127.0.0.1:2515',

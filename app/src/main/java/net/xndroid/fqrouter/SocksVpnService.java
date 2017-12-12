@@ -5,13 +5,12 @@ import android.content.Intent;
 import android.net.LocalServerSocket;
 import android.net.LocalSocket;
 import android.net.VpnService;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
-import android.util.Log;
 import android.widget.Toast;
 
+import net.xndroid.LaunchService;
 import net.xndroid.MainActivity;
 import net.xndroid.R;
 import net.xndroid.utils.LogUtils;
@@ -32,12 +31,11 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static android.icu.lang.UCharacter.GraphemeClusterBreak.L;
-import static net.xndroid.AppModel.sService;
 
 /**
  * android:process="net.xndroid.fqrouter.sockvpnservice"
@@ -67,7 +65,6 @@ public class SocksVpnService extends VpnService {
     private static String sFqHome;
     private static String sXndroidFile;
     private static boolean stopFlag = true;
-    private int protectedFd = 0;
     private Set<String> skippedFds = new HashSet<String>();
     private Set<Integer> stagingFds = new HashSet<Integer>();
 
@@ -90,12 +87,14 @@ public class SocksVpnService extends VpnService {
                 }
             }
         }).start();
-        return START_STICKY;
+//        return START_STICKY;
+        return START_NOT_STICKY;
     }
 
 
     @Override
     public void onRevoke() {
+        stopService(new Intent(this, LaunchService.class));
         stopSelf();
         stopVpn();
     }
@@ -121,6 +120,8 @@ public class SocksVpnService extends VpnService {
     @Override
     public void onDestroy() {
         stopVpn();
+        if(LogUtils.sGetDefaultLog() != null)
+            LogUtils.sGetDefaultLog().close();
     }
 
     private void startVpn(String teredo_ip) {
@@ -246,7 +247,20 @@ public class SocksVpnService extends VpnService {
     }
 
     private String[] listFds() {
-        return new File("/proc/self/fd").list();
+        String[] fdlist = new File("/proc/self/fd").list();
+        if(fdlist != null)
+            return fdlist;
+        try {
+            Process mProcess = Runtime.getRuntime().exec(sXndroidFile + "/busybox ls /proc/self/fd");
+            mProcess.waitFor();
+            byte[] output = new byte[10240];
+            int readLen = mProcess.getInputStream().read(output);
+            return new String(output, 0, readLen).split("\\s+");
+        }catch (Exception e){
+            LogUtils.e("listFds fail", e);
+        }
+
+        return new String[]{};
     }
 
     private void initSkippedFds() {
@@ -259,12 +273,12 @@ public class SocksVpnService extends VpnService {
         int count = 0;
         for (int stagingFd : stagingFds) {
             try {
-                if (stagingFd != this.protectedFd && isSocket(stagingFd)) {
+                if (isSocket(stagingFd)) {
                     ParcelFileDescriptor.adoptFd(stagingFd).close();
                     count += 1;
                 }
             } catch (Exception e) {
-                // ignore
+                LogUtils.d("close stagingFd " + stagingFd +" fail: " + e.toString());
             }
         }
         LogUtils.i("closed fd count: " + count);
@@ -281,6 +295,7 @@ public class SocksVpnService extends VpnService {
                 }
             } catch (Exception e) {
                 skippedFds.add(fileName);
+                LogUtils.d("add stagingFd " + fileName + " fail: " + e.toString());
                 continue;
             }
         }
@@ -422,11 +437,10 @@ public class SocksVpnService extends VpnService {
             if (protect(nativeFd)) {
                 if(persist){
                     LogUtils.i("create a persistent udp socket");
-                    this.protectedFd = nativeFd;
+                    skippedFds.add("" + nativeFd);
                     Field privateFd = FileDescriptor.class.getDeclaredField("descriptor");
                     privateFd.setAccessible(true);
-                    FileDescriptor connectFileDescriptor = fdSocket.getFileDescriptor();
-                    int connectFd = privateFd.getInt(connectFileDescriptor);
+                    int connectFd = privateFd.getInt(fdSocket.getFileDescriptor());
                     sendFd(connectFd, nativeFd);
                 }
                 else {

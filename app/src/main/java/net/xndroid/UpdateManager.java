@@ -12,6 +12,7 @@ import android.net.Uri;
 
 import net.xndroid.utils.HttpJson;
 import net.xndroid.utils.LogUtils;
+import net.xndroid.utils.ShellUtils;
 
 import java.io.File;
 
@@ -22,12 +23,17 @@ class DownloadReceiver extends BroadcastReceiver{
         if(intent.getAction().equals(DownloadManager.ACTION_DOWNLOAD_COMPLETE)){
             if(intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)==UpdateManager.sDownloadId)
             {
-                LogUtils.i("download apk finished, start to install");
-                if(UpdateManager.sDownloadPath!=null){
+                if(UpdateManager.sDownloadPath!=null && UpdateManager.sDownloadPath.length() > 0){
+                    LogUtils.i("download apk finished, start to install");
                     Intent callIntent = new Intent(Intent.ACTION_VIEW);
                     callIntent.setDataAndType(Uri.parse("file://"+ UpdateManager.sDownloadPath), "application/vnd.android.package-archive");
                     callIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK );
                     context.startActivity(callIntent);
+                    String oldApkPath = context.getApplicationContext().getPackageResourcePath();
+                    ShellUtils.execBusybox("cp -f " + oldApkPath + " " + "/sdcard/xndroid-old.apk");
+                    if(AppModel.sContext != null) {
+                        AppModel.showToast(AppModel.sContext.getString(R.string.install_new_tip));
+                    }
                 }
             }
         }

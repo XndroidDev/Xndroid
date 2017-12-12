@@ -6,6 +6,8 @@ import random
 import time
 import logging
 import os
+import subprocess
+import shlex
 from binascii import hexlify
 
 try:
@@ -126,12 +128,45 @@ blank_echo_packet = b'\x60\x00\x00\x00\x00\x0c\x3a\x20\x20\x01\x00\x00\x53\xaa\x
 blank_rs_packet = b'\x60\x00\x00\x00\x00\x08\x3a\xff\xfe\x80\x00\x00\x00\x00\x00\x00\
 \x00\x00\xff\xff\xff\xff\xff\xfe\xff\x02\x00\x00\x00\x00\x00\x00\
 \x00\x00\x00\x00\x00\x00\x00\x02\x85\x00\x7d\x38\x00\x00\x00\x00'
-
+teredo_servers = ['83.170.6.76','217.17.192.217','157.56.106.184','195.140.195.140']
 tun_fd = None
+default_teredo_client = None
+
+import fqsocks.httpd
+import httplib
+import json
+
+@fqsocks.httpd.http_handler('GET', 'teredo-state')
+def handle_teredo_state(environ, start_response):
+    start_response(httplib.OK, [('Content-Type', 'text/json')])
+    if default_teredo_client == None:
+        return [json.dumps({'qualified':'UNKNOW','nat_type':'UNKNOW',
+                            'teredo_ip':'UNKNOW','local_teredo_ip':'UNKNOW'})]
+    return [json.dumps({'qualified': default_teredo_client.qualified,
+                        'nat_type': default_teredo_client.nat_type,
+                        'teredo_ip': socket.inet_ntop(socket.AF_INET6,default_teredo_client.teredo_ip) if default_teredo_client.teredo_ip else 'None',
+                        'local_teredo_ip': socket.inet_ntop(socket.AF_INET6,default_teredo_client.local_teredo_ip) if default_teredo_client.local_teredo_ip else 'None'})]
+
+
+
+def check_network():
+    try:
+        output = subprocess.check_output(shlex.split('ping -c 4 -W 2 -w 6 114.114.114.114'), stderr=subprocess.STDOUT)
+        if output and output.find('time=') > 0:
+            return True
+        else:
+            return False
+    except subprocess.CalledProcessError, e:
+        return False
+    except:
+        LOGGER.exception('check_network fail')
+        return True
 
 
 class teredo_client(object):
     def __init__(self, sock, server_ip='83.170.6.76', server_second_ip='83.170.6.77', refresh_interval=29):
+        global default_teredo_client
+        default_teredo_client = self
         self.server_ip = server_ip
         self.server_second_ip = server_second_ip
         self.refresh_interval = refresh_interval
@@ -144,12 +179,15 @@ class teredo_client(object):
         self.obfuscated_port = ''
         self.obfuscated_ip = ''
         self.wait_check_qualified = True
+        self.qualify_fail_time = 0
+        self.server_index = 0
         self.qualified = False
         self.packet_list = ip_buffer_list(15, 128)
         self.trusted_peer_list = ip_buffer_list(20, 256)
         self.untrusted_peer_list = ip_buffer_list(16, 8)
         self.teredo_sock = sock
         self.rs_packet,self.rs_nonce = self.create_rs_packet()
+
 
     def write_packet(self, data):
         if not tun_fd:
@@ -172,8 +210,6 @@ class teredo_client(object):
             return os.write(tun_fd, data)
 
 
-
-
     def stopself(self):
         raise Exception('stopself called')
 
@@ -186,12 +222,24 @@ class teredo_client(object):
                     if time.time() - self.last_time_with_server < 7:
                         # qualify succeed
                         self.qualified = True
+                        self.qualify_fail_time = 0
                         self.random_refresh_interval = self.refresh_interval*(random.random()*0.25+0.75)
                         gevent.sleep(self.last_time_with_server + self.random_refresh_interval - time.time() + 1)
                         continue
                     else:
-                        self.qualified = False
-                        LOGGER.warning("teredo offline")
+                        if self.qualified:
+                            self.qualified = False
+                            LOGGER.warning('teredo offline')
+                        self.qualify_fail_time += 1
+                        if self.qualify_fail_time >= 6:
+                            if check_network():
+                                self.server_index += 1
+                                self.server_ip = teredo_servers[self.server_index % len(teredo_servers)]
+                                self.qualify_fail_time = 0
+                                LOGGER.warning('qualify fail for many times, change server to %s' % self.server_ip)
+                            else:
+                                self.qualify_fail_time = 0
+                                LOGGER.warning('network is unavailable')
                 if time.time() > self.last_time_with_server + self.random_refresh_interval:
                     self.wait_check_qualified = True
                     self.send_qualify(self.server_ip)
@@ -201,8 +249,8 @@ class teredo_client(object):
                     continue
                 self.random_refresh_interval = self.refresh_interval*(random.random()*0.25+0.75)
                 gevent.sleep(self.last_time_with_server + self.random_refresh_interval - time.time() + 1)
-            except:
-                LOGGER.error('maintain fail!')
+            except Exception, e:
+                LOGGER.error('maintain fail:%s' % str(e))
                 gevent.sleep(3)
 
 
@@ -529,11 +577,14 @@ def test():
     # sock = socket.fromfd(fd, socket.AF_INET, socket.SOCK_DGRAM)
     # client = teredo_client(sock)
 
-    client = teredo_client(socket.socket(socket.AF_INET, socket.SOCK_DGRAM))
+    client = teredo_client(socket.socket(socket.AF_INET, socket.SOCK_DGRAM), server_ip='210.225.196.89', server_second_ip='210.225.196.90')
     ip = client.start()
     if not ip:
-        return
-    print('teredo start succeed %s' % ip)
+        client.server_forever('2001:0:53aa:64c:0:1234:1234:1234')
+        print('teredo start fail')
+    else:
+        print('teredo start succeed %s' % ip)
+        client.server_forever(ip)
     greenlet = gevent.spawn(test_task)
     gevent.sleep(1)
     test_pkt = b'\x60\x00\x00\x00\x00\x20\x06\x80\x20\x01\x00\x00\x53\xaa\x06\x4c\

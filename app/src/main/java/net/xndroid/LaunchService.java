@@ -2,8 +2,10 @@ package net.xndroid;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Service;
 import android.content.BroadcastReceiver;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
@@ -38,11 +40,14 @@ import static net.xndroid.AppModel.sVersionCode;
 import static net.xndroid.AppModel.sVersionName;
 import static net.xndroid.AppModel.sXndroidFile;
 import static net.xndroid.AppModel.showToast;
-import static net.xndroid.utils.ShellUtils.execBusybox;
+
 
 public class LaunchService extends Service {
     public LaunchService() {
     }
+
+    public static final String PER_ROOT = "XNDROID_ROOT";
+    public static final String PER_ROOT_MODE = "XNDROID_ROOT_MODE";
 
     private static LaunchService sDefaultService;
 
@@ -56,8 +61,7 @@ public class LaunchService extends Service {
             "android.permission.ACCESS_NETWORK_STATE"};
 
     @TargetApi(M)
-    static private void getPermission(String[] permissions,Activity activity)
-    {
+    static private void getPermission(String[] permissions,Activity activity) {
         if(Build.VERSION.SDK_INT>=23) {
             ArrayList<String> preToDo = new ArrayList<>();
             boolean tip = false;
@@ -79,8 +83,7 @@ public class LaunchService extends Service {
 
 
 
-    private static boolean writeRawFile(int id, String destPath)
-    {
+    private static boolean writeRawFile(int id, String destPath) {
         InputStream input = sContext.getResources().openRawResource(id);
         byte[] buff = new byte[512*1024];
         try {
@@ -132,7 +135,7 @@ public class LaunchService extends Service {
         if(ShellUtils.stdErr != null || out.length() < 20){
             ret = unzipForO(dirPath, filePath);
         }
-        execBusybox("chmod -R 777 " + dirPath);
+        ShellUtils.execBusybox("chmod -R 777 " + dirPath);
         new File(filePath).delete();
         return ret;
     }
@@ -147,24 +150,121 @@ public class LaunchService extends Service {
         }
     }
 
+    private static Boolean _modeChosen = null;
 
-    private static void shellInit()
-    {
-        String busybox = sXndroidFile + "/busybox";
-        if(!new File(busybox).exists())
-            prepareRawFile(R.raw.busybox, busybox);
-        if(!new File(busybox).setExecutable(true, false)){
-            AppModel.fatalError("setExecutable for busybox fail!");
+    public static void chooseLaunchMode(){
+        if(!ShellUtils.isRoot()){
+            AppModel.showToast(sContext.getString(R.string.only_vpn_available));
+            return;
         }
+        sActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                new AlertDialog.Builder(AppModel.sActivity)
+                    .setTitle(R.string.choose_mode)
+                    .setMessage(R.string.choose_mode_tip)
+                    .setCancelable(false)
+                    .setNegativeButton(R.string.vpn_mode, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            LaunchService._modeChosen = Boolean.FALSE;
+                            AppModel.sPreferences.edit().putInt(PER_ROOT_MODE, -1).apply();
+                        }
+                    }).setPositiveButton(R.string.root_mode, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        LaunchService._modeChosen = Boolean.TRUE;
+                        AppModel.sPreferences.edit().putInt(PER_ROOT_MODE, 1).apply();
+                    }
+                }).create().show();
+            }
+        });
+    }
+
+    private static boolean isRunInRootMode(){
+        if(!ShellUtils.isRoot())
+            return false;
+        int mode = AppModel.sPreferences.getInt(PER_ROOT_MODE, 0);
+        if(AppModel.sLastFail || mode == 0){
+            _modeChosen = null;
+            chooseLaunchMode();
+            while (_modeChosen == null){
+                try {
+                    Thread.sleep(300);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            if(_modeChosen == Boolean.TRUE)
+                return true;
+            else
+                return false;
+        }
+        if(mode == 1)
+            return true;
+        if(mode == -1)
+            return false;
+        return false;
+    }
+
+    private static void shellInit() {
         ShellUtils.init(sXndroidFile);
+        try {
+            String busybox = sXndroidFile + "/busybox";
+            if(!new File(busybox).exists()) {
+                if(Build.VERSION.SDK_INT < 26) {
+                    prepareRawFile(R.raw.busybox, busybox);
+                }else {
+                    if(ShellUtils.isRoot()){
+                        prepareRawFile(R.raw.busybox, busybox);
+                    }else {
+                        prepareRawFile(R.raw.busybox_for_o, busybox);
+                        new File(sXndroidFile + "/busybox_for_o").createNewFile();
+                    }
+                }
+            }else {
+                if(Build.VERSION.SDK_INT >= 26) {
+                    boolean busyboxOFlag = new File(sXndroidFile + "/busybox_for_o").exists();
+                    if (ShellUtils.isRoot() && busyboxOFlag) {
+                        new File(busybox).delete();
+                        new File(sXndroidFile + "/busybox_for_o").delete();
+                        prepareRawFile(R.raw.busybox, busybox);
+                    } else if (!ShellUtils.isRoot() && !busyboxOFlag) {
+                        new File(busybox).delete();
+                        prepareRawFile(R.raw.busybox_for_o, busybox);
+                        new File(sXndroidFile + "/busybox_for_o").createNewFile();
+                    }
+                }
+            }
+
+            if(!new File(busybox).setExecutable(true, false)){
+                AppModel.fatalError("setExecutable for busybox fail!");
+            }
+        }catch (Exception e){
+            LogUtils.e("init busybox fail", e);
+            AppModel.fatalError("init busybox fail");
+        }
 
         /*for "line 1: dirname: Permission denied" in Android 4.x and Android 5.x*/
-        execBusybox("ln -s " + ShellUtils.sBusyBox + " " + sXndroidFile + "/dirname");
+        ShellUtils.execBusybox("ln -s " + ShellUtils.sBusyBox + " " + sXndroidFile + "/dirname");
         ShellUtils.exec("export PATH=" + sXndroidFile + ":$PATH");
         /*get device information*/
         ShellUtils.exec("env");
         ShellUtils.exec("getprop");
-
+        if(ShellUtils.isRoot()){
+            AppModel.sPreferences.edit().putBoolean(PER_ROOT, true).apply();
+            LogUtils.i("run as root");
+        }else {
+            if(AppModel.sPreferences.getBoolean(PER_ROOT, false)){
+                AppModel.showToast(sContext.getString(R.string.no_root_tip));
+                LogUtils.w("NO ROOT");
+            }
+        }
+        AppModel.sIsRootMode = isRunInRootMode();
+        if(AppModel.sIsRootMode){
+            LogUtils.i("launch in root mode");
+            AppModel.showToast(sContext.getString(R.string.do_not_force_stop));
+        }
     }
 
 
@@ -200,23 +300,29 @@ public class LaunchService extends Service {
         }
     }
 
+    private static void clearOldProcess(){
+        XXnetManager.quit();
+        FqrouterManager.quit();
+    }
+
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         sDefaultService = this;
         AppModel.sService = this;
         launch();
-        return super.onStartCommand(intent, flags, startId);
+        return START_NOT_STICKY;
     }
 
 
     @Override
     public void onDestroy() {
         this.unregisterReceiver(mReceiver);
-        if(!AppModel.sAppStoped)
-            AppModel.fatalError("Launch service exit unexpectedly!");
         sDefaultService = null;
-        AppModel.sService = null;
+        if(!AppModel.sAppStoped){
+            LogUtils.w("Launch service onDestroy, call appStop");
+            AppModel.appStop();
+        }
         super.onDestroy();
     }
 
@@ -231,15 +337,23 @@ public class LaunchService extends Service {
                 LogUtils.i("APP start, sVersionCode: " + sVersionCode + ",sVersionName: " + sVersionName
                         + ",sAutoThread:" + sAutoThread + ",sLastVersion:" + sLastVersion + ",sDebug:" + sDebug
                         + ",sLastFail:" + sLastFail + ",sLang:" + sLang + ",sXndroidFile:" + sXndroidFile);
-
-                AppModel.getNetworkState();
+                clearOldProcess();
                 shellInit();
+                if(ShellUtils.isRoot()) {
+                    FqrouterManager.cleanIptables();
+                }
+                if(!XXnetManager.checkNetwork()){
+                    AppModel.fatalError(getString(R.string.no_network_tip));
+                }
+                AppModel.getNetworkState();
                 updateMsg(getString(R.string.prepare_python));
                 pythonInit();
                 updateMsg(getString(R.string.prepare_fqrouter));
                 FqrouterManager.prepareFqrouter();
-                updateMsg(getString(R.string.start_vpn));
-                FqrouterManager.startVpnService();
+                if(!AppModel.sIsRootMode) {
+                    updateMsg(getString(R.string.start_vpn));
+                    FqrouterManager.startVpnService();
+                }
                 updateMsg(getString(R.string.wait_fqrouter));
                 FqrouterManager.startFqrouter();
                 FqrouterManager.waitReady();
@@ -256,7 +370,9 @@ public class LaunchService extends Service {
 
     public static void postStop(){
         FqrouterManager.postStop();
-        XXnetService.getDefaultService().postStop();
+        if(XXnetService.getDefaultService() != null) {
+            XXnetService.getDefaultService().postStop();
+        }
         for(int i=0;i<10;i++){
             if(FqrouterManager.exitFinished() && XXnetService.getDefaultService().exitFinished())
                 break;
@@ -266,13 +382,19 @@ public class LaunchService extends Service {
                 e.printStackTrace();
             }
         }
-
+        ShellUtils.execBusybox("chmod -R 777 " + sXndroidFile);
         if(sDefaultService != null)
             sDefaultService.stopSelf();
 //        ShellUtils.close();//AppModle.forceStop need it
-        LogUtils.sGetDefaultLog().close();
+//        LogUtils.sGetDefaultLog().close();
     }
 
+    public static void handleFatalError(){
+        FqrouterManager.postStop();
+        if(XXnetService.getDefaultService() != null){
+            XXnetService.getDefaultService().stopXXnet();
+        }
+    }
 
     @Override
     public IBinder onBind(Intent intent) {

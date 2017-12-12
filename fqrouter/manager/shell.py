@@ -21,6 +21,7 @@ def launch_python(name, args, on_exit=None):
     LOGGER.info('launch python: %s' % ' '.join(command))
     env = os.environ.copy()
     env['PYTHONHOME'] = PYTHON_HOME
+    env['PYTHONPATH'] = "%s:%s" % (env['PYTHONPATH'], current_path)
     if USE_SU:
         proc = subprocess.Popen('su', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE, env=env)
         proc.terminate = functools.partial(sudo_kill, proc.pid)

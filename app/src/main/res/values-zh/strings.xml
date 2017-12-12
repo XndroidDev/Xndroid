@@ -98,4 +98,27 @@
     <string name="teredo_ip">Teredo地址</string>
     <string name="fatalerror">致命错误</string>
     <string name="update_tip">点击菜单中的 \'检查更新\' 以更新</string>
+    <string name="no_root_tip">警告: 无法获取root权限,却曾以root身份运行过. 建议授予root权限或清除应用数据后重试,否则可能会出现意想不到的错误.</string>
+    <string name="choose_mode">选择启动模式</string>
+    <string name="choose_mode_tip">设备已root,请选择启动模式. fqrouter的一些功能可能无法在VPN模式中使用.</string>
+    <string name="vpn_mode">VPN模式</string>
+    <string name="root_mode">Root模式</string>
+    <string name="only_vpn_available">无法获取root权限, 仅VPN模式可用.</string>
+    <string name="do_not_force_stop">以root模式启动,请勿强制退出. 如果造成网络异常,请重新以root模式启动并正常退出,或重启设备.</string>
+    <string name="clear_certificate_cache">清除证书缓存</string>
+    <string name="set_appid_fail">设置AppId失败</string>
+    <string name="restart_tip">操作完成,尝试重启应用.</string>
+    <string name="sys_cert_no_root">无root权限,无法导入为系统证书.</string>
+    <string name="system_cert_fail">导入为系统证书失败 </string>
+    <string name="system_cert_succeed">导入为系统证书成功,如果不能及时生效,请重启设备 </string>
+    <string name="import_cert_7tip">Android 7.0及以上可能不信任用户证书.</string>
+    <string name="no_root_no_need">未root,无需也无法进行操作</string>
+    <string name="import_system_certificate">导入为系统证书</string>
+    <string name="remove_system_certificate">移除系统证书</string>
+    <string name="import_cert_full_tip">如设置了图案解锁却要求输入凭证,则先清除锁屏密码再尝试. Android 7.0及以上可能不信任用户证书. 如果设备ROOT了,可以导入为系统证书.</string>
+    <string name="finished">完成</string>
+    <string name="no_network_tip">无网络连接,请检查网络设置.</string>
+    <string name="install_new_tip">开始安装新版本. 旧版本会被保存到 \'/sdcard/xndroid-old.apk\'. 如果新版不可用, 请导出日志并退回旧版.</string>
+    <string name="no_full_function">Root后可以使用完整的功能.</string>
+    <string name="import_user_certificate">导入为用户证书</string>
 </resources>

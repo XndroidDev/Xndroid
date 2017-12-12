@@ -14,7 +14,7 @@ def DEFAULT_CONFIG():
         'direct_access_enabled': False,
         'google_scrambler_enabled': False,
         'tcp_scrambler_enabled': False,
-        'https_enforcer_enabled': True,
+        'https_enforcer_enabled': False,
         'access_check_enabled': True,
         'hosted_domain_enabled': False,
         'prefers_private_proxy': True,

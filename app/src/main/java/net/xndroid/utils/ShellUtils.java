@@ -7,7 +7,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 
 public class ShellUtils {
-    private static final boolean USE_ROOT = false;
+    private static final boolean USE_ROOT = true;
     private static String sBasePath;
     public static String sBusyBox;
     private static Process sProcess;
@@ -106,7 +106,7 @@ public class ShellUtils {
     //remember synchronized for multi-thread call
     static synchronized private String exec(String cmd, boolean wait)
     {
-        LogUtils.i(">>>~ " + cmd);
+        LogUtils.i((sRoot?">>># ":">>>~ ") + cmd);
         StringBuffer strBuff = new StringBuffer();
         stdErr = null;
         String finishFlag = "~~~SHELL_TASK_"+sTaskID+"_FINISHED~~~";

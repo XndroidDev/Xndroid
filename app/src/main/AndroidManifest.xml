@@ -51,6 +51,10 @@
             android:name=".LaunchService"
             android:enabled="true"
             android:exported="true" />
+        <service android:name=".wifi_repeater.AcquireWifiLockService">
+        </service>
+        <service android:name=".wifi_repeater.ReleaseWifiLockService">
+        </service>
     </application>
 
 </manifest>

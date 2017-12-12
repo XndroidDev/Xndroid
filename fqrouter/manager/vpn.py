@@ -10,10 +10,6 @@ import _multiprocessing
 import socket
 import httplib
 import fqdns
-import fqsocks.fqsocks
-import fqsocks.config_file
-import fqsocks.gateways.proxy_client
-import fqsocks.networking
 import contextlib
 import gevent
 import gevent.socket
@@ -22,13 +18,17 @@ import config
 import traceback
 import urllib2
 import fqsocks.httpd
+import fqsocks.fqsocks
+import fqsocks.config_file
+import fqsocks.gateways.proxy_client
+import fqsocks.pages.home
+import fqsocks.networking
 import teredo
-import json
 
-
+fqsocks.pages.home.is_root_mode = False
 current_path = os.path.dirname(os.path.abspath(__file__))
 home_path = os.path.abspath(current_path + "/..")
-FQROUTER_VERSION = 'ultimate'
+FQROUTER_VERSION = 'ULTIMATE'
 LOGGER = logging.getLogger('fqrouter')
 LOG_DIR = home_path + "/log"
 MANAGER_LOG_FILE = os.path.join(LOG_DIR, 'manager.log')
@@ -55,7 +55,6 @@ def setup_logging():
     handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
     logging.getLogger('teredo').addHandler(handler)
 
-setup_logging()
 
 def send_message(message):
     fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -104,9 +103,6 @@ def create_teredo_sock_until_ready():
             LOGGER.info('create_teredo_sock_until_ready:get fd fail, retry in 1 seconds')
         gevent.sleep(1)
 
-
-teredo_sock = create_teredo_sock_until_ready()
-teredo_client = teredo.teredo_client(teredo_sock)
 
 fqsocks.networking.SPI['create_tcp_socket'] = create_tcp_socket
 fqdns.SPI['create_udp_socket'] = create_udp_socket
@@ -160,15 +156,15 @@ def handle_exit(environ, start_response):
 fqsocks.httpd.HANDLERS[('POST', 'exit')] = handle_exit
 
 
-def redirect_tun_traffic(tun_fd):
+def redirect_tun_traffic(tun_fd, teredo_client):
     while True:
         try:
-            redirect_ip_packet(tun_fd)
+            redirect_ip_packet(tun_fd, teredo_client)
         except:
             LOGGER.exception('failed to handle ip packet')
 
 
-def redirect_ip_packet(tun_fd):
+def redirect_ip_packet(tun_fd, teredo_client):
     gevent.socket.wait_read(tun_fd)
     try:
         data = os.read(tun_fd, 8192)
@@ -246,21 +242,15 @@ class VpnUdpHandler(fqdns.DnsHandler):
             LOGGER.exception('failed to handle udp')
 
 DNS_HANDLER = VpnUdpHandler(
-    enable_china_domain=True, enable_hosted_domain=True,
+    enable_china_domain=True, enable_hosted_domain=False,
     original_upstream=('udp', default_dns_server, 53) if default_dns_server else None)
 
 fqsocks.networking.DNS_HANDLER = DNS_HANDLER
 
-@fqsocks.httpd.http_handler('GET', 'teredo-state')
-def handle_teredo_state(environ, start_response):
-    start_response(httplib.OK, [('Content-Type', 'text/json')])
-    return [json.dumps({'qualified': teredo_client.qualified,
-                        'nat_type': teredo_client.nat_type,
-                        'teredo_ip': socket.inet_ntop(socket.AF_INET6,teredo_client.teredo_ip) if teredo_client.teredo_ip else 'None',
-                        'local_teredo_ip': socket.inet_ntop(socket.AF_INET6,teredo_client.local_teredo_ip)})]
-
 
 if '__main__' == __name__:
+    setup_logging()
+    LOGGER.info('running vpn.py')
     LOGGER.info('environment: %s' % os.environ.items())
     LOGGER.info('default dns server: %s' % default_dns_server)
     # FQROUTER_VERSION = os.getenv('FQROUTER_VERSION')
@@ -269,6 +259,8 @@ if '__main__' == __name__:
     except:
         LOGGER.exception('failed to patch ssl')
 
+    teredo_sock = create_teredo_sock_until_ready()
+    teredo_client = teredo.teredo_client(teredo_sock)
     teredo_ip = None
     try:
         teredo_ip = teredo_client.start()
@@ -317,5 +309,5 @@ if '__main__' == __name__:
     teredo.tun_fd = tun_fd
 
     gevent.spawn(fqsocks.fqsocks.main)
-    greenlet = gevent.spawn(redirect_tun_traffic, tun_fd)
+    greenlet = gevent.spawn(redirect_tun_traffic, tun_fd, teredo_client)
     greenlet.join()

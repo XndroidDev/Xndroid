@@ -9,11 +9,36 @@
     <item
         android:id="@+id/action_import_cert"
         android:orderInCategory="100"
-        android:title="@string/import_certificate"
+        android:title="@string/import_user_certificate"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_import_sys_cert"
+        android:orderInCategory="100"
+        android:title="@string/import_system_certificate"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_remove_sys_cert"
+        android:orderInCategory="100"
+        android:title="@string/remove_system_certificate"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_launch_mode"
+        android:orderInCategory="100"
+        android:title="@string/choose_mode"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_clear_cert"
+        android:orderInCategory="100"
+        android:title="@string/clear_certificate_cache"
         app:showAsAction="never" />
     <item
         android:id="@+id/action_check_update"
         android:orderInCategory="100"
         android:title="@string/check_update"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_exit"
+        android:orderInCategory="100"
+        android:title="@string/exit"
         app:showAsAction="never" />
 </menu>

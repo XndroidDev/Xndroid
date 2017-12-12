@@ -2,6 +2,7 @@ package net.xndroid.xxnet;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.security.KeyChain;
 
 import net.xndroid.AppModel;
@@ -16,8 +17,15 @@ import org.json.JSONObject;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.security.MessageDigest;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.security.auth.x500.X500Principal;
 
 import static net.xndroid.AppModel.sContext;
 import static net.xndroid.AppModel.sXndroidFile;
@@ -49,16 +57,30 @@ public class XXnetManager {
     private static final String PER_CA_MD5 = "XNDROID_CA_MD5";
 
 
-    private static boolean checkNetwork(){
-        String url = "https://www.baidu.com/duty/copyright.html";
-        String response = HttpJson.get(url);
-        if(response.length() > 0)
-            return true;
-        else{
-            if(HttpJson.get(url).length() > 0)
-                return true;
-            return false;
+    private static boolean _networkResult = false;
+    public static boolean checkNetwork(){
+        final String url = "https://www.baidu.com/duty/copyright.html";
+        try {
+            for(int i=0;i<3;i++){
+                _networkResult = false;
+                Thread thread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if(HttpJson.get(url).length() > 0) {
+                            _networkResult = true;
+                            return;
+                        }
+                    }
+                });
+                thread.start();
+                thread.join(1200);
+                if(_networkResult)
+                    return true;
+            }
+        }catch (Exception e){
+            LogUtils.e("checkNetwork fail", e);
         }
+        return false;
     }
 
 // 可能因为联网权限导致无法连接网络,却可以ping通
@@ -193,6 +215,7 @@ public class XXnetManager {
         if(response.indexOf("success") > 0)
             return true;
         LogUtils.e("setAppId fail:\n" + response);
+        AppModel.showToast(sContext.getString(R.string.set_appid_fail));
         return false;
     }
 
@@ -223,7 +246,7 @@ public class XXnetManager {
     }
 
     public static boolean waitReady(){
-        for(int i=0;i < 15;i++){
+        for(int i=0;i < 16;i++){
             if(updateAttribute()) {
                 autoImportCA();
                 return true;
@@ -244,19 +267,80 @@ public class XXnetManager {
             return;
         String md5 = ShellUtils.execBusybox("md5sum " + certPath + " | " + ShellUtils.sBusyBox + " cut -c 1-32").trim();
         String lastMd5 = AppModel.sPreferences.getString(PER_CA_MD5, "");
-        if(lastMd5.isEmpty() || !lastMd5.equals(md5))
-            importCert();
+        if(lastMd5.isEmpty() || !lastMd5.equals(md5)) {
+            if(ShellUtils.isRoot()) {
+                importSystemCert();
+            }else {
+                importCert();
+            }
+        }
 
     }
 
-    public static void importCert(){
-        AppModel.showToast(AppModel.sService.getString(R.string.import_cert_tip));
+    private static String getSubjectHash(String certPath){
+        try {
+            X509Certificate cert = (X509Certificate) CertificateFactory
+                    .getInstance("X.509").generateCertificate(new FileInputStream(certPath));
+            X500Principal subject = cert.getSubjectX500Principal();
+            byte[] sumbytes = MessageDigest.getInstance("MD5").digest(subject.getEncoded());
+            return Integer.toHexString(ByteBuffer.wrap(sumbytes).order(ByteOrder.LITTLE_ENDIAN).getInt());
+        }catch (Exception e){
+            LogUtils.e("get subject old hash fail", e);
+        }
+        return "8da8b1b3";
+    }
+
+    public static void cleanSystemCert(){
+        if(!ShellUtils.isRoot()) {
+            AppModel.showToast(sContext.getString(R.string.no_root_no_need));
+            return;
+        }
+        ShellUtils.execBusybox("mount -o remount,rw /system");
+        ShellUtils.execBusybox("rm /system/etc/security/cacerts/8da8b1b3.0");
+        ShellUtils.execBusybox("mount -o remount,ro /system");
+        AppModel.showToast(sContext.getString(R.string.finished));
+    }
+
+    public static void importSystemCert() {
+        if(!ShellUtils.isRoot()) {
+            AppModel.showToast(sContext.getString(R.string.sys_cert_no_root));
+            return;
+        }
         String certPath = AppModel.sXndroidFile + "/xxnet/data/gae_proxy/CA.crt";
+        ShellUtils.execBusybox("chmod 777 " + certPath);
         if(!new File(certPath).exists()){
             LogUtils.e("importCert fail, file not exist");
             AppModel.showToast("import certificate fail, file not exist");
             return;
         }
+        String subjectHash = getSubjectHash(certPath);
+        LogUtils.i("subjectHash: " + subjectHash);
+        ShellUtils.execBusybox("mount -o remount,rw /system");
+        String output = ShellUtils.execBusybox("cp -f " + certPath + " /system/etc/security/cacerts/" + subjectHash + ".0");
+        if(output.trim().length() > 0 || ShellUtils.stdErr != null){
+            AppModel.showToast(sContext.getString(R.string.system_cert_fail) + " " + output.trim() + " "
+                    + (ShellUtils.stdErr!=null ? ShellUtils.stdErr:""));
+        }else {
+            AppModel.showToast(sContext.getString(R.string.system_cert_succeed) + " " + subjectHash + ".0");
+        }
+        ShellUtils.execBusybox("chmod 644 /system/etc/security/cacerts/" + subjectHash + ".0");
+        ShellUtils.execBusybox("mount -o remount,ro /system");
+
+        String md5 = ShellUtils.execBusybox("md5sum " + certPath + " | " + ShellUtils.sBusyBox + " cut -c 1-32").trim();
+        AppModel.sPreferences.edit().putString(PER_CA_MD5, md5).apply();
+        ShellUtils.execBusybox("cp -f " + certPath + " /sdcard/XX-Net.crt");
+    }
+
+    public static void importCert(){
+        String certPath = AppModel.sXndroidFile + "/xxnet/data/gae_proxy/CA.crt";
+        ShellUtils.execBusybox("chmod 777 " + certPath);
+        if(!new File(certPath).exists()){
+            LogUtils.e("importCert fail, file not exist");
+            AppModel.showToast("import certificate fail, file not exist");
+            return;
+        }
+        AppModel.showToast(AppModel.sService.getString(R.string.import_cert_tip)
+                + (Build.VERSION.SDK_INT>23?( sContext.getString(R.string.import_cert_7tip)):"" ));
         byte[] keychain;
         try{
             BufferedInputStream input =new BufferedInputStream(new FileInputStream(certPath));
@@ -267,7 +351,6 @@ public class XXnetManager {
             return;
         }
         Intent installIntent = KeyChain.createInstallIntent();
-        //Android支持两种证书文件格式，一种是PKCS12，一种是X.509证书
         installIntent.putExtra(KeyChain.EXTRA_CERTIFICATE, keychain);
         installIntent.putExtra(KeyChain.EXTRA_NAME,"XX-Net Chain");
         AppModel.sActivity.startActivityForResult(installIntent, IMPORT_CERT_REQUEST);

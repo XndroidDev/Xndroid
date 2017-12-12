@@ -205,6 +205,7 @@ public class SocksVpnService extends VpnService {
 
     private void listenFdServerSocket() throws Exception {
         final LocalServerSocket fdServerSocket = new LocalServerSocket("fdsock2");
+        initSkippedFds();
         try {
             int count = 0;
             while (!stopFlag) {
@@ -235,14 +236,10 @@ public class SocksVpnService extends VpnService {
     }
 
     private void garbageCollectFds() {
-        if (listFds() == null) {
+        if (listFds() == null || listFds().length == 0) {
             LogUtils.e("can not gc fd as can not list them");
         } else {
-            if (skippedFds.isEmpty()) {
-                initSkippedFds();
-            } else {
-                closeStagingFds();
-            }
+            closeStagingFds();
         }
     }
 

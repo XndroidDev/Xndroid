@@ -63,6 +63,7 @@ public class LogUtils {
     private long mLogSize = 2*1024*1024;
     private FileOutputStream mOutputStream;
     private LogThread mThread;
+    private boolean mFirstTrun = true;
 
     private void copyBottom(String path, String newPath, long len)
     {
@@ -102,7 +103,16 @@ public class LogUtils {
                 mOutputStream=null;
                 copyBottom(mPath, newPath, mLogSize/2);
                 File file = new File(mPath);
-                file.delete();
+                if(mFirstTrun){
+                    mFirstTrun = false;
+                    File bakFile = new File(mPath + ".bak");
+                    if(bakFile.isFile()){
+                        bakFile.delete();
+                    }
+                    file.renameTo(bakFile);
+                }else {
+                    file.delete();
+                }
                 new File(newPath).renameTo(file);
                 mOutputStream = new FileOutputStream(mPath,true);
             } catch (IOException e) {

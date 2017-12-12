@@ -258,7 +258,7 @@ public class MainActivity extends AppCompatActivity
 
     public void startLightning(){
         Intent intent = new Intent(AppModel.sContext, acr.browser.lightning.MainActivity.class);
-        AppModel.sContext.startActivity(intent);
+        startActivity(intent);
     }
 
 

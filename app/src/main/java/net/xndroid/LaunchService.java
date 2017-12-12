@@ -29,15 +29,8 @@ import java.util.ArrayList;
 
 import static android.os.Build.VERSION_CODES.M;
 import static net.xndroid.AppModel.sActivity;
-import static net.xndroid.AppModel.sAutoThread;
 import static net.xndroid.AppModel.sContext;
-import static net.xndroid.AppModel.sDebug;
 import static net.xndroid.AppModel.sDevMobileWork;
-import static net.xndroid.AppModel.sLang;
-import static net.xndroid.AppModel.sLastFail;
-import static net.xndroid.AppModel.sLastVersion;
-import static net.xndroid.AppModel.sVersionCode;
-import static net.xndroid.AppModel.sVersionName;
 import static net.xndroid.AppModel.sXndroidFile;
 import static net.xndroid.AppModel.showToast;
 
@@ -333,10 +326,6 @@ public class LaunchService extends Service {
                 updateMsg(getString(R.string.request_permission));
                 getPermission(sPermissions,sActivity);
                 updateMsg(getString(R.string.initializing));
-                LogUtils.sSetDefaultLog(new LogUtils(sXndroidFile+"/log/java_main.log"));
-                LogUtils.i("APP start, sVersionCode: " + sVersionCode + ",sVersionName: " + sVersionName
-                        + ",sAutoThread:" + sAutoThread + ",sLastVersion:" + sLastVersion + ",sDebug:" + sDebug
-                        + ",sLastFail:" + sLastFail + ",sLang:" + sLang + ",sXndroidFile:" + sXndroidFile);
                 clearOldProcess();
                 shellInit();
                 if(ShellUtils.isRoot()) {
@@ -386,7 +375,6 @@ public class LaunchService extends Service {
         if(sDefaultService != null)
             sDefaultService.stopSelf();
 //        ShellUtils.close();//AppModle.forceStop need it
-//        LogUtils.sGetDefaultLog().close();
     }
 
     public static void handleFatalError(){

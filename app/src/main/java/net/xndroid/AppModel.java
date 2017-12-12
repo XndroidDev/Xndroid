@@ -249,8 +249,6 @@ public class AppModel {
         sDebug = isApkInDebug(activity);
         sLastFail = sPreferences.getBoolean(PER_LAST_FAIL, false);
         sPreferences.edit().putBoolean(PER_LAST_FAIL, true).apply();
-        if(sVersionCode != sLastVersion && sLastVersion != 0)
-            updataEnv(sLastVersion);
         sPreferences.edit().putInt(PER_VERSION, sVersionCode).apply();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             sLang = sActivity.getResources().getConfiguration().getLocales().toString();
@@ -258,7 +256,12 @@ public class AppModel {
             sLang = sActivity.getResources().getConfiguration().locale.toString();
         }
         sLang = sLang.contains("zh_CN") ? "zh_CN" : sLang;
-
+        LogUtils.sSetDefaultLog(new LogUtils(sXndroidFile+"/log/java_main.log"));
+        LogUtils.i("APP start, sVersionCode: " + sVersionCode + ",sVersionName: " + sVersionName
+                + ",sAutoThread:" + sAutoThread + ",sLastVersion:" + sLastVersion + ",sDebug:" + sDebug
+                + ",sLastFail:" + sLastFail + ",sLang:" + sLang + ",sXndroidFile:" + sXndroidFile);
+        if(sVersionCode != sLastVersion && sLastVersion != 0)
+            updataEnv(sLastVersion);
         Intent intent = new Intent(activity,LaunchService.class);
         activity.startService(intent);
     }

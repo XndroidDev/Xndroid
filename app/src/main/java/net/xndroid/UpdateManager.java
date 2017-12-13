@@ -29,9 +29,9 @@ class DownloadReceiver extends BroadcastReceiver{
                     callIntent.setDataAndType(Uri.parse("file://"+ UpdateManager.sDownloadPath), "application/vnd.android.package-archive");
                     callIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK );
                     context.startActivity(callIntent);
-                    String oldApkPath = context.getApplicationContext().getPackageResourcePath();
-                    ShellUtils.execBusybox("cp -f " + oldApkPath + " " + "/sdcard/xndroid-old.apk");
                     if(AppModel.sContext != null) {
+                        String oldApkPath = context.getApplicationContext().getPackageResourcePath();
+                        ShellUtils.execBusybox("cp -f " + oldApkPath + " " + "/sdcard/xndroid-old.apk");
                         AppModel.showToast(AppModel.sContext.getString(R.string.install_new_tip));
                     }
                 }

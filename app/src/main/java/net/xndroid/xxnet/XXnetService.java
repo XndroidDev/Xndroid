@@ -187,7 +187,9 @@ public class XXnetService extends Service {
                         + "cd " + sXndroidFile + " \n"
                         + "sh " + sXndroidFile + "/python/bin"
                         + (Build.VERSION.SDK_INT >17?"/python-launcher.sh ":"/python-launcher-nopie.sh ")
-                        + sXndroidFile + "/xxnet/android_start.py > " + sXndroidFile + "/log/xxnet-output.log 2>&1 \nexit\n";
+                        + sXndroidFile + "/xxnet/android_start.py protect_sock "
+                        + (AppModel.sIsRootMode?"root_mode":"vpn_mode")
+                        + " > " + sXndroidFile + "/log/xxnet-output.log 2>&1 \nexit\n";
                 LogUtils.i("try to start xxnet, cmd: " + cmd);
                 try {
                     mProcess = Runtime.getRuntime().exec(ShellUtils.isRoot()?"su":"sh");

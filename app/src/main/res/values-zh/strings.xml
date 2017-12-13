@@ -118,7 +118,7 @@
     <string name="import_cert_full_tip">如设置了图案解锁却要求输入凭证,则先清除锁屏密码再尝试. Android 7.0及以上可能不信任用户证书. 如果设备ROOT了,可以导入为系统证书.</string>
     <string name="finished">完成</string>
     <string name="no_network_tip">无网络连接,请检查网络设置.</string>
-    <string name="install_new_tip">开始安装新版本. 旧版本会被保存到 \'/sdcard/xndroid-old.apk\'. 如果新版不可用, 请导出日志并退回旧版.</string>
+    <string name="install_new_tip">开始安装新版本. 旧版本会被保存到 \'/sdcard/xndroid-old.apk\'. 如果新版不可用, 请导出日志并退回旧版. 建议安装新版前先正常退出应用, 以保证顺利更新.</string>
     <string name="no_full_function">Root后可以使用完整的功能.</string>
     <string name="import_user_certificate">导入为用户证书</string>
 </resources>

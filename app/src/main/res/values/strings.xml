@@ -118,7 +118,7 @@
     <string name="import_cert_full_tip">You can turn off the screen lock and try again if a password is required.Applications maybe don\'t trust certificates imported by user above Android7.0. And it can be imported as system certificate with ROOT.</string>
     <string name="finished">finished</string>
     <string name="no_network_tip">No network is unreachable, check your network setting.</string>
-    <string name="install_new_tip">Start to install the new version. The old version will de copied to \'/sdcard/xndroid-old.apk\'. Report the logs and rollback to old version if the new version is unusable.</string>
+    <string name="install_new_tip">Start to install the new version. The old version will de copied to \'/sdcard/xndroid-old.apk\'. Report the logs and rollback to old version if the new version is unusable. It\'s advised to exit this APP before update.</string>
     <string name="no_full_function">You can use full functions with root.</string>
     <string name="import_user_certificate">import user certificate</string>
 </resources>

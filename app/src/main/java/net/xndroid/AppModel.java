@@ -222,6 +222,7 @@ public class AppModel {
         FileUtils.rm(sXndroidFile + "/python", null);
         FileUtils.rm(sXndroidFile + "/fqrouter", null);
         new File(sXndroidFile + "/busybox").delete();
+        new File(sXndroidFile + "/busybox_for_o").delete();
     }
 
 

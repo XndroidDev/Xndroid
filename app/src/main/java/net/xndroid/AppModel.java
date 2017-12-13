@@ -17,11 +17,9 @@ import android.preference.PreferenceManager;
 import android.widget.Toast;
 
 import net.xndroid.fqrouter.FqrouterManager;
-import net.xndroid.utils.FileUtils;
 import net.xndroid.utils.LogUtils;
 import net.xndroid.utils.ShellUtils;
 
-import java.io.File;
 import java.io.OutputStreamWriter;
 
 public class AppModel {
@@ -218,13 +216,6 @@ public class AppModel {
         LogUtils.i("network change, use_mobile_network=" + sDevMobileWork);
     }
 
-    private static void updataEnv(int lastVersion){
-        FileUtils.rm(sXndroidFile + "/python", null);
-        FileUtils.rm(sXndroidFile + "/fqrouter", null);
-        new File(sXndroidFile + "/busybox").delete();
-        new File(sXndroidFile + "/busybox_for_o").delete();
-    }
-
 
     public static void appInit(final MainActivity activity){
         if(sAppStoped)
@@ -261,8 +252,6 @@ public class AppModel {
         LogUtils.i("APP start, sVersionCode: " + sVersionCode + ",sVersionName: " + sVersionName
                 + ",sAutoThread:" + sAutoThread + ",sLastVersion:" + sLastVersion + ",sDebug:" + sDebug
                 + ",sLastFail:" + sLastFail + ",sLang:" + sLang + ",sXndroidFile:" + sXndroidFile);
-        if(sVersionCode != sLastVersion && sLastVersion != 0)
-            updataEnv(sLastVersion);
         Intent intent = new Intent(activity,LaunchService.class);
         activity.startService(intent);
     }

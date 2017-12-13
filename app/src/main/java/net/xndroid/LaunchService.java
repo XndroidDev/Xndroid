@@ -319,6 +319,21 @@ public class LaunchService extends Service {
         super.onDestroy();
     }
 
+    private static void updateEnvEarly(){
+        if(AppModel.sLastVersion == 0 || AppModel.sLastVersion == AppModel.sVersionCode)
+            return;
+        new File(sXndroidFile + "/busybox").delete();
+        new File(sXndroidFile + "/busybox_for_o").delete();
+    }
+
+    private static void updataEnv(){
+        if(AppModel.sLastVersion == 0 || AppModel.sLastVersion == AppModel.sVersionCode)
+            return;
+        ShellUtils.execBusybox("rm -r " + sXndroidFile + "/python");
+        ShellUtils.execBusybox("rm -r " + sXndroidFile + "/fqrouter");
+        ShellUtils.execBusybox("rm -r " + sXndroidFile + "/xxnet");
+    }
+
     private void launch(){
         new WorkingDlg(AppModel.sActivity, getString(R.string.xndroid_launching)) {
             @Override
@@ -327,7 +342,9 @@ public class LaunchService extends Service {
                 getPermission(sPermissions,sActivity);
                 updateMsg(getString(R.string.initializing));
                 clearOldProcess();
+                updateEnvEarly();
                 shellInit();
+                updataEnv();
                 if(ShellUtils.isRoot()) {
                     FqrouterManager.cleanIptables();
                 }

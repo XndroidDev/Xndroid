@@ -277,6 +277,19 @@ public class XXnetManager {
 
     }
 
+    private static boolean isGoAgentCert(String certPath){
+        try {
+            X509Certificate cert = (X509Certificate) CertificateFactory
+                    .getInstance("X.509").generateCertificate(new FileInputStream(certPath));
+            X500Principal subject = cert.getSubjectX500Principal();
+            return subject.getName().toLowerCase().contains("goagent");
+        }catch (Exception e){
+            LogUtils.e("get subject fail", e);
+        }
+        return false;
+    }
+
+
     private static String getSubjectHash(String certPath){
         try {
             X509Certificate cert = (X509Certificate) CertificateFactory
@@ -287,7 +300,8 @@ public class XXnetManager {
         }catch (Exception e){
             LogUtils.e("get subject old hash fail", e);
         }
-        return "8da8b1b3";
+//        return "8da8b1b3";
+        return null;
     }
 
     public static void cleanSystemCert(){
@@ -295,10 +309,22 @@ public class XXnetManager {
             AppModel.showToast(sContext.getString(R.string.no_root_no_need));
             return;
         }
+        String[] certs = new File("/system/etc/security/cacerts").list();
+        if(certs == null){
+            AppModel.showToast("cleanSystemCert fail, can't list");
+            return;
+        }
+        int count = 0;
         ShellUtils.execBusybox("mount -o remount,rw /system");
-        ShellUtils.execBusybox("rm /system/etc/security/cacerts/8da8b1b3.0");
+        for(String cert : certs){
+            if(isGoAgentCert("/system/etc/security/cacerts/" + cert)){
+                ShellUtils.execBusybox("rm /system/etc/security/cacerts/" + cert);
+                count ++;
+                LogUtils.i("remove system cert " + cert);
+            }
+        }
         ShellUtils.execBusybox("mount -o remount,ro /system");
-        AppModel.showToast(sContext.getString(R.string.finished));
+        AppModel.showToast(sContext.getString(R.string.finished) + " " + count + "CA");
     }
 
     public static void importSystemCert() {
@@ -314,6 +340,10 @@ public class XXnetManager {
             return;
         }
         String subjectHash = getSubjectHash(certPath);
+        if(subjectHash == null){
+            AppModel.showToast("import system certificate fail, get subject old hash fail.");
+            return;
+        }
         LogUtils.i("subjectHash: " + subjectHash);
         ShellUtils.execBusybox("mount -o remount,rw /system");
         String output = ShellUtils.execBusybox("cp -f " + certPath + " /system/etc/security/cacerts/" + subjectHash + ".0");

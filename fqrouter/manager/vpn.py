@@ -81,6 +81,11 @@ def create_udp_socket(keep_alive=False):
         return sock
 
 def create_tcp_socket(server_ip, server_port, connect_timeout):
+    if server_ip == '127.0.0.1':
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(connect_timeout)
+        sock.connect((server_ip, server_port))
+        return sock
     fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     with contextlib.closing(fdsock):
         fdsock.connect('\0fdsock2')

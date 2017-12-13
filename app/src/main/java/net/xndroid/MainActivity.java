@@ -240,7 +240,12 @@ public class MainActivity extends AppCompatActivity
         }else if(id == R.id.action_import_sys_cert){
             XXnetManager.importSystemCert();
         }else if(id == R.id.action_remove_sys_cert){
-            XXnetManager.cleanSystemCert();
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    XXnetManager.cleanSystemCert();
+                }
+            }).start();
         }
         else {
             return super.onOptionsItemSelected(item);

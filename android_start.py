@@ -26,9 +26,13 @@ vpn_mode = True
 
 
 def sock_connect_main(self, addr):
-    if protect_socket and not vpn_mode:
+    if protect_socket \
+            and not vpn_mode \
+            and self.family == socket.AF_INET \
+            and addr[0] != '127.0.0.1':
         self.bind((OUTBOUND_IP, 0))
     original_socket_connect(self, addr)
+
 
 def sock_connect_ex_main(self, addr):
     try:
@@ -42,17 +46,13 @@ _sock_options = {socket.SO_REUSEADDR, socket.SO_LINGER, socket.SO_RCVBUF,
                  socket.TCP_NODELAY, socket.SO_KEEPALIVE, socket.SO_SNDBUF}
 
 def sock_connect_vpn(self, addr):
-    # if LOGGER.isEnabledFor(logging.DEBUG):
-    #     LOGGER.info('vpn socket connect %s' % str(addr))
-    if protect_socket == False or vpn_mode == False or self.type != socket.SOCK_STREAM:
-        return original_socket_connect(self, addr)
-    if self.family != socket.AF_INET:
+    if protect_socket == False \
+            or vpn_mode == False \
+            or self.type != socket.SOCK_STREAM \
+            or self.family != socket.AF_INET \
+            or addr[0] == '127.0.0.1':
         return original_socket_connect(self, addr)
     host,port = addr
-    if host == '127.0.0.1':
-        return original_socket_connect(self, addr)
-    # if LOGGER.isEnabledFor(logging.DEBUG):
-    #         LOGGER.debug("vpn tcp %s:%s" % (host, port))
     fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     with contextlib.closing(fdsock):
         timeout = self.gettimeout()
@@ -60,8 +60,6 @@ def sock_connect_vpn(self, addr):
         fdsock.sendall('OPEN TCP,%s,%s,%s\n' %
                        (host, port,int(timeout * 1000) if timeout else 5000))
         fd = _multiprocessing.recvfd(fdsock.fileno())
-        # if LOGGER.isEnabledFor(logging.DEBUG):
-        #     LOGGER.debug("vpn tcp %s:%s,rev fd, fd=%s, timeout=%s" % (host, port, fd, timeout))
         if fd <= 2:
             if LOGGER.isEnabledFor(logging.DEBUG):
                 LOGGER.error('vpn fail to create tcp socket: %s:%s, wrong fd' % (host, port))
@@ -86,12 +84,11 @@ def sock_connect_ex_vpn(self, addr):
     return 0
 
 def sock_init_vpn(self, family=socket.AF_INET, type=socket.SOCK_STREAM, proto=0, _sock=None):
-    # if LOGGER.isEnabledFor(logging.DEBUG):
-    #     LOGGER.debug("!")
-    if protect_socket == False or vpn_mode == False or type != socket.SOCK_DGRAM:
-        original_socket_init(self, family, type, proto, _sock)
-        return
-    if family != socket.AF_INET:
+    if protect_socket == False \
+            or vpn_mode == False \
+            or type != socket.SOCK_DGRAM \
+            or self.family != socket.AF_INET \
+            or addr[0] == '127.0.0.1':
         original_socket_init(self, family, type, proto, _sock)
         return
     fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -189,14 +186,17 @@ def setup_logging():
 
 
 def main():
+    global protect_socket, vpn_mode
     arg = sys.argv
     setup_logging()
-    global protect_socket, vpn_mode
+    LOGGER.info('argv: %s' % str(sys.argv))
     if len(arg) >= 3:
-        if cmp(arg[1], 'protect_sock') == 0:
+        if arg[1] == 'protect_sock':
             protect_socket = True
-            if cmp(arg[2], 'vpn_mode') == 0:
+            if arg[2] == 'vpn_mode':
                 vpn_mode = True
+            else:
+                vpn_mode = False
         else:
             protect_socket = False
     if protect_socket:

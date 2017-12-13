@@ -148,30 +148,29 @@ def handle_teredo_state(environ, start_response):
                         'local_teredo_ip': socket.inet_ntop(socket.AF_INET6,default_teredo_client.local_teredo_ip) if default_teredo_client.local_teredo_ip else 'None'})]
 
 
-
-def check_network():
-    try:
-        output = subprocess.check_output(shlex.split('ping -c 4 -W 2 -w 6 114.114.114.114'), stderr=subprocess.STDOUT)
-        if output and output.find('time=') > 0:
-            return True
-        else:
-            return False
-    except subprocess.CalledProcessError, e:
-        return False
-    except:
-        LOGGER.exception('check_network fail')
-        return True
+# def check_network():
+#     try:
+#         output = subprocess.check_output(shlex.split('ping -c 4 -W 2 -w 6 114.114.114.114'), stderr=subprocess.STDOUT)
+#         if output and output.find('time=') > 0:
+#             return True
+#         else:
+#             return False
+#     except subprocess.CalledProcessError, e:
+#         return False
+#     except:
+#         LOGGER.exception('check_network fail')
+#         return True
 
 
 class teredo_client(object):
-    def __init__(self, sock, server_ip='83.170.6.76', server_second_ip='83.170.6.77', refresh_interval=29):
+    def __init__(self, sock, server_ip='83.170.6.76', server_second_ip='83.170.6.77', refresh_interval=15):
         global default_teredo_client
         default_teredo_client = self
         self.server_ip = server_ip
         self.server_second_ip = server_second_ip
         self.refresh_interval = refresh_interval
         self.random_refresh_interval = self.refresh_interval*(random.random()*0.25+0.75)
-        self.last_time_with_server = time.time() - 30
+        self.last_time_with_server = time.time() - refresh_interval -1
         self.nat_type = 'UNKNOWN'
         self.old_teredo_ip = ''
         self.local_teredo_ip = ''
@@ -231,15 +230,11 @@ class teredo_client(object):
                             self.qualified = False
                             LOGGER.warning('teredo offline')
                         self.qualify_fail_time += 1
-                        if self.qualify_fail_time >= 6:
-                            if check_network():
-                                self.server_index += 1
-                                self.server_ip = teredo_servers[self.server_index % len(teredo_servers)]
-                                self.qualify_fail_time = 0
-                                LOGGER.warning('qualify fail for many times, change server to %s' % self.server_ip)
-                            else:
-                                self.qualify_fail_time = 0
-                                LOGGER.warning('network is unavailable')
+                        if self.qualify_fail_time >= 4:
+                            self.server_index += 1
+                            self.server_ip = teredo_servers[self.server_index % len(teredo_servers)]
+                            self.qualify_fail_time = 0
+                            LOGGER.warning('qualify fail for many times, change server to %s' % self.server_ip)
                 if time.time() > self.last_time_with_server + self.random_refresh_interval:
                     self.wait_check_qualified = True
                     self.send_qualify(self.server_ip)
@@ -565,10 +560,10 @@ def test():
     import sys
     import logging.handlers
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s')
-    handler = logging.handlers.RotatingFileHandler(
-        'teredo.log', maxBytes=1024 * 256, backupCount=0)
-    handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
-    logging.getLogger('teredo').addHandler(handler)
+    # handler = logging.handlers.RotatingFileHandler(
+    #     'teredo.log', maxBytes=1024 * 256, backupCount=0)
+    # handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+    # logging.getLogger('teredo').addHandler(handler)
 
     # import _multiprocessing
     # fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)

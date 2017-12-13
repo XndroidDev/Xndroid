@@ -87,8 +87,7 @@ def sock_init_vpn(self, family=socket.AF_INET, type=socket.SOCK_STREAM, proto=0,
     if protect_socket == False \
             or vpn_mode == False \
             or type != socket.SOCK_DGRAM \
-            or self.family != socket.AF_INET \
-            or addr[0] == '127.0.0.1':
+            or family != socket.AF_INET:
         original_socket_init(self, family, type, proto, _sock)
         return
     fdsock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)

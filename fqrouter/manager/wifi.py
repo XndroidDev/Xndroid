@@ -675,6 +675,10 @@ def setup_networking(hotspot_interface):
         shell_execute('%s dnsmasq' % KILLALL_PATH)
     except:
         LOGGER.exception('failed to killall dnsmasq')
+    try:
+        shell_execute('%s route add 10.24.1.0/24 dev %s table local' % (IP_PATH, hotspot_interface))
+    except:
+        LOGGER.warning('failed to add route for %s' % hotspot_interface)
     shell_execute('%s -i %s --dhcp-authoritative --no-negcache --user=root --no-resolv --no-hosts '
                   '--server=8.8.8.8 --dhcp-range=10.24.1.2,10.24.1.254,12h '
                   '--dhcp-leasefile=%s/dnsmasq.leases '

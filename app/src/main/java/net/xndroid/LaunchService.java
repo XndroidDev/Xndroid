@@ -134,13 +134,19 @@ public class LaunchService extends Service {
     }
 
     private static void pythonInit(){
-        if(new File(sXndroidFile + "/python/bin/python").exists())
-            return;
-        if(!unzipRawFile(R.raw.python, sXndroidFile))
-            AppModel.fatalError("prepare python fail");
-        for(File binFile:new File(sXndroidFile + "/python/bin").listFiles()){
-            binFile.setExecutable(true, false);
+        try {
+            if(new File(sXndroidFile + "/python/bin/python").exists())
+                return;
+            if(!unzipRawFile(R.raw.python, sXndroidFile))
+                AppModel.fatalError("prepare python fail");
+            for(File binFile:new File(sXndroidFile + "/python/bin").listFiles()){
+                binFile.setExecutable(true, false);
+            }
+        }catch (Exception e){
+            LogUtils.e("pythonInit fail", e);
+            AppModel.fatalError("init python fail: " + e.toString());
         }
+
     }
 
     private static Boolean _modeChosen = null;
@@ -322,16 +328,20 @@ public class LaunchService extends Service {
     private static void updateEnvEarly(){
         if(AppModel.sLastVersion == 0 || AppModel.sLastVersion == AppModel.sVersionCode)
             return;
-        new File(sXndroidFile + "/busybox").delete();
-        new File(sXndroidFile + "/busybox_for_o").delete();
+        if(AppModel.sLastVersion < 13) {
+            new File(sXndroidFile + "/busybox").delete();
+            new File(sXndroidFile + "/busybox_for_o").delete();
+        }
     }
 
     private static void updataEnv(){
         if(AppModel.sLastVersion == 0 || AppModel.sLastVersion == AppModel.sVersionCode)
             return;
-        ShellUtils.execBusybox("rm -r " + sXndroidFile + "/python");
         ShellUtils.execBusybox("rm -r " + sXndroidFile + "/fqrouter");
-        ShellUtils.execBusybox("rm -r " + sXndroidFile + "/xxnet");
+        if(AppModel.sLastVersion < 13) {
+            ShellUtils.execBusybox("rm -r " + sXndroidFile + "/python");
+            ShellUtils.execBusybox("rm -r " + sXndroidFile + "/xxnet");
+        }
     }
 
     private void launch(){

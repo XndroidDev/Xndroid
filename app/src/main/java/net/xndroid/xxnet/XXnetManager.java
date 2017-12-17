@@ -59,21 +59,28 @@ public class XXnetManager {
 
     private static boolean _networkResult = false;
     public static boolean checkNetwork(){
-        final String url = "https://www.baidu.com/duty/copyright.html";
+        _networkResult = false;
         try {
-            for(int i=0;i<3;i++){
-                _networkResult = false;
-                Thread thread = new Thread(new Runnable() {
+            String[] urls = new String[]{
+                    "https://www.baidu.com/duty/copyright.html",
+                    "https://www.zhihu.com/",
+                    "https://www.taobao.com/tbhome/page/about/home",
+                    "http://www.iqiyi.com/common/copyright.html",
+                    "http://www.sogou.com"
+            };
+
+            for(final String url: urls){
+                new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        if(HttpJson.get(url).length() > 0) {
+                        if(HttpJson.get(url, null).length() > 0){
                             _networkResult = true;
-                            return;
                         }
                     }
-                });
-                thread.start();
-                thread.join(1200);
+                }).start();
+            }
+            for(int i=0;i<20;i++){
+                Thread.sleep(200);
                 if(_networkResult)
                     return true;
             }
@@ -246,7 +253,7 @@ public class XXnetManager {
     }
 
     public static boolean waitReady(){
-        for(int i=0;i < 16;i++){
+        for(int i=0;i < 20;i++){
             if(updateAttribute()) {
                 autoImportCA();
                 return true;

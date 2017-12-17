@@ -102,7 +102,7 @@ def handle_update_http_gateway_config(environ, start_response):
 def handle_enable_wifi_repeater(environ, start_response):
     config = config_file.read_config()
     if spi_wifi_repeater:
-        error = spi_wifi_repeater['start'](config['wifi_repeater']['ssid'], config['wifi_repeater']['password'])
+        error = spi_wifi_repeater['start'](config['wifi_repeater']['ssid'], config['wifi_repeater']['password'], config['wifi_repeater']['chipset'])
     else:
         error = 'unsupported'
     start_response(httplib.OK, [('Content-Type', 'text/plain')])
@@ -134,6 +134,7 @@ def handle_update_wifi_repeater_config(environ, start_response):
         return ['Wifi repeater is unsupported']
     ssid = environ['REQUEST_ARGUMENTS']['ssid'].value
     password = environ['REQUEST_ARGUMENTS']['password'].value
+    chipset = environ['REQUEST_ARGUMENTS']['chipset'].value
     if not ssid:
         return [environ['select_text']('SSID must not be empty', 'SSID不能为空')]
     if not password:
@@ -144,15 +145,16 @@ def handle_update_wifi_repeater_config(environ, start_response):
     def apply(config):
         config['wifi_repeater']['ssid'] = ssid
         config['wifi_repeater']['password'] = password
+        config['wifi_repeater']['chipset'] = chipset
 
     config_file.update_config(apply)
-    if spi_wifi_repeater['is_started']():
-        error = spi_wifi_repeater['stop']()
-        if error:
-            return [error]
-        error = spi_wifi_repeater['start']()
-        if error:
-            return [error]
+    # if spi_wifi_repeater['is_started']():
+    #     error = spi_wifi_repeater['stop']()
+    #     if error:
+    #         return [error]
+    #     error = spi_wifi_repeater['start']()
+    #     if error:
+    #         return [error]
     return []
 
 

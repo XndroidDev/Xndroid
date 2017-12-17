@@ -121,20 +121,21 @@ def stop_hotspot():
             shell_execute('netcfg %s up' % WIFI_INTERFACE)
         except:
             LOGGER.exception('failed to reload STA firmware')
-        if working_hotspot_iface:
-            try:
-                shell_execute('%s dev %s del' % (IW_PATH, working_hotspot_iface))
-            except:
-                LOGGER.exception('failed to delete wifi interface')
-            return ''
-        else:
-            return ''
+        # if working_hotspot_iface:
+        #     try:
+        #         shell_execute('%s dev %s del' % (IW_PATH, working_hotspot_iface))
+        #     except:
+        #         LOGGER.exception('failed to delete wifi interface')
+        #     return ''
+        # else:
+        #     return ''
+        return ''
     except:
         LOGGER.exception('failed to stop hotspot')
         return 'failed to stop hotspot'
 
 
-def start_hotspot(ssid, password):
+def start_hotspot(ssid, password, chipset=None):
     global has_started_before
     has_started_before = True
     try:
@@ -153,7 +154,12 @@ def start_hotspot(ssid, password):
             dump_wifi_status()
             LOGGER.info('=== Start Hotspot ===')
             enable_ipv4_forward()
-            wifi_chipset_family, wifi_chipset_model = get_wifi_chipset()
+            if chipset:
+                LOGGER.info('use chosen chipset %s' % chipset)
+                wifi_chipset_family = chipset
+                wifi_chipset_model = 'UNKNOW'
+            else:
+                wifi_chipset_family, wifi_chipset_model = get_wifi_chipset()
             LOGGER.info('chipset is: %s %s' % (wifi_chipset_family, wifi_chipset_model))
             if 'unsupported' == wifi_chipset_family:
                 return 'wifi chipset [%s] is not supported' % wifi_chipset_model
@@ -678,11 +684,21 @@ def setup_networking(hotspot_interface):
     try:
         shell_execute('%s route add 10.24.1.0/24 dev %s table local' % (IP_PATH, hotspot_interface))
     except:
-        LOGGER.warning('failed to add route for %s' % hotspot_interface)
-    shell_execute('%s -i %s --dhcp-authoritative --no-negcache --user=root --no-resolv --no-hosts '
+        LOGGER.exception('failed to add route for %s' % hotspot_interface)
+    fail_flag = [False]
+    def run_dnsmasq():
+        try:
+            shell_execute('%s -i %s --dhcp-authoritative --no-negcache --user=root --no-resolv --no-hosts '
                   '--server=8.8.8.8 --dhcp-range=10.24.1.2,10.24.1.254,12h '
                   '--dhcp-leasefile=%s/dnsmasq.leases '
                   '--pid-file=%s/dnsmasq.pid' % (DNSMASQ_PATH, hotspot_interface, home_path, home_path))
+        except:
+            fail_flag[0] = True
+            LOGGER.exception('execute dnsmasq fail')
+    greenlet = gevent.spawn(run_dnsmasq)
+    greenlet.join(2)
+    if fail_flag[0]:
+        raise Exception('run dnsmasq fail')
     log_upstream_wifi_status('after setup networking', control_socket_dir)
 
 

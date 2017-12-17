@@ -19,7 +19,7 @@ import java.util.Map;
 public class HttpJson {
 
     static {
-        System.setProperty("sun.net.client.defaultConnectTimeout", "1200");
+        System.setProperty("sun.net.client.defaultConnectTimeout", "1500");
         System.setProperty("sun.net.client.defaultReadTimeout", "8000");
     }
 
@@ -56,7 +56,7 @@ public class HttpJson {
         try {
             URL realUrl = new URL(url);
             URLConnection connection = realUrl.openConnection();
-            connection.setConnectTimeout(1200);
+            connection.setConnectTimeout(1500);
             connection.setReadTimeout(12000);
             connection.setRequestProperty("accept", "*/*");
 //            connection.setRequestProperty("Referer", "http://127.0.0.1/");
@@ -108,18 +108,18 @@ public class HttpJson {
 
     }
 
-    public static String get(String urlStr)
-    {
+    public static String get(String urlStr, String ref){
         //LogUtils.defaultLogWrite("get", urlStr);
         InputStream input = null;
         try {
             URL url = new URL(urlStr);
             URLConnection connection = url.openConnection();
-            connection.setConnectTimeout(1200);
+            connection.setConnectTimeout(1500);
             connection.setReadTimeout(8000);
             connection.setRequestProperty("accept", "*/*");
-//            connection.setRequestProperty("Referer", "http://127.0.0.1/");
-            connection.setRequestProperty("Referer", "http://127.0.0.1:8085/?module=gae_proxy");
+            if(ref != null) {
+                connection.setRequestProperty("Referer", ref);
+            }
             connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.75 Safari/537.36");
             connection.connect();
             input = connection.getInputStream();
@@ -128,15 +128,18 @@ public class HttpJson {
 //            LogUtils.e("get fail:" + e.getMessage() + "url:" + urlStr, e);
             LogUtils.d("get fail:" + e.getMessage() + " url: " + urlStr);
         }finally {
-            if(input != null)
-                try {
-                    if(input != null)
-                        input.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+            try {
+                if(input != null)
+                    input.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         return "";
+    }
+
+    public static String get(String urlStr){
+        return get(urlStr, "http://127.0.0.1:8085/?module=gae_proxy");
     }
 
     public static JSONObject getJson(String url)

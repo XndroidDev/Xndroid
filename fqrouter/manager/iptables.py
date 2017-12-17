@@ -6,7 +6,7 @@ import shell
 LOGGER = logging.getLogger('fqrouter.%s' % __name__)
 RE_CHAIN_NAME = re.compile(r'Chain (.+) \(')
 RE_SPACE = re.compile(r'\s+')
-
+tables = {}
 
 def insert_rules(rules, to_fq_chain=True):
     for signature, rule_args in reversed(rules): # insert the last one first
@@ -41,11 +41,14 @@ def update_rule_args(rule_args):
 
 
 def flush_fq_chain():
+    global tables
+    tables = {}
     for table in ('filter', 'nat'):
         rules = dump_table(table)
         for chain, chain_rules in rules.items():
             if chain.startswith('fq_'):
                 shell.call(shlex.split('iptables -t %s --flush %s' % (table, chain)))
+    tables = {}
 
 
 def init_fq_chains():
@@ -116,11 +119,15 @@ def contains_rule(table, chain, signature):
 
 
 def dump_table(table):
+    if tables and tables.has_key(table):
+        return tables[table]
     command = 'iptables -t %s -L -v -n' % table
     LOGGER.debug('command: %s' % command)
     output = shell.check_output(shlex.split(command))
     LOGGER.debug('output: %s' % output)
-    return parse(output)
+    res = parse(output)
+    tables[table] = res
+    return res
 
 
 def parse(output):
@@ -150,7 +157,7 @@ def parse(output):
                 rule['pkts'], rule['bytes'], rule['target'], rule['prot'], rule['opt'], \
                 rule['iface_in'], rule['iface_out'], rule['source'], rule['destination'] = parts[:9]
                 rule['extra'] = ' '.join(parts[9:])
-                LOGGER.debug('parsed rule: %s' % str(rule))
+                # LOGGER.debug('parsed rule: %s' % str(rule))
                 rules.setdefault(current_chain, []).append(rule)
         return rules
     except:

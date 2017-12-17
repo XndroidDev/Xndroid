@@ -235,7 +235,7 @@ public class FqrouterManager {
 
 
     public static boolean waitReady(){
-        for(int i=0;i<(AppModel.sIsRootMode?35:18);i++){
+        for(int i=0;i<(AppModel.sIsRootMode?25:20);i++){
             if(ping()) {
                 watchFqrouter();
                 return true;

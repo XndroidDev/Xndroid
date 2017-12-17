@@ -876,9 +876,19 @@
                         <input type="text" class="form-control" id="wifi-repeater-password"
                                value="{{ config['wifi_repeater']['password'] }}">
                     </div>
+                    <div class="form-group">
+                        <label for="wifi-repeater-chipset">{{ _('ChipSet', '芯片类型') }}</label>
+                        <select name="chipset" class="form-control" id="wifi-repeater-chipset">
+                            <option value="">{{ _('Auto detect','自动检测') }}</option>
+                            <option value="bcm">Broadcom</option>
+                            <option value="wcnss">WCNSS(Qualcomm)</option>
+                            <option value="ti">TI</option>
+                            <option value="mtk">MTK</option>
+                        </select>
+                    </div>
                 </form>
                 <div>
-                    <h5>{{ _('In some phone model, you need to manually disable the android wifi p2p service by clicking the button below to make the wifi repeater work', '有些机型需要点下面的按钮手工禁用系统自带的WIFI P2P服务才可以正常启动无线中继') }}</h5>
+                    <h5>{{ _('You should choose auto detect generally, however you can choose a kind of chip and try again if it can not work. In some phone model, you need to manually disable the android wifi p2p service by clicking the button below to make the wifi repeater work', '通常芯片类型选择 自动检测 即可, 如果你的手机芯片型号不被支持, 但还想再试试, 就可以手动选择一类芯片. 有些机型需要点下面的按钮手工禁用系统自带的WIFI P2P服务才可以正常启动无线中继') }}</h5>
                     <button class="btn btn-default" id="disable-wifi-p2p">{{ _('Disable Wifi P2P', '关闭系统的WIFI P2P') }}</button>
                     <button class="btn btn-default" id="enable-wifi-p2p">{{ _('Restore Wifi P2P', '复原系统的WIFI P2P') }}</button>
                 </div>
@@ -985,6 +995,7 @@
 <script>
     bootbox.setDefaults({'locale': '{{ _("en", "zh_CN") }}'});
     $(document).ready(function () {
+        $('#wifi-repeater-chipset').val('{{ config['wifi_repeater']['chipset'] }}')
         // Show or hide the sticky footer button
         $(window).scroll(function() {
             if ($(this).scrollTop() > 200) {
@@ -1357,7 +1368,7 @@
 
         $('#wifi-repeater-dialog-reset').click(function () {
             $('#wifi-repeater-dialog').modal('hide');
-            bootbox.confirm('{{ _("Are you sure? It will reset your wifi configuration to fix problem caused by wifi repeater failure. THEN YOU PHONE WILL BE REBOOTED. Use report error button if it does not fix your problem.", "你确定要重置吗？重置无线配置是为了修复无线中继失败导致的无线无法连接的问题。接着会重启你的手机，特别注意！！！使用后如果问题依旧，请点主界面的报告错误按钮") }}',
+            bootbox.confirm('{{ _("Are you sure? It will reset your wifi configuration to fix problem caused by wifi repeater failure. THEN YOU PHONE WILL BE REBOOTED.", "你确定要重置吗？重置无线配置是为了修复无线中继失败导致的无线无法连接的问题。接着会重启你的手机，特别注意！！！") }}',
                     function (result) {
                         if (result) {
                             $.post('/wifi-repeater/reset');
@@ -1373,7 +1384,8 @@
             e.preventDefault();
             var newConfig = {
                 ssid: $('#wifi-repeater-ssid').val(),
-                password: $('#wifi-repeater-password').val()
+                password: $('#wifi-repeater-password').val(),
+                chipset: $('#wifi-repeater-chipset').val()
             };
             $.post('/wifi-repeater/config/update', newConfig, function (error) {
                 if (error) {
@@ -1460,7 +1472,7 @@
                 bootbox.alert('{{ _("Restored", "复原了") }}');
             })
         });
-
+        
 
         showHideSpeed();
         refreshProxyList();

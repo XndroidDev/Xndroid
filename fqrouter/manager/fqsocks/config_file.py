@@ -40,6 +40,7 @@ def DEFAULT_CONFIG():
         },
         'wifi_repeater': {
             'ssid': 'fqrouter',
+            'chipset': '',
             'password': '12345678'
         },
         'upnp': {

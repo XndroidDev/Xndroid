@@ -235,6 +235,7 @@ def init_tun(teredo_ip):
         return
     return fd
 
+
 def redirect_ipv6_packet(tun_fd, teredo_client):
     gevent.socket.wait_read(tun_fd)
     try:
@@ -262,6 +263,7 @@ def needs_su():
 
 
 def run():
+    iptables.tables = {}
     iptables.init_fq_chains()
     shutdown_hook.add(iptables.flush_fq_chain)
     iptables.insert_rules(DNS_RULES)
@@ -321,11 +323,13 @@ def run():
         except:
             LOGGER.exception('failed to start comp_shortcut')
             comp_shortcut.stop()
+    iptables.tables = {}
     fqsocks.fqsocks.main()
 
 
 def clean():
     LOGGER.info('clean...')
+    iptables.tables = {}
     try:
         iptables.flush_fq_chain()
         try:

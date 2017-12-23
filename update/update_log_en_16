@@ -1,0 +1,4 @@
+Xndroid 1.1.5
+    * fix Android 7.0+ no Internet access for 1.1.5
+	# please update, the update function of the old versions will be unavailable
+	

@@ -387,7 +387,7 @@ public class LaunchService extends Service {
         if(AppModel.sLastVersion < 13) {
             ShellUtils.execBusybox("rm -r " + sXndroidFile + "/xxnet");
         }
-        if(AppModel.sLastVersion <= 14){
+        if(AppModel.sLastVersion < 16){
             ShellUtils.execBusybox("rm -r " + sXndroidFile + "/python");
         }
     }

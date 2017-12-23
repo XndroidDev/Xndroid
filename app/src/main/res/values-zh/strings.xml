@@ -121,4 +121,12 @@
     <string name="install_new_tip">开始安装新版本. 旧版本会被保存到 \'/sdcard/xndroid-old.apk\'. 如果新版不可用, 请导出日志并退回旧版. 建议安装新版前先正常退出应用, 以保证顺利更新.</string>
     <string name="no_full_function">Root后可以使用完整的功能.</string>
     <string name="import_user_certificate">导入为用户证书</string>
+    <string name="stable_b">(稳定版)</string>
+    <string name="test_b">(测试版)</string>
+    <string name="update_policy">更新策略</string>
+    <string name="update_policy_tip">请选择更新策略. 建议更新到最新版, 以帮助项目及时发现可能存在的bug. </string>
+    <string name="notice_latest">提醒最新版</string>
+    <string name="notice_stable">提醒稳定版</string>
+    <string name="no_update">不要提醒</string>
+    <string name="update_setting">更新设置</string>
 </resources>

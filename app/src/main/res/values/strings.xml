@@ -121,4 +121,12 @@
     <string name="install_new_tip">Start to install the new version. The old version will de copied to \'/sdcard/xndroid-old.apk\'. Report the logs and rollback to old version if the new version is unusable. It\'s advised to exit this APP before update.</string>
     <string name="no_full_function">You can use full functions with root.</string>
     <string name="import_user_certificate">import user certificate</string>
+    <string name="stable_b">(stable)</string>
+    <string name="test_b">(test)</string>
+    <string name="update_policy">update policy</string>
+    <string name="update_policy_tip">Please select update policy. </string>
+    <string name="notice_latest">notice latest</string>
+    <string name="notice_stable">notice stable</string>
+    <string name="no_update">don\'t update</string>
+    <string name="update_setting">update setting</string>
 </resources>

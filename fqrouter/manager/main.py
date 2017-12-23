@@ -183,8 +183,8 @@ def init_tun(teredo_ip):
     shell_execute('ip rule')
     shell_execute('ip addr')
     shell_execute('ip -f inet6 route list')
-    shell_execute('ifconfig')
-    shell_execute('route -A inet6')
+    shell_execute_busybox('ifconfig')
+    shell_execute_busybox('route -A inet6')
     # prepare environment
     shell_execute_busybox('mkdir /dev/net')
     shell_execute_busybox('ln -s /dev/tun /dev/net/tun')
@@ -204,7 +204,7 @@ def init_tun(teredo_ip):
         elif os.path.exists('/dev/net/tun'):
             fd = os.open('/dev/net/tun', os.O_RDWR)
         else:
-            LOGGER.error('tun not exit')
+            LOGGER.error('tun not exist')
             return
         if fd < 0:
             LOGGER.error('open tun fail')

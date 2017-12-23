@@ -246,6 +246,8 @@ public class MainActivity extends AppCompatActivity
                     XXnetManager.cleanSystemCert();
                 }
             }).start();
+        }else if(id == R.id.action_update_setting){
+            UpdateManager.setUpdatePolicy(this);
         }
         else {
             return super.onOptionsItemSelected(item);

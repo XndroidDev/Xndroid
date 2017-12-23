@@ -7,6 +7,7 @@ import android.security.KeyChain;
 
 import net.xndroid.AppModel;
 import net.xndroid.R;
+import net.xndroid.utils.FileUtils;
 import net.xndroid.utils.HttpJson;
 import net.xndroid.utils.LogUtils;
 import net.xndroid.utils.ShellUtils;
@@ -241,7 +242,7 @@ public class XXnetManager {
     }
 
     public static void prepare(){
-        if(new File(sXndroidFile + "/xxnet/code/default/launcher/start.py").exists())
+        if(FileUtils.exists(sXndroidFile + "/xxnet/code/default/launcher/start.py"))
             return;
         if(!unzipRawFile(R.raw.xxnet, sXndroidFile))
             AppModel.fatalError("prepare XX-Net fail");
@@ -253,7 +254,7 @@ public class XXnetManager {
     }
 
     public static boolean waitReady(){
-        for(int i=0;i < 20;i++){
+        for(int i=0;i < 25;i++){
             if(updateAttribute()) {
                 autoImportCA();
                 return true;
@@ -270,7 +271,7 @@ public class XXnetManager {
 
     private static void autoImportCA(){
         String certPath = AppModel.sXndroidFile + "/xxnet/data/gae_proxy/CA.crt";
-        if(!new File(certPath).exists())
+        if(!FileUtils.exists(certPath))
             return;
         String md5 = ShellUtils.execBusybox("md5sum " + certPath + " | " + ShellUtils.sBusyBox + " cut -c 1-32").trim();
         String lastMd5 = AppModel.sPreferences.getString(PER_CA_MD5, "");
@@ -341,10 +342,15 @@ public class XXnetManager {
         }
         String certPath = AppModel.sXndroidFile + "/xxnet/data/gae_proxy/CA.crt";
         ShellUtils.execBusybox("chmod 777 " + certPath);
+        ShellUtils.execBusybox("cp -f " + certPath + " /sdcard/XX-Net.crt");
         if(!new File(certPath).exists()){
-            LogUtils.e("importCert fail, file not exist");
-            AppModel.showToast("import certificate fail, file not exist");
-            return;
+            if(new File("/sdcard/XX-Net.crt").exists()){
+                certPath = "/sdcard/XX-Net.crt";
+            }else {
+                LogUtils.e("importCert fail, file not exist");
+                AppModel.showToast("import certificate fail, file not exist");
+                return;
+            }
         }
         String subjectHash = getSubjectHash(certPath);
         if(subjectHash == null){
@@ -365,16 +371,20 @@ public class XXnetManager {
 
         String md5 = ShellUtils.execBusybox("md5sum " + certPath + " | " + ShellUtils.sBusyBox + " cut -c 1-32").trim();
         AppModel.sPreferences.edit().putString(PER_CA_MD5, md5).apply();
-        ShellUtils.execBusybox("cp -f " + certPath + " /sdcard/XX-Net.crt");
     }
 
     public static void importCert(){
         String certPath = AppModel.sXndroidFile + "/xxnet/data/gae_proxy/CA.crt";
         ShellUtils.execBusybox("chmod 777 " + certPath);
+        ShellUtils.execBusybox("cp -f " + certPath + " /sdcard/XX-Net.crt");
         if(!new File(certPath).exists()){
-            LogUtils.e("importCert fail, file not exist");
-            AppModel.showToast("import certificate fail, file not exist");
-            return;
+            if(new File("/sdcard/XX-Net.crt").exists()){
+                certPath = "/sdcard/XX-Net.crt";
+            }else {
+                LogUtils.e("importCert fail, file not exist");
+                AppModel.showToast("import certificate fail, file not exist");
+                return;
+            }
         }
         AppModel.showToast(AppModel.sService.getString(R.string.import_cert_tip)
                 + (Build.VERSION.SDK_INT>23?( sContext.getString(R.string.import_cert_7tip)):"" ));
@@ -394,7 +404,6 @@ public class XXnetManager {
 
         String md5 = ShellUtils.execBusybox("md5sum " + certPath + " | " + ShellUtils.sBusyBox + " cut -c 1-32").trim();
         AppModel.sPreferences.edit().putString(PER_CA_MD5, md5).apply();
-        ShellUtils.execBusybox("cp -f " + certPath + " /sdcard/XX-Net.crt");
 
     }
 

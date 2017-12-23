@@ -16,6 +16,8 @@ import net.xndroid.utils.ShellUtils;
 
 import java.io.File;
 
+import static net.xndroid.AppModel.sContext;
+
 class DownloadReceiver extends BroadcastReceiver{
 
     @Override
@@ -29,10 +31,10 @@ class DownloadReceiver extends BroadcastReceiver{
                     callIntent.setDataAndType(Uri.parse("file://"+ UpdateManager.sDownloadPath), "application/vnd.android.package-archive");
                     callIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK );
                     context.startActivity(callIntent);
-                    if(AppModel.sContext != null) {
+                    if(sContext != null) {
                         String oldApkPath = context.getApplicationContext().getPackageResourcePath();
                         ShellUtils.execBusybox("cp -f " + oldApkPath + " " + "/sdcard/xndroid-old.apk");
-                        AppModel.showToast(AppModel.sContext.getString(R.string.install_new_tip));
+                        AppModel.showToast(sContext.getString(R.string.install_new_tip));
                     }
                 }
             }
@@ -44,14 +46,46 @@ class DownloadReceiver extends BroadcastReceiver{
 public class UpdateManager {
 
     public static final String PER_IGNORE_VERSION = "XNDROID_IGNORE_VERSION";
+    public static final String PER_UPDATE_POLICY = "XNDROID_UPDATE_POLICY";
+    public static final int UPDATE_ALL = 2;
+    public static final int UPDATE_STABLE = 1;
+    public static final int UPDATE_OFF = 0;
 
-    private static final String sUpdateUrl =  "https://raw.githubusercontent.com/XndroidDev/Xndroid/master/update";
+    public static String sDownloadPath = "";
+    public static long sDownloadId = 0;
+    private static boolean sStableVersion = true;
+    private static String sVersionName = "";
 
+    private static final String sUpdateUrl =  "https://raw.githubusercontent.com/XndroidDev/Xndroid-update/master/update";
+
+    public static void setUpdatePolicy(Context context){
+        new AlertDialog.Builder(context).setTitle(R.string.update_policy)
+                .setMessage(R.string.update_policy_tip)
+                .setPositiveButton(R.string.notice_latest, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        AppModel.sPreferences.edit().putInt(PER_UPDATE_POLICY, UPDATE_ALL).apply();
+                    }
+                }).setNeutralButton(R.string.notice_stable, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        AppModel.sPreferences.edit().putInt(PER_UPDATE_POLICY, UPDATE_STABLE).apply();
+                    }
+                }).setNegativeButton(R.string.no_update, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        AppModel.sPreferences.edit().putInt(PER_UPDATE_POLICY, UPDATE_OFF).apply();
+                    }
+                }).create().show();
+    }
 
     private static String getUpdateLog(int version){
         boolean chinese = AppModel.sLang.startsWith("zh");
         String log = "";
         int curVersion = AppModel.sVersionCode;
+        if(AppModel.sDebug){
+            curVersion--;
+        }
         while (curVersion++ < version){
             log += HttpJson.get(sUpdateUrl + "/update_log_" +
                     (chinese ? "zh" : "en") + "_" + curVersion);
@@ -60,40 +94,47 @@ public class UpdateManager {
         return log;
     }
 
-    public static String sDownloadPath = "";
-    public static long sDownloadId = 0;
-
     private static void doUpdate()
     {
-        AppModel.sContext.registerReceiver(new DownloadReceiver(),
+        sContext.registerReceiver(new DownloadReceiver(),
                 new IntentFilter("android.intent.action.DOWNLOAD_COMPLETE" ));
-
-        DownloadManager.Request request = new DownloadManager.Request(Uri.parse
-                ("https://raw.githubusercontent.com/XndroidDev/Xndroid/master/update/app-release.apk"));
+        String url = "https://raw.githubusercontent.com/XndroidDev/Xndroid-update/master/update/app-debug.apk";
+        if(sStableVersion){
+            url = "https://github.com/XndroidDev/Xndroid/releases/download/" + sVersionName + "/app-release.apk";
+        }
+        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
         request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI);
         request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
-        request.setTitle(AppModel.sContext.getString(R.string.updating_xndroid));
-        request.setDescription(AppModel.sContext.getString(R.string.downloading_xndroid));
+        request.setTitle(sContext.getString(R.string.updating_xndroid));
+        request.setDescription(sContext.getString(R.string.downloading_xndroid));
         String dir = "update";
         String apk = "Xndroid.apk";
-        request.setDestinationInExternalFilesDir(AppModel.sContext, dir ,apk);
-        sDownloadPath =AppModel.sContext.getExternalFilesDir(null)+"/"+ dir+"/"+apk;
+        request.setDestinationInExternalFilesDir(sContext, dir ,apk);
+        sDownloadPath = sContext.getExternalFilesDir(null)+"/"+ dir+"/"+apk;
         File file = new File(sDownloadPath);
         if(file.isFile())
             file.delete();
-        DownloadManager downManager = (DownloadManager)AppModel.sContext.getSystemService(Context.DOWNLOAD_SERVICE);
+        DownloadManager downManager = (DownloadManager) sContext.getSystemService(Context.DOWNLOAD_SERVICE);
         sDownloadId = downManager.enqueue(request);
     }
 
 
     private static void showUpdate(final int version){
         //this code don't run in main thread
-        String versionName = "0.0.0";
+        String versionName = "";
         String versionLog = "";
-        if(version > AppModel.sVersionCode) {
+        if(sStableVersion){
             versionName = HttpJson.get(sUpdateUrl + "/latest_version_name");
-            versionLog = getUpdateLog(version);
+        }else {
+            versionName = HttpJson.get(sUpdateUrl + "/latest_debug_name");
         }
+        if(versionName.isEmpty()){
+            LogUtils.e("fail to get version name");
+            AppModel.showToast(sContext.getString(R.string.get_version_fail));
+            return;
+        }
+        versionLog = getUpdateLog(version);
+        sVersionName = versionName;
 
         final String finalVersionLog = versionLog;
         final String finalVersionName = versionName;
@@ -103,13 +144,14 @@ public class UpdateManager {
             @Override
             public void run() {
                 AlertDialog.Builder builder = new AlertDialog.Builder(AppModel.sActivity);
-                if(version > AppModel.sVersionCode){
-                    builder.setTitle(AppModel.sContext.getString(R.string.find_new_version) + finalVersionName);
+                if(version > AppModel.sVersionCode || (AppModel.sDebug && sStableVersion && version == AppModel.sVersionCode)){
+                    builder.setTitle(sContext.getString(R.string.find_new_version) + finalVersionName
+                            + (sStableVersion?sContext.getString(R.string.stable_b): sContext.getString(R.string.test_b)));
                     builder.setMessage(finalVersionLog);
                     builder.setPositiveButton(R.string.update, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            AppModel.showToast(AppModel.sContext.getString(R.string.update_xndroid_to) + finalVersionName);
+                            AppModel.showToast(sContext.getString(R.string.update_xndroid_to) + finalVersionName);
                             LogUtils.i("update Xndroid to " + version);
                             doUpdate();
                         }
@@ -117,7 +159,7 @@ public class UpdateManager {
                     builder.setNeutralButton(R.string.ignore, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            AppModel.showToast(AppModel.sContext.getString(R.string.ignore_version) + finalVersionName);
+                            AppModel.showToast(sContext.getString(R.string.ignore_version) + finalVersionName);
                             LogUtils.i("ignore version " + version);
                             AppModel.sPreferences.edit().putInt(PER_IGNORE_VERSION, version).commit();
                         }
@@ -145,6 +187,8 @@ public class UpdateManager {
             if (!checkall) {
                 if (version <= AppModel.sVersionCode)
                     return;
+                if(AppModel.sPreferences.getInt(PER_UPDATE_POLICY, UPDATE_ALL) == UPDATE_OFF)
+                    return;
                 int ignoreVersion = AppModel.sPreferences.getInt(PER_IGNORE_VERSION, 0);
                 if (ignoreVersion == version)
                     return;
@@ -152,7 +196,7 @@ public class UpdateManager {
             if(AppModel.sIsForeground) {
                 showUpdate(version);
             }else {
-                AppModel.showToast(AppModel.sContext.getString(R.string.find_new_version) + version + AppModel.sContext.getString(R.string.update_tip));
+                AppModel.showToast(sContext.getString(R.string.find_new_version) + version + sContext.getString(R.string.update_tip));
             }
         }catch (Exception e){
             AppModel.showToast("checkUpdate error");
@@ -160,20 +204,31 @@ public class UpdateManager {
         }
     }
 
+
     private static int getXndroidLatestVersion(){
+        int version = 0;
+        int versionDebug = 0;
+        String versionDebugStr = "";
         String versionStr = HttpJson.get(sUpdateUrl + "/latest_version_code");
         if(versionStr.length() == 0){
             versionStr = HttpJson.get(sUpdateUrl + "/latest_version_code");
         }
-        if(versionStr.length() == 0)
-            return 0;
-        int version = 0;
+        if(AppModel.sPreferences.getInt(PER_UPDATE_POLICY, UPDATE_ALL) == UPDATE_ALL){
+            versionDebugStr = HttpJson.get(sUpdateUrl + "/latest_debug_code");
+            if(versionDebugStr.length() == 0){
+                versionDebugStr = HttpJson.get(sUpdateUrl + "/latest_debug_code");
+            }
+        }
         try {
-            version = Integer.parseInt(versionStr);
+            if(versionStr.length() > 0)
+                version = Integer.parseInt(versionStr);
+            if(versionDebugStr.length() > 0)
+                versionDebug = Integer.parseInt(versionDebugStr);
         }catch (Exception e){
             e.printStackTrace();
         }
-        return version;
+        sStableVersion = (version >= versionDebug);
+        return (version >= versionDebug ? version : versionDebug);
     }
 }
 

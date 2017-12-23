@@ -10,6 +10,7 @@ import android.util.Log;
 import net.xndroid.AppModel;
 import net.xndroid.LaunchService;
 import net.xndroid.R;
+import net.xndroid.utils.FileUtils;
 import net.xndroid.utils.HttpJson;
 import net.xndroid.utils.LogUtils;
 import net.xndroid.utils.ShellUtils;
@@ -71,11 +72,11 @@ public class FqrouterManager {
 
     public static void prepareFqrouter(){
         String vpnPath = sXndroidFile + "/fqrouter/manager/vpn.py";
-        if(!new File(vpnPath).exists()) {
+        if(!FileUtils.exists(vpnPath)) {
             if (!LaunchService.unzipRawFile(R.raw.fqrouter, sXndroidFile))
                 AppModel.fatalError("prepare fqrouter fail");
             if(Build.VERSION.SDK_INT >= 21){
-                if(new File(sXndroidFile + "/fqrouter/wifi-tools-pie").exists()){
+                if(FileUtils.exists(sXndroidFile + "/fqrouter/wifi-tools-pie")){
                     ShellUtils.execBusybox("rm -r " + sXndroidFile + "/fqrouter/wifi-tools");
                     ShellUtils.execBusybox("mv " + sXndroidFile + "/fqrouter/wifi-tools-pie "
                             + sXndroidFile + "/fqrouter/wifi-tools");
@@ -134,22 +135,24 @@ public class FqrouterManager {
                 int errorLen = 0;
                 String cmd = "";
                 if(AppModel.sIsRootMode){
-                    cmd = "cd " + sXndroidFile + " \n" +
-                            "export PATH=" + sXndroidFile + ":$PATH\n" +
-                            ((AppModel.sDebug || AppModel.sLastFail) ? "export DEBUG=TRUE\n" : "") +
-                            "sh " + sXndroidFile + "/python/bin" +
-                            (Build.VERSION.SDK_INT > 17 ? "/python-launcher.sh " : "/python-launcher-nopie.sh ") +
-                            sXndroidFile + "/fqrouter/manager/main.py run " +
-                            " > " + sXndroidFile + "/log/fqrouter-output.log 2>&1 \nexit\n";
+                    cmd = "cd " + sXndroidFile + " \n"
+                            + "export PATH=" + sXndroidFile + ":$PATH\n"
+//                            + "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/vendor/lib64:/vendor/lib:/system/lib64:/system/lib\n"
+                            + ((AppModel.sDebug || AppModel.sLastFail) ? "export DEBUG=TRUE\n" : "")
+                            + "sh " + sXndroidFile + "/python/bin"
+                            + (Build.VERSION.SDK_INT > 17 ? "/python-launcher.sh " : "/python-launcher-nopie.sh ")
+                            + sXndroidFile + "/fqrouter/manager/main.py run "
+                            + " > " + sXndroidFile + "/log/fqrouter-output.log 2>&1 \nexit\n";
                 }else {
-                    cmd = "cd " + sXndroidFile + " \n" +
-                        "export PATH=" + sXndroidFile + ":$PATH\n" +
-                        ((AppModel.sDebug || AppModel.sLastFail) ? "export DEBUG=TRUE\n" : "") +
-                        "sh " + sXndroidFile + "/python/bin" +
-                        (Build.VERSION.SDK_INT > 17 ? "/python-launcher.sh " : "/python-launcher-nopie.sh ") +
-                        sXndroidFile + "/fqrouter/manager/vpn.py " +
-                        (Build.VERSION.SDK_INT >= 20 ? " 26.26.26.1 26.26.26.2 " : " 10.25.1.1 10.25.1.2 ") +
-                        " > " + sXndroidFile + "/log/fqrouter-output.log 2>&1 \nexit\n";
+                    cmd = "cd " + sXndroidFile + " \n"
+                            + "export PATH=" + sXndroidFile + ":$PATH\n"
+//                            + "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/vendor/lib64:/vendor/lib:/system/lib64:/system/lib\n"
+                            + ((AppModel.sDebug || AppModel.sLastFail) ? "export DEBUG=TRUE\n" : "")
+                            + "sh " + sXndroidFile + "/python/bin"
+                            + (Build.VERSION.SDK_INT > 17 ? "/python-launcher.sh " : "/python-launcher-nopie.sh ")
+                            + sXndroidFile + "/fqrouter/manager/vpn.py "
+                            + (Build.VERSION.SDK_INT >= 20 ? " 26.26.26.1 26.26.26.2 " : " 10.25.1.1 10.25.1.2 ")
+                            + " > " + sXndroidFile + "/log/fqrouter-output.log 2>&1 \nexit\n";
                 }
                 LogUtils.i("try to start fqrouter, cmd: " + cmd);
                 try {
@@ -158,8 +161,10 @@ public class FqrouterManager {
                     sInStream.write(cmd);
                     sInStream.flush();
                     mProcess.waitFor();
-                    readLen = mProcess.getInputStream().read(output);
-                    errorLen = mProcess.getErrorStream().read(error);
+                    if(mProcess != null) {
+                        readLen = mProcess.getInputStream().read(output);
+                        errorLen = mProcess.getErrorStream().read(error);
+                    }
                     mProcess = null;
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -259,15 +264,16 @@ public class FqrouterManager {
         if(!AppModel.sIsRootMode) {
             sContext.stopService(new Intent(sContext, SocksVpnService.class));
         }
-        if(mProcess != null)
-            if(!quit()) {
+        if(mProcess != null) {
+            if (!quit()) {
                 Log.e("xndroid_log", "quit fqrouter fail");
-                if(mProcess != null) {
+                if (mProcess != null) {
                     Log.w("xndroid_log", "destroy fqrouter process");
                     mProcess.destroy();
                 }
                 mProcess = null;
             }
+        }
     }
 
     public static void cleanIptables(){

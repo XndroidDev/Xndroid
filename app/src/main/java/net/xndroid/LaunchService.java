@@ -14,6 +14,7 @@ import android.os.Build;
 import android.os.IBinder;
 
 import net.xndroid.fqrouter.FqrouterManager;
+import net.xndroid.utils.FileUtils;
 import net.xndroid.utils.GZipUtils;
 import net.xndroid.utils.LogUtils;
 import net.xndroid.utils.ShellUtils;
@@ -121,32 +122,77 @@ public class LaunchService extends Service {
         if(!prepareRawFile(fileId, filePath))
             return false;
         boolean ret = true;
-//        if(Build.VERSION.SDK_INT >= 26){
-//            ret = unzipForO(dirPath, filePath);
-//        }
         String out = ShellUtils.execBusybox("tar -C " + dirPath + " -xvf " + filePath);
         if(ShellUtils.stdErr != null || out.length() < 20){
             ret = unzipForO(dirPath, filePath);
         }
-        ShellUtils.execBusybox("chmod -R 777 " + dirPath);
         new File(filePath).delete();
+        ShellUtils.execBusybox("chmod -R 777 " + dirPath);
+        String parts[] = ShellUtils.execBusybox("ls -ldn " + sXndroidFile).split("\\s+");
+        if(parts.length < 4){
+            LogUtils.e("fail to chown: get uid gid fail");
+        }else {
+            ShellUtils.execBusybox("chown -R " + parts[2] + " " + dirPath);
+            ShellUtils.execBusybox("chgrp -R " + parts[2] + " " + dirPath);
+        }
         return ret;
     }
 
+//    private static void test(){
+//        LogUtils.i("========================begin test======================");
+//        ShellUtils.execBusybox("whoami");
+//        ShellUtils.execBusybox("ls -l " + sXndroidFile);
+//        ShellUtils.execBusybox("ls -l " + sXndroidFile + "/python");
+//        ShellUtils.execBusybox("ls -l " + sXndroidFile + "/python/bin");
+//        ShellUtils.execBusybox("du -a " + sXndroidFile);
+//        File bin = new File(sXndroidFile + "/python/bin");
+//        if(!bin.exists()){
+//            LogUtils.e(sXndroidFile + "/python/bin  not exist!");
+//        }
+//        String[] binstrs = bin.list();
+//        if(binstrs == null){
+//            LogUtils.e("bin.list() == null");
+//        }else {
+//            LogUtils.i("binstrs: " + Arrays.toString(binstrs));
+//        }
+//        File[] binfiles = bin.listFiles();
+//        if(binfiles == null){
+//            LogUtils.e("binfiles == null");
+//        }else {
+//            LogUtils.i("binfiles len: " + binfiles.length);
+//        }
+//        if(new File(sXndroidFile + "/python/bin/python").exists()){
+//            LogUtils.i("python/bin/python canExecute:" + new File(sXndroidFile + "/python/bin/python").canExecute());
+//        }else {
+//            LogUtils.e(sXndroidFile + "/python/bin/python not exist !");
+//        }
+//        if(!new File(sXndroidFile + "/python/bin/python").setExecutable(true, false)){
+//            LogUtils.e("can't set executable");
+//        }
+//        if(new File(sXndroidFile + "/python/bin/python").exists()){
+//            LogUtils.i("python/bin/python canExecute:" + new File(sXndroidFile + "/python/bin/python").canExecute());
+//        }else {
+//            LogUtils.e(sXndroidFile + "/python/bin/python not exist !");
+//        }
+//        ShellUtils.execBusybox("ls -l " + sXndroidFile + "/python/bin");
+//        LogUtils.i("========================end test======================");
+//        AppModel.exportLogs();
+//    }
+
     private static void pythonInit(){
-        try {
-            if(new File(sXndroidFile + "/python/bin/python").exists())
-                return;
-            if(!unzipRawFile(R.raw.python, sXndroidFile))
-                AppModel.fatalError("prepare python fail");
-            for(File binFile:new File(sXndroidFile + "/python/bin").listFiles()){
+        if(FileUtils.exists(sXndroidFile + "/python/bin/python"))
+            return;
+        if(!unzipRawFile(R.raw.python, sXndroidFile))
+            AppModel.fatalError("prepare python fail");
+//        test();
+        File[] files = new File(sXndroidFile + "/python/bin").listFiles();
+        if(files == null){
+            LogUtils.e("fail to list python/bin");
+        }else {
+            for (File binFile : files) {
                 binFile.setExecutable(true, false);
             }
-        }catch (Exception e){
-            LogUtils.e("pythonInit fail", e);
-            AppModel.fatalError("init python fail: " + e.toString());
         }
-
     }
 
     private static Boolean _modeChosen = null;
@@ -339,8 +385,10 @@ public class LaunchService extends Service {
             return;
         ShellUtils.execBusybox("rm -r " + sXndroidFile + "/fqrouter");
         if(AppModel.sLastVersion < 13) {
-            ShellUtils.execBusybox("rm -r " + sXndroidFile + "/python");
             ShellUtils.execBusybox("rm -r " + sXndroidFile + "/xxnet");
+        }
+        if(AppModel.sLastVersion <= 14){
+            ShellUtils.execBusybox("rm -r " + sXndroidFile + "/python");
         }
     }
 

@@ -63,13 +63,18 @@ public class XXnetService extends Service {
             String version = XXnetManager.sXXversion;
             String codePath = sXndroidFile + "/xxnet/code";
             LogUtils.i("XX-Net version is " + version + ", remove useless files");
-            for(File file : new File(codePath).listFiles()){
-                String fileName = file.getName();
-                if(!fileName.equals(version) && !fileName.equals("version.txt")){
-                    ShellUtils.execBusybox("rm -rf " + codePath + "/" +fileName);
+            File[] versions = new File(codePath).listFiles();
+            if(versions == null){
+                LogUtils.e("can't list /xxnet/code");
+            }else {
+                for (File file : versions) {
+                    String fileName = file.getName();
+                    if (!fileName.equals(version) && !fileName.equals("version.txt")) {
+                        ShellUtils.execBusybox("rm -rf " + codePath + "/" + fileName);
+                    }
                 }
+                ShellUtils.execBusybox("ln -s " + codePath + "/" + version + " " + codePath + "/default");
             }
-            ShellUtils.execBusybox("ln -s " + codePath + "/" + version + " " + codePath + "/default");
 			ShellUtils.execBusybox("rm -r " + sXndroidFile + "/xxnet/data/downloads");
             ShellUtils.execBusybox("rm -r " + sXndroidFile + "/xxnet/SwitchyOmega");
 
@@ -80,7 +85,7 @@ public class XXnetService extends Service {
             };
 
             for(String deletepath : deletePaths){
-                rm(codePath + "/" + version + deletepath, null);
+                ShellUtils.execBusybox("rm -r " + codePath + "/" + version + deletepath);
             }
 
             rm(codePath + "/" + version + "/python27",new String[] {"exe", "dll"});
@@ -181,10 +186,11 @@ public class XXnetService extends Service {
                 int readLen = 0;
                 byte[] error = new byte[1024];
                 int errorLen = 0;
-                String cmd = "export LANG=" + AppModel.sLang + " \n"
+                String cmd = "cd " + sXndroidFile + " \n"
+                        + "export LANG=" + AppModel.sLang + " \n"
                         + "export PATH=" + sXndroidFile + ":$PATH\n"
+//                        + "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/vendor/lib64:/vendor/lib:/system/lib64:/system/lib\n"
                         + ((AppModel.sDebug || AppModel.sLastFail)?"export DEBUG=TRUE\n":"")
-                        + "cd " + sXndroidFile + " \n"
                         + "sh " + sXndroidFile + "/python/bin"
                         + (Build.VERSION.SDK_INT >17?"/python-launcher.sh ":"/python-launcher-nopie.sh ")
                         + sXndroidFile + "/xxnet/android_start.py protect_sock "
@@ -197,8 +203,10 @@ public class XXnetService extends Service {
                     sInStream.write(cmd);
                     sInStream.flush();
                     mProcess.waitFor();
-                    readLen = mProcess.getInputStream().read(output);
-                    errorLen = mProcess.getErrorStream().read(error);
+                    if(mProcess != null) {
+                        readLen = mProcess.getInputStream().read(output);
+                        errorLen = mProcess.getErrorStream().read(error);
+                    }
                     mProcess = null;
                 } catch (Exception e) {
                     AppModel.fatalError("XX-Net process fail:" + e.getMessage());
@@ -233,15 +241,16 @@ public class XXnetService extends Service {
     }
 
     public void stopXXnet(){
-        if(mProcess != null)
-            if(!XXnetManager.quit()){
+        if(mProcess != null) {
+            if (!XXnetManager.quit()) {
                 Log.e("xndroid_log", "xxnet quit fail");
-                if(mProcess != null) {
+                if (mProcess != null) {
                     Log.w("xndroid_log", "destroy xxnet");
                     mProcess.destroy();
                 }
                 mProcess = null;
             }
+        }
         stopForeground(true);
         this.stopSelf();
     }

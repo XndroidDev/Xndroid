@@ -9,6 +9,17 @@ import java.util.ListIterator;
 
 public class FileUtils {
 
+    /*File.exists() maybe don't work when run as root on Android 7.0+*/
+    public static boolean exists(String path){
+        if(new File(path).exists())
+            return true;
+        ShellUtils.execBusybox("ls " + path);
+        if(ShellUtils.stdErr == null)
+            return true;
+
+        return false;
+    }
+
     public static void rm(String path, String[] postfixs){
         LogUtils.i("rm path=" + path +",postfixs=" +
                 (postfixs == null ? "null" : Arrays.toString(postfixs)));

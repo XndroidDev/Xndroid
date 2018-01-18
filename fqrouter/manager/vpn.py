@@ -265,7 +265,7 @@ if '__main__' == __name__:
         LOGGER.exception('failed to patch ssl')
 
     teredo_sock = create_teredo_sock_until_ready()
-    teredo_client = teredo.teredo_client(teredo_sock)
+    teredo_client = teredo.teredo_client(teredo_sock, teredo.get_default_teredo_server())
     teredo_ip = None
     try:
         teredo_ip = teredo_client.start()

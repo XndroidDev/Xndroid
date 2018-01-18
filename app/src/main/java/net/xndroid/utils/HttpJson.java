@@ -59,7 +59,6 @@ public class HttpJson {
             connection.setConnectTimeout(1500);
             connection.setReadTimeout(12000);
             connection.setRequestProperty("accept", "*/*");
-//            connection.setRequestProperty("Referer", "http://127.0.0.1/");
             connection.setRequestProperty("Referer", "http://127.0.0.1:8085/?module=gae_proxy");
             connection.setRequestProperty("content-type","application/x-www-form-urlencoded");
             connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.75 Safari/537.36");
@@ -72,8 +71,7 @@ public class HttpJson {
             input = connection.getInputStream();
             return streamToString(input);
         } catch (Exception e) {
-//            LogUtils.e("post fail:" + e.getMessage(), e);
-            LogUtils.d("post fail:" + e.getMessage() + " url: " + url);
+            LogUtils.e("post fail:" + e.getMessage() + " url: " + url, e);
         }
         finally{
             try{

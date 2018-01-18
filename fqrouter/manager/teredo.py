@@ -128,13 +128,16 @@ blank_echo_packet = b'\x60\x00\x00\x00\x00\x0c\x3a\x20\x20\x01\x00\x00\x53\xaa\x
 blank_rs_packet = b'\x60\x00\x00\x00\x00\x08\x3a\xff\xfe\x80\x00\x00\x00\x00\x00\x00\
 \x00\x00\xff\xff\xff\xff\xff\xfe\xff\x02\x00\x00\x00\x00\x00\x00\
 \x00\x00\x00\x00\x00\x00\x00\x02\x85\x00\x7d\x38\x00\x00\x00\x00'
-teredo_servers = ['83.170.6.76','217.17.192.217','157.56.106.184','195.140.195.140']
+teredo_servers = ['157.56.106.184','83.170.6.76','195.140.195.140','217.17.192.217']
 tun_fd = None
 default_teredo_client = None
 
+import fqsocks.config_file
+import config as configure
 import fqsocks.httpd
 import httplib
 import json
+
 
 @fqsocks.httpd.http_handler('GET', 'teredo-state')
 def handle_teredo_state(environ, start_response):
@@ -147,6 +150,43 @@ def handle_teredo_state(environ, start_response):
                         'teredo_ip': socket.inet_ntop(socket.AF_INET6,default_teredo_client.teredo_ip) if default_teredo_client.teredo_ip else 'None',
                         'local_teredo_ip': socket.inet_ntop(socket.AF_INET6,default_teredo_client.local_teredo_ip) if default_teredo_client.local_teredo_ip else 'None'})]
 
+
+@fqsocks.httpd.http_handler('POST', 'teredo-set-server')
+def handle_teredo_set_server(environ, start_response):
+    start_response(httplib.OK, [('Content-Type', 'text/plain')])
+    server = environ['REQUEST_ARGUMENTS']['server'].value
+    if not server:
+        if not default_teredo_client:
+            return
+        server = teredo_servers[(default_teredo_client.server_index + 1) % len(teredo_servers)]
+    if server not in teredo_servers:
+        teredo_servers.insert(0, server)
+    if default_teredo_client:
+        try:
+            default_teredo_client.server_ip = server
+            default_teredo_client.server_index = teredo_servers.index(server)
+            default_teredo_client.qualify_fail_time = 0
+            default_teredo_client.send_qualify(server)
+        except:
+            LOGGER.exception('teredo_set_server fail')
+    LOGGER.info('set teredo server to %s' % server)
+    def apply(config):
+        config['teredo_server'] = server
+    fqsocks.config_file.update_config(apply)
+    return []
+
+
+def get_default_teredo_server():
+    config = fqsocks.config_file._read_config()
+    server = config['teredo_server']
+    if not server:
+        server = teredo_servers[0]
+    else:
+        if server in teredo_servers:
+            teredo_servers.remove(server)
+        teredo_servers.insert(0, server)
+    LOGGER.info('default teredo server is %s' % server)
+    return server
 
 # def check_network():
 #     try:
@@ -163,7 +203,7 @@ def handle_teredo_state(environ, start_response):
 
 
 class teredo_client(object):
-    def __init__(self, sock, server_ip='83.170.6.76', server_second_ip='83.170.6.77', refresh_interval=15):
+    def __init__(self, sock, server_ip='157.56.106.184', server_second_ip='157.56.106.185', refresh_interval=10):
         global default_teredo_client
         default_teredo_client = self
         self.server_ip = server_ip
@@ -420,9 +460,9 @@ class teredo_client(object):
                     # router advertisement
                     teredo_ip,obfuscated_port,obfuscated_ip = self.handle_qualify(indicate_pkt, ipv6_pkt)
                     self.qualified = True
-                    if obfuscated_ip != self.obfuscated_ip or obfuscated_port != self.obfuscated_port:
+                    if obfuscated_ip != self.obfuscated_ip or obfuscated_port != self.obfuscated_port \
+                            or self.teredo_ip[4:8] != teredo_ip[4:8]:
                         LOGGER.warning('mapped ip and port changed')
-                        # self.stopself()
                         self.old_teredo_ip = self.teredo_ip
                         self.teredo_ip = teredo_ip
                         self.obfuscated_port = obfuscated_port

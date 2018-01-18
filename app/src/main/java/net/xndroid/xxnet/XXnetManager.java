@@ -45,6 +45,7 @@ public class XXnetManager {
     public static int sWorkerH1 = 0;
     public static int sWorkerH2 = 0;
     public static boolean sLastupdateOK = false;
+    public static boolean sIsIdle = false;
     private static int sThreadNum = -1;
 
     public static final int IMPORT_CERT_REQUEST = 102;
@@ -118,8 +119,13 @@ public class XXnetManager {
                 sSummaryLevel = SUMMARY_LEVEL_WARNING;
                 sStateSummary = sContext.getString(R.string.no_ip);
             }else if(sWorkerH2 == 0 && sWorkerH1 ==0){
-                sStateSummary = sContext.getString(R.string.connect_no_establish);
-                sSummaryLevel = SUMMARY_LEVEL_WARNING;
+                if(sIsIdle){
+                    sStateSummary = sContext.getString(R.string.gae_idle);
+                    sSummaryLevel = SUMMARY_LEVEL_OK;
+                }else {
+                    sStateSummary = sContext.getString(R.string.connect_no_establish);
+                    sSummaryLevel = SUMMARY_LEVEL_WARNING;
+                }
             } else {
                 sSummaryLevel = SUMMARY_LEVEL_OK;
                 sStateSummary = sContext.getString(R.string.running_normally);
@@ -168,6 +174,7 @@ public class XXnetManager {
             sIpv6 = json.getString("use_ipv6");
             sWorkerH1 = json.getInt("worker_h1");
             sWorkerH2 = json.getInt("worker_h2");
+            sIsIdle = json.getInt("is_idle") != 0;
 //            LogUtils.defaultLogWrite("info", "xxnet state refreshed: Appid=" + sAppid
 //            + ",good_ip=" + sIpNum + ",ip_quality=" + sIpQuality + ",net_state="
 //            + sIPV4State + ",ipv6=" + sIpv6 + ",xxnet_version=" + sXXversion);

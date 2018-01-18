@@ -275,7 +275,7 @@ def run():
     LOGGER.info('init teredo and tun')
     sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
     sock.bind(('10.1.2.3', 0))
-    teredo_client = teredo.teredo_client(sock)
+    teredo_client = teredo.teredo_client(sock, teredo.get_default_teredo_server())
     teredo_ip = None
     try:
         teredo_ip = teredo_client.start()

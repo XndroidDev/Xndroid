@@ -16,9 +16,12 @@ import android.widget.Switch;
 import android.widget.TextView;
 
 import net.xndroid.fqrouter.FqrouterManager;
+import net.xndroid.utils.LogUtils;
 import net.xndroid.utils.ShellUtils;
 import net.xndroid.xxnet.XXnetManager;
 import net.xndroid.xxnet.XXnetService;
+
+import java.net.InetAddress;
 
 import static net.xndroid.AppModel.PER_AUTO_THREAD;
 import static net.xndroid.AppModel.sPreferences;
@@ -49,6 +52,7 @@ public class XndroidFragment extends Fragment implements View.OnClickListener
     private TextView mTeredoState;
     private TextView mNatType;
     private TextView mTeredoIP;
+    private View mTeredoChangeServer;
     private View mTeredoChangedWarning;
     private TextView mFqrouterInfo;
 
@@ -90,6 +94,7 @@ public class XndroidFragment extends Fragment implements View.OnClickListener
         mTeredoIP = mRootView.findViewById(R.id.xndroid_teredo_ip);
         mTeredoChangedWarning = mRootView.findViewById(R.id.xndroid_teredo_changed_warning);
         mFqrouterInfo = mRootView.findViewById(R.id.xndroid_fqrouter_info);
+        mTeredoChangeServer = mRootView.findViewById(R.id.xndroid_change_teredo_server);
 
         mUiUpdate = new Runnable() {
             @Override
@@ -161,6 +166,7 @@ public class XndroidFragment extends Fragment implements View.OnClickListener
         mImportIp.setOnClickListener(this);
 
         mTeredoChangedWarning.setOnClickListener(this);
+        mTeredoChangeServer.setOnClickListener(this);
 
         return mRootView;
     }
@@ -291,6 +297,38 @@ public class XndroidFragment extends Fragment implements View.OnClickListener
         showDlg(getString(R.string.ip_changed), getString(R.string.ip_changed_msg));
     }
 
+
+    private void doChangeTeredoServer(){
+        final EditText editText = new EditText(AppModel.sActivity);
+        editText.setHint(R.string.change_server_tip);
+        new AlertDialog.Builder(AppModel.sActivity)
+                .setTitle(R.string.change_teredo_server).setView(editText)
+                .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        final String server = editText.getText().toString();
+                        //Warning! Network request is not allowed to run in main thread.
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                String ip = server.trim();
+                                if(!ip.isEmpty()){
+                                    try {
+                                        ip = InetAddress.getByName(ip).getHostAddress();
+                                    }catch (Exception e){
+                                        LogUtils.e("doChangeTeredoServer fail ", e);
+                                        AppModel.showToast(getString(R.string.not_ip_domain));
+                                        return;
+                                    }
+                                }
+                                FqrouterManager.changeTeredoServer(ip);
+                            }
+                        }).start();
+
+                    }
+                }).create().show();
+    }
+
     @Override
     public void onClick(View v) {
         if(v == mCertSet){
@@ -315,6 +353,8 @@ public class XndroidFragment extends Fragment implements View.OnClickListener
             doImportIp();
         }else if(v == mTeredoChangedWarning){
             doChangedWarning();
+        }else if(v == mTeredoChangeServer){
+            doChangeTeredoServer();
         }
     }
 }

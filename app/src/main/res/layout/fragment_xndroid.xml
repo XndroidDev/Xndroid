@@ -192,6 +192,14 @@
                     android:layout_marginLeft="10dp"
                     android:text="Teredo"
                     android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="10dp"
+                    android:text="@string/change_server"
+                    android:id="@+id/xndroid_change_teredo_server"
+                    android:textColor="@color/colorLinkText" />
                 <!--<ImageView-->
                 <!--android:id="@+id/xndroid_config_tip"-->
                 <!--android:layout_width="20dp"-->
@@ -250,7 +258,7 @@
                             android:layout_width="20dp"
                             android:layout_height="20dp"
                             android:layout_marginLeft="10dp"
-                            android:src="@mipmap/ic_warning"
+                            android:src="@mipmap/ic_tip_gray"
                             android:visibility="invisible" />
                     </LinearLayout>
 

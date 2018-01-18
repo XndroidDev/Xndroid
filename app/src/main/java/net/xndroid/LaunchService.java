@@ -396,37 +396,42 @@ public class LaunchService extends Service {
         new WorkingDlg(AppModel.sActivity, getString(R.string.xndroid_launching)) {
             @Override
             public void work() {
-                updateMsg(getString(R.string.request_permission));
-                getPermission(sPermissions,sActivity);
-                updateMsg(getString(R.string.initializing));
-                clearOldProcess();
-                updateEnvEarly();
-                shellInit();
-                updataEnv();
-                if(ShellUtils.isRoot()) {
-                    FqrouterManager.cleanIptables();
+                try {
+                    updateMsg(getString(R.string.request_permission));
+                    getPermission(sPermissions, sActivity);
+                    updateMsg(getString(R.string.initializing));
+                    clearOldProcess();
+                    updateEnvEarly();
+                    shellInit();
+                    updataEnv();
+                    if (ShellUtils.isRoot()) {
+                        FqrouterManager.cleanIptables();
+                    }
+                    if (!XXnetManager.checkNetwork()) {
+                        AppModel.fatalError(getString(R.string.no_network_tip));
+                    }
+                    AppModel.getNetworkState();
+                    updateMsg(getString(R.string.prepare_python));
+                    pythonInit();
+                    updateMsg(getString(R.string.prepare_fqrouter));
+                    FqrouterManager.prepareFqrouter();
+                    if (!AppModel.sIsRootMode) {
+                        updateMsg(getString(R.string.start_vpn));
+                        FqrouterManager.startVpnService();
+                    }
+                    updateMsg(getString(R.string.wait_fqrouter));
+                    FqrouterManager.startFqrouter();
+                    FqrouterManager.waitReady();
+                    updateMsg(getString(R.string.prepare_xxnet));
+                    XXnetManager.prepare();
+                    updateMsg(getString(R.string.wait_xxnet));
+                    XXnetManager.startXXnet(LaunchService.this);
+                    XXnetManager.waitReady();
+                    checkXndroidUpdate();
+                }catch (Exception e){
+                    LogUtils.e("launch fail ", e);
+                    AppModel.fatalError("unexpected exception: " + e.getMessage());
                 }
-                if(!XXnetManager.checkNetwork()){
-                    AppModel.fatalError(getString(R.string.no_network_tip));
-                }
-                AppModel.getNetworkState();
-                updateMsg(getString(R.string.prepare_python));
-                pythonInit();
-                updateMsg(getString(R.string.prepare_fqrouter));
-                FqrouterManager.prepareFqrouter();
-                if(!AppModel.sIsRootMode) {
-                    updateMsg(getString(R.string.start_vpn));
-                    FqrouterManager.startVpnService();
-                }
-                updateMsg(getString(R.string.wait_fqrouter));
-                FqrouterManager.startFqrouter();
-                FqrouterManager.waitReady();
-                updateMsg(getString(R.string.prepare_xxnet));
-                XXnetManager.prepare();
-                updateMsg(getString(R.string.wait_xxnet));
-                XXnetManager.startXXnet(LaunchService.this);
-                XXnetManager.waitReady();
-                checkXndroidUpdate();
             }
         };
         regReceiver();

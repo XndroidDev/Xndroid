@@ -61,7 +61,7 @@
     <string name="waitting_respond">Waiting for XX-net to respond</string>
     <string name="public_appid">(Set your own AppID!!!)</string>
     <string name="ignore">ignore</string>
-    <string name="connect_no_establish">connection not established, please wait</string>
+    <string name="connect_no_establish">No connection, please wait</string>
     <string name="import_u"><u>Import</u></string>
     <string name="import_cert">import certification</string>
     <string name="import_cert_tip">You can turn off the screen lock and try again if a password is required.</string>
@@ -129,4 +129,9 @@
     <string name="notice_stable">notice stable</string>
     <string name="no_update">don\'t update</string>
     <string name="update_setting">update setting</string>
+    <string name="gae_idle">GAE proxy is idle</string>
+    <string name="change_server"><u>change server</u></string>
+    <string name="change_server_tip">leave a blank to pick a build-in server</string>
+    <string name="change_teredo_server">please type teredo server</string>
+    <string name="not_ip_domain">fail, not a valid IPV4 address or domain name.</string>
 </resources>

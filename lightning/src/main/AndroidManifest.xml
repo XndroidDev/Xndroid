@@ -39,6 +39,7 @@
 
         <activity
             android:process="acr.browser.lightning"
+            android:taskAffinity="acr.browser.lightning"
             android:name=".MainActivity"
             android:alwaysRetainTaskState="true"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard"
@@ -124,6 +125,7 @@
         </activity>
         <activity
             android:process="acr.browser.lightning"
+            android:taskAffinity="acr.browser.lightning"
             android:name=".settings.activity.SettingsActivity"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard"
             android:label="@string/settings"
@@ -136,6 +138,7 @@
         </activity>
         <activity
             android:process="acr.browser.lightning"
+            android:taskAffinity="acr.browser.lightning"
             android:name=".IncognitoActivity"
             android:alwaysRetainTaskState="true"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard"
@@ -151,6 +154,7 @@
         </activity>
         <activity
             android:process="acr.browser.lightning"
+            android:taskAffinity="acr.browser.lightning"
             android:name=".reading.activity.ReadingActivity"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard"
             android:label="@string/reading_mode"

@@ -21,6 +21,8 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.OutputStreamWriter;
+import java.util.HashMap;
+import java.util.Map;
 
 import static android.app.Activity.RESULT_OK;
 import static net.xndroid.AppModel.sActivity;
@@ -225,9 +227,9 @@ public class FqrouterManager {
                         }
 
                         if(AppModel.sDevScreenOff || !AppModel.sIsForeground)
-                            Thread.sleep(8000);
+                            Thread.sleep(5000);
                         else
-                            Thread.sleep(4000);
+                            Thread.sleep(3000);
 
                     } catch (Exception e) {
                         LogUtils.e("watchFqrouter error ", e);
@@ -290,4 +292,9 @@ public class FqrouterManager {
         return mProcess == null;
     }
 
+    public static void changeTeredoServer(String ip){
+        Map<String, String> map = new HashMap<>();
+        map.put("server", ip);
+        HttpJson.post("http://127.0.0.1:" + sPort + "/teredo-set-server", map);
+    }
 }

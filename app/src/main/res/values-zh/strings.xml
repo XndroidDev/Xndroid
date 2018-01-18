@@ -129,4 +129,9 @@
     <string name="notice_stable">提醒稳定版</string>
     <string name="no_update">不要提醒</string>
     <string name="update_setting">更新设置</string>
+    <string name="gae_idle">GAE代理空闲中</string>
+    <string name="change_server"><u>更换服务器</u></string>
+    <string name="change_server_tip">留空以挑选内置的服务器</string>
+    <string name="change_teredo_server">输入teredo服务器地址或域名</string>
+    <string name="not_ip_domain">失败, 不是有效的IPV4地址或域名.</string>
 </resources>

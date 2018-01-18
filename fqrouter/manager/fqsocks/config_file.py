@@ -6,9 +6,12 @@ import logging
 
 LOGGER = logging.getLogger(__name__)
 DEFAULT_PUBLIC_SERVERS_SOURCE = 'no_available_source!'
+current_path = os.path.dirname(os.path.abspath(__file__))
+home_path = os.path.abspath(current_path + "/../..")
 
 def DEFAULT_CONFIG():
     return {
+        'teredo_server': '',
         'config_file': None,
         'china_shortcut_enabled': True,
         'direct_access_enabled': False,
@@ -115,12 +118,13 @@ def add_proxy(config, proxy_type, n=0, **kwargs):
 
 
 def _read_config():
-    if not cli_args:
-        return DEFAULT_CONFIG()
     config = DEFAULT_CONFIG()
-    config['config_file'] = cli_args.config_file
-    if os.path.exists(cli_args.config_file):
-        with open(cli_args.config_file) as f:
+    if not cli_args or not hasattr(cli_args, 'config_file'):
+        config['config_file'] = home_path + '/etc/fqsocks.json'
+    else:
+        config['config_file'] = cli_args.config_file
+    if os.path.exists(config['config_file']):
+        with open(config['config_file']) as f:
             content = f.read()
             if content:
                 config.update(json.loads(content))

@@ -95,27 +95,23 @@ public class XXnetService extends Service {
 
 
     private final int IP_QUALITY_LIMIT = 500;
-    private final int IP_NUM_LIMIT = 60;
+    private final int IP_NUM_LIMIT = 80;
     public static int MAX_THREAD_NUM = 12;
 
     private int giveThreadNum(){
-        if(XXnetManager.sIpQuality < 0 || XXnetManager.sIpNum < 0 ||
-                (XXnetManager.sWorkerH1 == 0 && XXnetManager.sWorkerH2 == 0))
+        if(XXnetManager.sIpQuality <= 0 || XXnetManager.sIpQuality >= 3000 || XXnetManager.sIpNum <= 0 ||
+                (XXnetManager.sWorkerH1 == 0 && XXnetManager.sWorkerH2 == 0 && !XXnetManager.sIsIdle))
             return MAX_THREAD_NUM;
         boolean goodQuality = XXnetManager.sIpQuality < IP_QUALITY_LIMIT;
         boolean goodNum = XXnetManager.sIpNum > IP_NUM_LIMIT;
         if(AppModel.sDevScreenOff){
             if(AppModel.sDevBatteryLow)
                 return 0;
-            if(!goodQuality)
-                if(sDevMobileWork)
-                    return MAX_THREAD_NUM /2;
-                else
-                    return MAX_THREAD_NUM;
-            else if(!goodNum)
-                return MAX_THREAD_NUM /2;
-            else
+            if(goodQuality)
                 return 0;
+            if(sDevMobileWork)
+                return 0;
+            return MAX_THREAD_NUM/2;
         }else {
             if(goodQuality && goodNum){
                 if(AppModel.sDevBatteryLow || sDevMobileWork)
@@ -163,7 +159,7 @@ public class XXnetService extends Service {
                             return;
                         doWatch();
                         if(AppModel.sDevScreenOff || !AppModel.sIsForeground)
-                            Thread.sleep(6000);
+                            Thread.sleep(5000);
                         else
                             Thread.sleep(3000);
 

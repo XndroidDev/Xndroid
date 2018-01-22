@@ -80,7 +80,7 @@
     <string name="qualified">qualified</string>
     <string name="offline">offline</string>
     <string name="ip_changed">Teredo IP changed</string>
-    <string name="ip_changed_msg">The mapped IP and port changed, teredo client will modify the address field of each IPV6 packet.</string>
+    <string name="ip_changed_msg">The teredo IP changed, teredo client will modify the address field of each IPV6 packet.</string>
     <string name="prepare_python">prepare environment for python…</string>
     <string name="prepare_fqrouter">prepare environment for fqrouter…</string>
     <string name="start_vpn">start vpn service, please authorize…</string>

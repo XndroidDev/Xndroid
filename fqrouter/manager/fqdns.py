@@ -841,10 +841,17 @@ def is_wrong_answer(answer):
 def list_wrong_answers():
     return WRONG_ANSWERS
 
+user_whitelist = '/sdcard/domain_whitelist.txt'
 china_domains_txt = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'china_domains.txt')
 if os.path.exists(china_domains_txt):
     with open(china_domains_txt) as f:
         CHINA_DOMAINS = set(f.read().splitlines(False))
+    try:
+        if os.path.exists(user_whitelist):
+            with open(user_whitelist) as uf:
+                CHINA_DOMAINS.update(uf.read().splitlines(False))
+    except:
+        LOGGER.exception('read user whitelist fail')
 else:
     print('%s not found' % china_domains_txt)
     CHINA_DOMAINS = set()

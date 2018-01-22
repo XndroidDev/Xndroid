@@ -80,7 +80,7 @@
     <string name="qualified">qualified(正常)</string>
     <string name="offline">offline(离线)</string>
     <string name="ip_changed">Teredo IP 已发生变化</string>
-    <string name="ip_changed_msg">本机在公网的映射地址和端口已发生变化,teredo将更改每个IPV6包的地址字段,但并不影响使用.</string>
+    <string name="ip_changed_msg">本机在公网的映射地址和端口已发生变化, 或已更换服务器. Teredo将更改每个IPV6包的地址字段, 但并不影响使用.</string>
     <string name="prepare_python">准备python环境…</string>
     <string name="prepare_fqrouter">准备fqrouter环境…</string>
     <string name="start_vpn">启动VPN服务, 请确认…</string>

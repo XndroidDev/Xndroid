@@ -391,11 +391,13 @@ fqsocks.pages.downstream.spi_wifi_repeater = {
 
 if '__main__' == __name__:
     setup_logging()
-    LOGGER.info('runnng main.py')
+    LOGGER.info('running main.py')
     LOGGER.info('environment: %s' % os.environ.items())
     LOGGER.info('default dns server: %s' % default_dns_server)
-    # FQROUTER_VERSION = os.getenv('FQROUTER_VERSION')
-    action = sys.argv[1]
+    if len(sys.argv) > 1:
+        action = sys.argv[1]
+    else:
+        action = 'run'
     if 'clean' == action:
         shell.USE_SU = needs_su()
         clean()

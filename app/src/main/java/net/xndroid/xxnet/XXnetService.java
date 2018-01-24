@@ -64,7 +64,7 @@ public class XXnetService extends Service {
             LogUtils.i("XX-Net version is " + version + ", remove useless files");
             FileUtils.rmExclude(codePath, new String[]{"version.txt", version});
             ShellUtils.execBusybox("ln -s " + codePath + "/" + version + " " + codePath + "/default");
-			ShellUtils.execBusybox("rm -r " + sXndroidFile + "/xxnet/data/downloads");
+            ShellUtils.execBusybox("rm -r " + sXndroidFile + "/xxnet/data/downloads");
             ShellUtils.execBusybox("rm -r " + sXndroidFile + "/xxnet/SwitchyOmega");
             ShellUtils.execBusybox("rm -r " + codePath + "/" + version + "/gae_proxy/server");
             ShellUtils.execBusybox("rm -r " + codePath + "/" + version + "/python27/1.0/WinSxS");

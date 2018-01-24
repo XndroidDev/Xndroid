@@ -103,8 +103,11 @@ public class AppModel {
 
 
     private static void handleFatalError(){
+        sAppStoped = true;
         try {
+            Thread.sleep(2000);//Some work may be still going on
             LaunchService.handleFatalError();
+            Thread.sleep(2000);
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -127,7 +130,15 @@ public class AppModel {
                                 .setNegativeButton(R.string.exit, new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
-                                        handleFatalError();
+                                        if(sActivity != null){
+                                            sActivity.postStop();
+                                        }
+                                        new Thread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                handleFatalError();
+                                            }
+                                        }).start();
                                     }
                                 }).create().show();
                     }

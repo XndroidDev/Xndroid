@@ -13,16 +13,15 @@ import android.util.Log;
 import net.xndroid.AppModel;
 import net.xndroid.MainActivity;
 import net.xndroid.R;
+import net.xndroid.utils.FileUtils;
 import net.xndroid.utils.LogUtils;
 import net.xndroid.utils.ShellUtils;
 
-import java.io.File;
 import java.io.OutputStreamWriter;
 
 import static net.xndroid.AppModel.sActivity;
 import static net.xndroid.AppModel.sDevMobileWork;
 import static net.xndroid.AppModel.sXndroidFile;
-import static net.xndroid.utils.FileUtils.rm;
 
 public class XXnetService extends Service {
 
@@ -63,32 +62,15 @@ public class XXnetService extends Service {
             String version = XXnetManager.sXXversion;
             String codePath = sXndroidFile + "/xxnet/code";
             LogUtils.i("XX-Net version is " + version + ", remove useless files");
-            File[] versions = new File(codePath).listFiles();
-            if(versions == null){
-                LogUtils.e("can't list /xxnet/code");
-            }else {
-                for (File file : versions) {
-                    String fileName = file.getName();
-                    if (!fileName.equals(version) && !fileName.equals("version.txt")) {
-                        ShellUtils.execBusybox("rm -rf " + codePath + "/" + fileName);
-                    }
-                }
-                ShellUtils.execBusybox("ln -s " + codePath + "/" + version + " " + codePath + "/default");
-            }
+            FileUtils.rmExclude(codePath, new String[]{"version.txt", version});
+            ShellUtils.execBusybox("ln -s " + codePath + "/" + version + " " + codePath + "/default");
 			ShellUtils.execBusybox("rm -r " + sXndroidFile + "/xxnet/data/downloads");
             ShellUtils.execBusybox("rm -r " + sXndroidFile + "/xxnet/SwitchyOmega");
-
-            String[] deletePaths = {
-                    "/python27/1.0/WinSxS",
-                    "/python27/1.0/lib/win32",
-                    "/python27/1.0/lib/linux",
-            };
-
-            for(String deletepath : deletePaths){
-                ShellUtils.execBusybox("rm -r " + codePath + "/" + version + deletepath);
-            }
-
-            rm(codePath + "/" + version + "/python27",new String[] {"exe", "dll"});
+            ShellUtils.execBusybox("rm -r " + codePath + "/" + version + "/gae_proxy/server");
+            ShellUtils.execBusybox("rm -r " + codePath + "/" + version + "/python27/1.0/WinSxS");
+            FileUtils.rmExclude(codePath + "/" + version + "/python27/1.0/lib", new String[] {"noarch"});
+            ShellUtils.execBusybox("rm -r " + codePath + "/" + version + "/python27/1.0/*.exe");
+            ShellUtils.execBusybox("rm -r " + codePath + "/" + version + "/python27/1.0/*.dll");
         }
 
     }
@@ -260,7 +242,7 @@ public class XXnetService extends Service {
 
     @Override
     public void onDestroy() {
-        postStop();
+//        postStop();
         super.onDestroy();
     }
 

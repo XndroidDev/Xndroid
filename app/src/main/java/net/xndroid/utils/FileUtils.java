@@ -20,6 +20,19 @@ public class FileUtils {
         return false;
     }
 
+    public static void rmExclude(String dir, String[] excludes){
+        String[] flist = ShellUtils.execBusybox("ls " + dir).split("\\n");
+        List<String> exList = Arrays.asList(excludes);
+        String cmd = "rm -r ";
+        for(String file:flist){
+            file = file.trim();
+            if(file.isEmpty() || exList.contains(file))
+                continue;
+            cmd = cmd + " \"" + dir + "/" + file + "\"";
+        }
+        ShellUtils.execBusybox(cmd);
+    }
+
     public static void rm(String path, String[] postfixs){
         LogUtils.i("rm path=" + path +",postfixs=" +
                 (postfixs == null ? "null" : Arrays.toString(postfixs)));

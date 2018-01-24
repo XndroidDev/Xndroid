@@ -97,18 +97,18 @@ public class FqrouterManager {
     }
 
     public static void startVpnService(){
-        String[] fds = new File("/proc/self/fd").list();
-        if(fds == null){
-            LogUtils.e("fdtest: fds is null");
-        }else {
-            LogUtils.i("fdtest: fds.length=" + fds.length);
-        }
-        ShellUtils.execBusybox("ls -l /proc/self/fd");
-        try {
-            LogUtils.i("fd CanonicalPath test:\n" + new File("/proc/self/fd/0").getCanonicalPath());
-        }catch (Exception e){
-            LogUtils.e("fd CanonicalPath test fail", e);
-        }
+//        String[] fds = new File("/proc/self/fd").list();
+//        if(fds == null){
+//            LogUtils.e("fdtest: fds is null");
+//        }else {
+//            LogUtils.i("fdtest: fds.length=" + fds.length);
+//        }
+//        ShellUtils.execBusybox("ls -l /proc/self/fd");
+//        try {
+//            LogUtils.i("fd CanonicalPath test:\n" + new File("/proc/self/fd/0").getCanonicalPath());
+//        }catch (Exception e){
+//            LogUtils.e("fd CanonicalPath test fail", e);
+//        }
 
         sRequestApproved = false;
         Intent intent = VpnService.prepare(sActivity);

@@ -34,6 +34,21 @@ def create_tcp_socket(server_ip, server_port, connect_timeout):
     return sock
 
 
+def create_ipv6_tcp_socket(server_ip, server_port, connect_timeout):
+    sock = socket.socket(family=socket.AF_INET6, type=socket.SOCK_STREAM)
+    sock.setblocking(0)
+    sock.settimeout(connect_timeout)
+    try:
+        sock.connect((server_ip, server_port))
+    except:
+        sock.close()
+        raise
+    sock.settimeout(None)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 32*1024)
+    sock.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, True)
+    return sock
+
 def _create_tcp_socket(server_ip, server_port, connect_timeout):
     sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
     if OUTBOUND_IP:
@@ -80,3 +95,6 @@ def resolve_txt(domain):
     request = dpkt.dns.DNS(
         id=random.randint(1, 65535), qd=[dpkt.dns.DNS.Q(name=str(domain), type=dpkt.dns.DNS_TXT)])
     return DNS_HANDLER.query(request, str(request)).an
+
+def is_ipv6(ip):
+    return ':' in ip

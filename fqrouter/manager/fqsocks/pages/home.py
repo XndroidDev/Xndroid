@@ -37,6 +37,8 @@ def home_page(environ, start_response):
         china_shortcut_enabled=proxy_client.china_shortcut_enabled,
         direct_access_enabled=proxy_client.direct_access_enabled,
         prefers_private_proxy=proxy_client.prefers_private_proxy,
+        ipv6_direct_enable=proxy_client.ipv6_direct_enable,
+        ipv6_direct_try_first=proxy_client.ipv6_direct_try_first,
         config=config_file.read_config(),
         is_root=is_root,
         default_interface_ip=networking.get_default_interface_ip(),

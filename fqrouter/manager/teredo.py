@@ -21,7 +21,12 @@ random.seed(time.time())
 
 class ip_buffer_list(object):
     def __init__(self, max_buff_len, list_num=256):
-        self.list_num = self._get_near_num(list_num)
+        if list_num < 1:
+            self.list_num = 1
+        elif list_num > 2048:
+            self.list_num = 2048
+        else:
+            self.list_num = list_num
         self.list = [[] for i in range(self.list_num)]
         self.max_buff_len = max_buff_len
 
@@ -31,21 +36,22 @@ class ip_buffer_list(object):
         self.append(item_p)
         return item_p
 
-    def _get_near_num(self,num):
-        num = int(num)
-        if num < 1:
-            num = 1
-        if num > 256:
-            num = 256
-        for i in range(1,9):
-            if num == pow(2,i):
-                return num
-            if num < pow(2,i):
-                return pow(2,i-1)
-        return num
+    # def _get_near_num(self,num):
+    #     num = int(num)
+    #     max_num = 2048
+    #     if num <= 1:
+    #         return 1
+    #     if num >= max_num:
+    #         return max_num
+    #     for i in range(1,9):
+    #         if num == pow(2,i):
+    #             return num
+    #         if num < pow(2,i):
+    #             return pow(2,i-1)
+    #     return num
 
-    def _get_list_index(self,id):
-        return ord(id[len(id)-1]) % self.list_num
+    def _get_list_index(self, id):
+        return hash(id) % self.list_num
 
     def append(self, dict):
         dict['valid'] = True
@@ -203,7 +209,7 @@ def get_default_teredo_server():
 
 
 class teredo_client(object):
-    def __init__(self, sock, server_ip='157.56.106.184', server_second_ip='157.56.106.185', refresh_interval=10):
+    def __init__(self, sock, server_ip='157.56.106.184', server_second_ip='157.56.106.185', refresh_interval=15):
         global default_teredo_client
         default_teredo_client = self
         self.server_ip = server_ip

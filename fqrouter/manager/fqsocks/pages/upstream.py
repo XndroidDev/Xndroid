@@ -184,6 +184,38 @@ def handle_disable_direct_access(environ, start_response):
     return []
 
 
+@httpd.http_handler('POST', 'ipv6-direct-enable/enable')
+def handle_enable_ipv6_direct(environ, start_response):
+    proxy_client.ipv6_direct_enable = True
+    config_file.update_config(ipv6_direct_enable=True)
+    start_response(httplib.OK, [('Content-Type', 'text/plain')])
+    return []
+
+
+@httpd.http_handler('POST', 'ipv6-direct-enable/disable')
+def handle_disable_ipv6_direct(environ, start_response):
+    proxy_client.ipv6_direct_enable = False
+    config_file.update_config(ipv6_direct_enable=False)
+    start_response(httplib.OK, [('Content-Type', 'text/plain')])
+    return []
+
+
+@httpd.http_handler('POST', 'ipv6-direct-first/enable')
+def handle_enable_ipv6_direct_try_first(environ, start_response):
+    proxy_client.ipv6_direct_try_first = True
+    config_file.update_config(ipv6_direct_try_first=True)
+    start_response(httplib.OK, [('Content-Type', 'text/plain')])
+    return []
+
+
+@httpd.http_handler('POST', 'ipv6-direct-first/disable')
+def handle_disable_ipv6_direct_try_first(environ, start_response):
+    proxy_client.ipv6_direct_try_first = False
+    config_file.update_config(ipv6_direct_try_first=False)
+    start_response(httplib.OK, [('Content-Type', 'text/plain')])
+    return []
+
+
 @httpd.http_handler('POST', 'hosted-domain/enable')
 def handle_enable_hosted_domain(environ, start_response):
     networking.DNS_HANDLER.enable_hosted_domain = True

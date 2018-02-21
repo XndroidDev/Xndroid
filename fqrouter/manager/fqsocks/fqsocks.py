@@ -140,6 +140,8 @@ def init_config(argv):
     proxy_client.goagent_public_servers_enabled = config['public_servers']['goagent_enabled']
     proxy_client.ss_public_servers_enabled = config['public_servers']['ss_enabled']
     proxy_client.prefers_private_proxy = config['prefers_private_proxy']
+    proxy_client.ipv6_direct_enable = config['ipv6_direct_enable']
+    proxy_client.ipv6_direct_try_first = config['ipv6_direct_try_first']
     networking.DNS_HANDLER.enable_hosted_domain = config['hosted_domain_enabled']
     http_gateway.LISTEN_IP, http_gateway.LISTEN_PORT = config['http_gateway']['ip'], config['http_gateway']['port']
     tcp_gateway.LISTEN_IP, tcp_gateway.LISTEN_PORT = config['tcp_gateway']['ip'], config['tcp_gateway']['port']

@@ -1,4 +1,5 @@
 import logging
+import socket
 from .. import networking
 
 LOGGER = logging.getLogger(__name__)
@@ -111,10 +112,15 @@ class DirectProxy(Proxy):
     def do_forward(self, client):
         try:
             upstream_sock = self.create_upstream_sock(client)
+        except socket.timeout:
+            if LOGGER.isEnabledFor(logging.DEBUG):
+                LOGGER.debug('[%s] %s connect upstream socket timed out' % (repr(client), self.__repr__()), exc_info=1)
+            client.fall_back(reason='direct connect upstream socket timed out')
+            return
         except:
             if LOGGER.isEnabledFor(logging.DEBUG):
-                LOGGER.debug('[%s] direct connect upstream socket timed out' % (repr(client)), exc_info=1)
-            client.fall_back(reason='direct connect upstream socket timed out')
+                LOGGER.debug('[%s] %s connect upstream socket fail' % (repr(client), self.__repr__()), exc_info=1)
+            client.fall_back(reason='direct connect upstream socket fail')
             return
         upstream_sock.settimeout(None)
         if LOGGER.isEnabledFor(logging.DEBUG):

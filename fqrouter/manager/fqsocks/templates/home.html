@@ -730,7 +730,7 @@
                     <div class="form-group">
                         {{ _(
                         'if enabled, private proxy will always be used for non-china websites.',
-                        '如果启用了，对于国外的网站无论是否可以直连都强制走个人代理。在个人代理线路质量好的情况下可以提高国外网站的访问速度。'
+                        '如果启用了，对于国外的网站无论是否可以直连都强制走个人代理。在代理质量好的情况下可以提高国外网站的访问速度。'
                         ) }}
                     </div>
                     <div class="form-group advanced-toggle">
@@ -773,7 +773,41 @@
                             try access directly first, use proxy only if tried and failed.
                             """,
                             """
-                            每个连接先尝试直连，只在不得不走代理的时候才走代理。
+                            尝试直连目标站点。若禁用“优先使用个人代理”和“IPV6直连”，则会优先尝试直连。
+                            """) }}
+                        </div>
+                        <div class="form-group">
+                            <label for="ipv6-direct-switch">{{ _('IPV6 Direct Access', 'IPV6直连') }}</label>
+
+                            <div class="make-switch pull-right" data-on="success" data-off="default"
+                                 id="ipv6-direct-switch">
+                                <input type="checkbox" {{ 'checked="checked"' if ipv6_direct_enable else '' }}>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            {{ _(
+                            """
+                            try access directly through ipv6.
+                            """,
+                            """
+                            尝试通过IPV6连接目标网站。
+                            """) }}
+                        </div>
+                        <div class="form-group">
+                            <label for="ipv6-direct-first-switch">{{ _('IPV6 Direct Access First', '优先IPV6直连') }}</label>
+
+                            <div class="make-switch pull-right" data-on="success" data-off="default"
+                                 id="ipv6-direct-first-switch">
+                                <input type="checkbox" {{ 'checked="checked"' if ipv6_direct_try_first else '' }}>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            {{ _(
+                            """
+                            try access directly through ipv6 first if IPV6 Direct Access enabled.
+                            """,
+                            """
+                            若IPV6直连已启用, 使用其它代理前优先尝试IPV6直连。IPV6连接不稳定时,会导致高延时或无法访问。
                             """) }}
                         </div>
                     </div>
@@ -1121,6 +1155,22 @@
                 $.post('/china-shortcut/enable');
             } else {
                 $.post('/china-shortcut/disable');
+            }
+        });
+
+        $('#ipv6-direct-switch').on('switch-change', function (e, data) {
+            if (data.value) {
+                $.post('/ipv6-direct-enable/enable');
+            } else {
+                $.post('/ipv6-direct-enable/disable');
+            }
+        });
+
+        $('#ipv6-direct-first-switch').on('switch-change', function (e, data) {
+            if (data.value) {
+                $.post('/ipv6-direct-first/enable');
+            } else {
+                $.post('/ipv6-direct-first/disable');
             }
         });
 

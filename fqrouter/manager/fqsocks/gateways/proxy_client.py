@@ -38,6 +38,7 @@ from .. import us_ip
 from .. import lan_ip
 from .. import china_ip
 from ..proxies.direct import DIRECT_PROXY
+from ..proxies.ipv6_direct import IPV6_DIRECT_PROXY
 from ..proxies.direct import NONE_PROXY
 from ..proxies.https_try import HTTPS_TRY_PROXY
 from .. import ip_substitution
@@ -51,13 +52,15 @@ LOGGER = logging.getLogger(__name__)
 proxies = []
 dns_polluted_at = 0
 china_shortcut_enabled = True
+ipv6_direct_enable = True
+ipv6_direct_try_first = False
 direct_access_enabled = True
-tcp_scrambler_enabled = True
-google_scrambler_enabled = True
+tcp_scrambler_enabled = False
+google_scrambler_enabled = False
 prefers_private_proxy = True
 https_enforcer_enabled = False
 goagent_public_servers_enabled = False
-ss_public_servers_enabled = True
+ss_public_servers_enabled = False
 last_refresh_started_at = -1
 refresh_timestamps = []
 goagent_group_exhausted = False
@@ -88,7 +91,10 @@ class ProxyClient(object):
         self.ip_substituted = False
 
     def create_tcp_socket(self, server_ip, server_port, connect_timeout):
-        upstream_sock = networking.create_tcp_socket(server_ip, server_port, connect_timeout)
+        if networking.is_ipv6(server_ip):
+            upstream_sock = networking.create_ipv6_tcp_socket(server_ip, server_port, connect_timeout)
+        else:
+            upstream_sock = networking.create_tcp_socket(server_ip, server_port, connect_timeout)
         upstream_sock.counter = stat.opened(upstream_sock, self.forwarding_by, self.host, self.dst_ip)
         self.resources.append(upstream_sock)
         self.resources.append(upstream_sock.counter)
@@ -410,17 +416,33 @@ def pick_proxy(client):
     if not china_shortcut_enabled:
         picks_public = False
     if client.protocol == 'HTTP':
-        return pick_preferred_private_proxy(client) or \
+        return (picK_ipv6_direct(client) if ipv6_direct_try_first else None) or \
+               pick_preferred_private_proxy(client) or \
+               (picK_ipv6_direct(client) if not ipv6_direct_try_first else None) or \
                pick_http_try_proxy(client) or \
                pick_tcp_smuggler(client) or \
                pick_proxy_supports(client, picks_public)
     elif client.protocol == 'HTTPS':
-        return pick_preferred_private_proxy(client) or \
+        return (picK_ipv6_direct(client) if ipv6_direct_try_first else None) or \
+               pick_preferred_private_proxy(client) or \
+               (picK_ipv6_direct(client) if not ipv6_direct_try_first else None) or \
                pick_https_try_proxy(client) or \
                pick_proxy_supports(client, picks_public)
     else:
-        return pick_preferred_private_proxy(client) or DIRECT_PROXY
+        return pick_preferred_private_proxy(client) or picK_ipv6_direct(client) or DIRECT_PROXY
 
+
+def picK_ipv6_direct(client):
+    if not ipv6_direct_enable:
+        return None
+    if IPV6_DIRECT_PROXY in client.tried_proxies:
+        return None
+    # if ipv6_direct_try_first:
+    #     return IPV6_DIRECT_PROXY
+    if IPV6_DIRECT_PROXY.is_domain_supported(client):
+        return IPV6_DIRECT_PROXY
+    else:
+        return None
 
 def pick_preferred_private_proxy(client):
     if prefers_private_proxy:
@@ -533,8 +555,8 @@ def should_pick(proxy, client, picks_public):
     if proxy.died:
         if proxy.auto_relive and time.time() > proxy.die_time + 3:
             proxy.died = False
-            return True
-        return False
+        else:
+            return False
     if client.has_tried(proxy):
         return False
     if not proxy.is_protocol_supported(client.protocol, client):

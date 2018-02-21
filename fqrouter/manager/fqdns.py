@@ -47,8 +47,8 @@ def main():
     resolve_parser.add_argument(
         '--strategy', help='anti-GFW strategy, for UDP only', default='pick-right',
         choices=['pick-first', 'pick-later', 'pick-right', 'pick-right-later', 'pick-all'])
-    resolve_parser.add_argument('--timeout', help='in seconds', default=1, type=float)
-    resolve_parser.add_argument('--record-type', default='A', choices=['A', 'TXT'])
+    resolve_parser.add_argument('--timeout', help='in seconds', default=2, type=float)
+    resolve_parser.add_argument('--record-type', default='A', choices=['A', 'TXT', 'AAAA'])
     resolve_parser.add_argument('--retry', default=1, type=int)
     resolve_parser.set_defaults(handler=resolve)
     discover_parser = sub_parsers.add_parser('discover', help='resolve black listed domain to discover wrong answers')
@@ -470,7 +470,7 @@ def resolve(record_type, domain, at, timeout, strategy='pick-right', retry=1):
             LOGGER.warn('no such domain: %s' % domain)
 
 
-def resolve_once(record_type, domain, servers, timeout, strategy):
+def resolve_once(record_type, domain, servers, timeout, strategy='pick-first'):
     greenlets = []
     queue = gevent.queue.Queue()
     try:
@@ -507,8 +507,9 @@ def parse_dns_server_specifier(dns_server_specifier):
 
 def parse_ip_colon_port(ip_colon_port):
     if ':' in ip_colon_port:
-        server_ip, server_port = ip_colon_port.split(':')
-        server_port = int(server_port)
+        parts = ip_colon_port.split(':')
+        server_ip = '.'.join(parts[0, -1])
+        server_port = int(parts[-1])
     else:
         server_ip = ip_colon_port
         server_port = 53
@@ -543,7 +544,10 @@ def resolve_one(record_type, domain, server_type, server_ip, server_port, timeou
 
 def resolve_over_tcp(record_type, domain, server_ip, server_port, timeout):
     try:
-        sock = create_tcp_socket(server_ip, server_port, connect_timeout=3)
+        if is_ipv6(server_ip):
+            sock = create_ipv6_tcp_socket(server_ip, server_port, connect_timeout=4)
+        else:
+            sock = create_tcp_socket(server_ip, server_port, connect_timeout=3)
     except gevent.GreenletExit:
         return []
     except:
@@ -571,6 +575,8 @@ def resolve_over_tcp(record_type, domain, server_ip, server_port, timeout):
                     return list_ipv4_addresses(response)
                 elif dpkt.dns.DNS_TXT == record_type:
                     return [answer.text[0] for answer in response.an]
+                elif dpkt.dns.DNS_AAAA == record_type:
+                    return list_ipv6_addresses(response)
                 else:
                     LOGGER.error('unsupported record type: %s' % record_type)
                     return []
@@ -595,7 +601,10 @@ def report_error(msg):
             LOGGER.exception(msg)
 
 def resolve_over_udp(record_type, domain, server_ip, server_port, timeout, strategy):
-    sock = create_udp_socket()
+    if is_ipv6(server_ip):
+        sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
+    else:
+        sock = create_udp_socket()
     try:
         with contextlib.closing(sock):
             sock.settimeout(timeout)
@@ -620,6 +629,14 @@ def resolve_over_udp(record_type, domain, server_ip, server_port, timeout, strat
                 response = dpkt.dns.DNS(sock.recv(8192))
                 LOGGER.debug('received response: %s' % repr(response))
                 return [answer.text[0] for answer in response.an]
+            elif dpkt.dns.DNS_AAAA == record_type:
+                response = dpkt.dns.DNS(sock.recv(8192))
+                if LOGGER.isEnabledFor(logging.DEBUG):
+                    LOGGER.debug('received response: %s' % repr(response))
+                if response.get_rcode() & dpkt.dns.DNS_RCODE_NXDOMAIN:
+                    raise NoSuchDomain()
+                return list_ipv6_addresses(response)
+
             else:
                 LOGGER.error('unsupported record type: %s' % record_type)
                 return []
@@ -680,20 +697,24 @@ class NoSuchDomain(Exception):
 
 
 def is_right_response(server_ip, response):
-    answers = list_ipv4_addresses(response)
-    if not answers: # GFW can forge empty response
-        return False
-    if any(is_wrong_answer(answer) for answer in answers):
-        return False
-    if fqsocks.china_ip.is_china_ip(server_ip):
-        if not all(fqsocks.china_ip.is_china_ip(answer) for answer in answers):
-            return False # we do not trust china dns to resolve non-china ips
+    # DNS pollution is rarely used
+    # answers = list_ipv4_addresses(response)
+    # if not answers: # GFW can forge empty response
+    #     return False
+    # if any(is_wrong_answer(answer) for answer in answers):
+    #     return False
+    # if fqsocks.china_ip.is_china_ip(server_ip):
+    #     if not all(fqsocks.china_ip.is_china_ip(answer) for answer in answers):
+    #         return False # we do not trust china dns to resolve non-china ips
     return True
 
 
 def list_ipv4_addresses(response):
     return [socket.inet_ntoa(answer.ip) for answer in response.an if dpkt.dns.DNS_A == answer.type]
 
+
+def list_ipv6_addresses(response):
+    return [socket.inet_ntop(socket.AF_INET6, answer.ip6) for answer in response.an if dpkt.dns.DNS_AAAA == answer.type]
 
 def discover(domain, at, timeout, repeat, only_new):
     server_ip, server_port = parse_ip_colon_port(at)
@@ -736,6 +757,17 @@ def _create_tcp_socket(server_ip, server_port, connect_timeout):
         sock.setsockopt(socket.SOL_SOCKET, SO_MARK, OUTBOUND_MARK)
     if OUTBOUND_IP:
         sock.bind((OUTBOUND_IP, 0))
+    sock.settimeout(connect_timeout)
+    try:
+        sock.connect((server_ip, server_port))
+    except:
+        sock.close()
+        raise
+    sock.settimeout(None)
+    return sock
+
+def create_ipv6_tcp_socket(server_ip, server_port, connect_timeout):
+    sock = socket.socket(family=socket.AF_INET6, type=socket.SOCK_STREAM)
     sock.settimeout(connect_timeout)
     try:
         sock.connect((server_ip, server_port))
@@ -926,6 +958,9 @@ def is_blocked_domain(domain):
     if '.'.join(parts[-3:]) in BLOCKED_DOMAINS:
         return True
     return False
+
+def is_ipv6(ip):
+    return ':' in ip
 
 # TODO use original dns for PTR query, http://stackoverflow.com/questions/5615579/how-to-get-original-destination-port-of-redirected-udp-message
 # TODO cache

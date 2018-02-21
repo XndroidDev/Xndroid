@@ -21,6 +21,8 @@ def DEFAULT_CONFIG():
         'access_check_enabled': True,
         'hosted_domain_enabled': False,
         'prefers_private_proxy': True,
+        'ipv6_direct_enable' : True,
+        'ipv6_direct_try_first' : False,
         'http_manager': {
             'enabled': True,
             'ip': '',

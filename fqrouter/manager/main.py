@@ -24,6 +24,8 @@ import fqsocks.pages.downstream
 import fqsocks.config_file
 import fqsocks.networking
 import fqsocks.pages.home
+import fqsocks.gateways.proxy_client
+import fqsocks.proxies.ipv6_direct
 import fqdns
 import struct
 import fcntl
@@ -128,6 +130,8 @@ fqsocks.httpd.HANDLERS[('GET', 'ping')] = handle_ping
 
 def exit_later():
     LOGGER.info('exit later')
+    if fqsocks.gateways.proxy_client.ipv6_direct_enable:
+        fqsocks.proxies.ipv6_direct.save_ipv6_host()
     shutdown_hook.execute()
     gevent.sleep(0.5)
     os._exit(1)

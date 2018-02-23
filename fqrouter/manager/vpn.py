@@ -22,6 +22,7 @@ import fqsocks.fqsocks
 import fqsocks.config_file
 import fqsocks.gateways.proxy_client
 import fqsocks.pages.home
+import fqsocks.proxies.ipv6_direct
 import fqsocks.networking
 import teredo
 
@@ -224,6 +225,8 @@ fqsocks.networking.SPI['get_original_destination'] = get_original_destination
 
 
 def exit_later():
+    if fqsocks.gateways.proxy_client.ipv6_direct_enable:
+        fqsocks.proxies.ipv6_direct.save_ipv6_host()
     gevent.sleep(0.5)
     os._exit(1)
 

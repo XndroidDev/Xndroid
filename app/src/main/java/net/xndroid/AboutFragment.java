@@ -29,7 +29,7 @@ public class AboutFragment extends Fragment {
             return mRootView;
         mRootView = inflater.inflate(R.layout.fragment_about, container, false);
         mVersionView = mRootView.findViewById(R.id.xndroid_version);
-        mVersionView.setText("Xndroid    " + AppModel.sVersionName);
+        mVersionView.setText("Xndroid    " + AppModel.sVersionName + (AppModel.sDebug ? " DEBUG" : " RELEASE"));
         mXXnetVersion = mRootView.findViewById(R.id.xndroid_xxnet_version);
         mUpdateView = mRootView.findViewById(R.id.xndroid_check_update);
         mUpdateView.setOnClickListener(new View.OnClickListener() {

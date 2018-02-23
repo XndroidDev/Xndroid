@@ -337,7 +337,7 @@ public class LaunchService extends Service {
                         Thread.sleep(4000);
                         UpdateManager.checkUpdate(false);
                     }catch (Exception e){
-                        LogUtils.e("checkXndroidUpdate fail", e);
+                        LogUtils.e("check Xndroid Update fail", e);
                     }
 
                 }

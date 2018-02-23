@@ -169,7 +169,7 @@ public class FqrouterManager {
                     }
                     mProcess = null;
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    LogUtils.e("fqrouter process error ", e);
                     AppModel.fatalError("fqrouter process error: " + e.getMessage());
                 }
                 mProcess = null;
@@ -232,7 +232,7 @@ public class FqrouterManager {
                             Thread.sleep(3000);
 
                     } catch (Exception e) {
-                        LogUtils.e("watchFqrouter error ", e);
+                        LogUtils.e("watch fqrouter fail ", e);
                     }
                 }
             }

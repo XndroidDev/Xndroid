@@ -39,14 +39,7 @@ public class XXnetService extends Service {
     private final String CHANNEL_ID = "channel_xxnet_state";
 
     public XXnetService() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "Channel XX-Net state", NotificationManager.IMPORTANCE_DEFAULT);
-            channel.setDescription("Show the state of XX-Net");
-            channel.enableLights(false);
-            channel.enableVibration(false);
-            mNotificationManager.createNotificationChannel(channel);
-        }
+
     }
 
 
@@ -158,13 +151,12 @@ public class XXnetService extends Service {
                             Thread.sleep(3000);
 
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        LogUtils.e("watch XX-Net fail ", e);
                     }
                 }
             }
         }).start();
     }
-
 
 
     private void startXXnet()
@@ -215,8 +207,21 @@ public class XXnetService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         sDefaultService = this;
-        startXXnet();
-        watchXXnet();
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "Channel XX-Net state", NotificationManager.IMPORTANCE_DEFAULT);
+                channel.setDescription("Show the state of XX-Net");
+                channel.enableLights(false);
+                channel.enableVibration(false);
+                mNotificationManager.createNotificationChannel(channel);
+            }
+            startXXnet();
+            watchXXnet();
+        }catch (Exception e){
+            LogUtils.e("start XX-Net fail ", e);
+            AppModel.fatalError("unexpected exception: " + e.getMessage());
+        }
         return START_NOT_STICKY;
     }
 

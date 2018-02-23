@@ -1,8 +1,11 @@
 package net.xndroid.xxnet;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.os.Build;
@@ -33,10 +36,18 @@ public class XXnetService extends Service {
         return sDefaultService;
     }
 
+    private final String CHANNEL_ID = "channel_xxnet_state";
 
     public XXnetService() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "Channel XX-Net state", NotificationManager.IMPORTANCE_DEFAULT);
+            channel.setDescription("Show the state of XX-Net");
+            channel.enableLights(false);
+            channel.enableVibration(false);
+            mNotificationManager.createNotificationChannel(channel);
+        }
     }
-
 
 
     private void notification(String title,String mesg){
@@ -52,8 +63,9 @@ public class XXnetService extends Service {
         Intent intent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this,0,intent,PendingIntent.FLAG_UPDATE_CURRENT);
         builder.setContentIntent(pendingIntent);
+        builder.setChannel(CHANNEL_ID);
         Notification notification = builder.build();
-        startForeground(NOTIFICATION_ID,notification);
+        startForeground(NOTIFICATION_ID, notification);
     }
 
 

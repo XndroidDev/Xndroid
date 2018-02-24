@@ -383,11 +383,11 @@ public class LaunchService extends Service {
     private static void updataEnv(){
         if(AppModel.sLastVersion == 0 || AppModel.sLastVersion == AppModel.sVersionCode)
             return;
-        ShellUtils.execBusybox("rm -r " + sXndroidFile + "/fqrouter");
-        if(AppModel.sLastVersion < 13) {
-            ShellUtils.execBusybox("rm -r " + sXndroidFile + "/xxnet");
+        FileUtils.rmExclude(sXndroidFile + "/fqrouter", new String[] {"etc"});
+        if(AppModel.sLastVersion <= 17) {
+            ShellUtils.execBusybox("rm " + sXndroidFile + "/xxnet/code/default");
         }
-        if(AppModel.sLastVersion < 16){
+        if(AppModel.sLastVersion <= 17){
             ShellUtils.execBusybox("rm -r " + sXndroidFile + "/python");
         }
     }

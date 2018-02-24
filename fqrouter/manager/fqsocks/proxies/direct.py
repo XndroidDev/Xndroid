@@ -1,5 +1,6 @@
 import logging
 import socket
+import time
 from .. import networking
 
 LOGGER = logging.getLogger(__name__)
@@ -31,6 +32,7 @@ class Proxy(object):
         self.failed_times += 1
         if self.failed_times > 3:
             self.died = True
+            self.die_time = time.time()
             LOGGER.fatal('!!! proxy died !!!: %s' % self)
 
     def record_latency(self, latency):
@@ -63,6 +65,7 @@ class Proxy(object):
             LOGGER.critical('!!! failed to resolve proxy ip: %s' % self.proxy_host)
             self._proxy_ip = '0.0.0.0'
             self.died = True
+            self.die_time = time.time()
             return self._proxy_ip
         self._proxy_ip = ips[0]
         return self._proxy_ip

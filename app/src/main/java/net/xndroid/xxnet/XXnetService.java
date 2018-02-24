@@ -191,7 +191,7 @@ public class XXnetService extends Service {
                     }
                     mProcess = null;
                 } catch (Exception e) {
-                    AppModel.fatalError("XX-Net process fail:" + e.getMessage());
+                    LogUtils.e("XX-Net process fail ", e);
                 }
                 mProcess = null;
                 LogUtils.i("xxnet exit output :\n" + (readLen <= 0 ? "" : new String(output, 0, readLen)));

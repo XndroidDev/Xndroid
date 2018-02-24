@@ -14,7 +14,7 @@ def DEFAULT_CONFIG():
         'teredo_server': '',
         'config_file': None,
         'china_shortcut_enabled': True,
-        'direct_access_enabled': False,
+        'direct_access_enabled': True,
         'google_scrambler_enabled': False,
         'tcp_scrambler_enabled': False,
         'https_enforcer_enabled': False,
@@ -59,7 +59,17 @@ def DEFAULT_CONFIG():
             'goagent_enabled': False,
             'ss_enabled': False
         },
-        'private_servers': {}
+        'private_servers': {
+            '00000000-eeee-4444-8888-999999999999': {
+                "username": "",
+                "proxy_type": "HTTP",
+                "host": "127.0.0.1",
+                "transport_type": "HTTP",
+                "traffic_type": "HTTP/HTTPS",
+                "password": "",
+                "port": 8087
+            }
+        }
     }
 
 cli_args = None

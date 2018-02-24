@@ -553,7 +553,7 @@ def _pick_proxy_supports(client, picks_public=None):
 
 def should_pick(proxy, client, picks_public):
     if proxy.died:
-        if proxy.auto_relive and time.time() > proxy.die_time + 3:
+        if proxy.auto_relive and proxy.die_time and time.time() > proxy.die_time + 3:
             proxy.died = False
         else:
             return False

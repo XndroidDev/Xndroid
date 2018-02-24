@@ -97,19 +97,6 @@ public class FqrouterManager {
     }
 
     public static void startVpnService(){
-//        String[] fds = new File("/proc/self/fd").list();
-//        if(fds == null){
-//            LogUtils.e("fdtest: fds is null");
-//        }else {
-//            LogUtils.i("fdtest: fds.length=" + fds.length);
-//        }
-//        ShellUtils.execBusybox("ls -l /proc/self/fd");
-//        try {
-//            LogUtils.i("fd CanonicalPath test:\n" + new File("/proc/self/fd/0").getCanonicalPath());
-//        }catch (Exception e){
-//            LogUtils.e("fd CanonicalPath test fail", e);
-//        }
-
         sRequestApproved = false;
         Intent intent = VpnService.prepare(sActivity);
         if (intent == null) {
@@ -170,14 +157,12 @@ public class FqrouterManager {
                     mProcess = null;
                 } catch (Exception e) {
                     LogUtils.e("fqrouter process error ", e);
-                    AppModel.fatalError("fqrouter process error: " + e.getMessage());
                 }
                 mProcess = null;
                 LogUtils.i("fqrouter exit output :\n" + (readLen <= 0 ? "" : new String(output, 0, readLen)));
                 LogUtils.i("fqrouter exit error :\n" + (errorLen <= 0 ? "" : new String(error, 0, errorLen)));
                 if(!AppModel.sAppStoped)
                     AppModel.fatalError(sContext.getString(R.string.fqrouter_exit_un));
-
 
             }
         }).start();

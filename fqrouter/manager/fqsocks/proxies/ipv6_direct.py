@@ -21,7 +21,7 @@ ipv6_fail_domain = {}
 if os.path.exists(host_path):
     try:
         with open(host_path) as f:
-            ipv6_stored_host = dict([line.rsplit() for line in \
+            ipv6_stored_host = dict([line.rsplit(' ', maxsplit=1) for line in \
                               f.read().splitlines(False) if not line.startswith('#')])
             print 'load %d ipv6 host item' % len(ipv6_stored_host)
     except Exception, e:

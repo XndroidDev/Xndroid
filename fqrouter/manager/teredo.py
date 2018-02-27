@@ -209,7 +209,7 @@ def get_default_teredo_server():
 
 
 class teredo_client(object):
-    def __init__(self, sock, server_ip='157.56.106.184', server_second_ip='157.56.106.185', refresh_interval=15):
+    def __init__(self, sock, server_ip='157.56.106.184', server_second_ip='157.56.106.185', refresh_interval=10):
         global default_teredo_client
         default_teredo_client = self
         self.server_ip = server_ip

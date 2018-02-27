@@ -185,7 +185,9 @@ public class UpdateManager {
         try {
             int version = getXndroidLatestVersion();
             if (!checkall) {
-                if (version <= AppModel.sVersionCode)
+                if(version < AppModel.sVersionCode)
+                    return;
+                if(version == AppModel.sVersionCode && !(AppModel.sDebug && sStableVersion))
                     return;
                 if(AppModel.sPreferences.getInt(PER_UPDATE_POLICY, UPDATE_ALL) == UPDATE_OFF)
                     return;

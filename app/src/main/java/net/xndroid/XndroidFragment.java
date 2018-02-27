@@ -16,6 +16,7 @@ import android.widget.Switch;
 import android.widget.TextView;
 
 import net.xndroid.fqrouter.FqrouterManager;
+import net.xndroid.utils.HttpJson;
 import net.xndroid.utils.LogUtils;
 import net.xndroid.utils.ShellUtils;
 import net.xndroid.xxnet.XXnetManager;
@@ -55,6 +56,7 @@ public class XndroidFragment extends Fragment implements View.OnClickListener
     private View mTeredoChangeServer;
     private View mTeredoChangedWarning;
     private TextView mFqrouterInfo;
+    private TextView mNoticeText;
 
 
     @Override
@@ -95,6 +97,7 @@ public class XndroidFragment extends Fragment implements View.OnClickListener
         mTeredoChangedWarning = mRootView.findViewById(R.id.xndroid_teredo_changed_warning);
         mFqrouterInfo = mRootView.findViewById(R.id.xndroid_fqrouter_info);
         mTeredoChangeServer = mRootView.findViewById(R.id.xndroid_change_teredo_server);
+        mNoticeText = mRootView.findViewById(R.id.xndroid_notice);
 
         mUiUpdate = new Runnable() {
             @Override
@@ -138,6 +141,9 @@ public class XndroidFragment extends Fragment implements View.OnClickListener
                 }else {
                     mRootTip.setVisibility(View.INVISIBLE);
                 }
+
+                if(mNoticeText.getText().toString().isEmpty())
+                    updateNotice();
             }
         };
         mUiUpdate.run();
@@ -152,7 +158,6 @@ public class XndroidFragment extends Fragment implements View.OnClickListener
         else
             mAutoScanSet.setChecked(false);
 
-//        mProxySet.setOnClickListener(this);
         mCertSet.setOnClickListener(this);
         mAutoScanSet.setOnClickListener(this);
         mAppIdSet.setOnClickListener(this);
@@ -177,21 +182,26 @@ public class XndroidFragment extends Fragment implements View.OnClickListener
                 .setPositiveButton(R.string.ok, null).create().show();
     }
 
-//    private void doProxyset(){
-//        if(!ShellUtils.isRoot()){
-//            new AlertDialog.Builder(AppModel.sActivity)
-//                    .setTitle(R.string.proxy_setting).setMessage(R.string.proxy_setting_tip)
-//                    .setPositiveButton(R.string.ok, null)
-//                    .setNeutralButton(R.string.help, new DialogInterface.OnClickListener() {
-//                        @Override
-//                        public void onClick(DialogInterface dialog, int which) {
-//                            AppModel.sActivity.launchUrl("https://github.com/XX-net/XX-Net/wiki/%E5%AE%89%E5%8D%93%E7%89%88");
-//                        }
-//                    })
-//                    .create().show();
-//        }
-//
-//    }
+
+    private void updateNotice(){
+        LogUtils.d("update notice");
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                boolean chinese = AppModel.sLang.startsWith("zh");
+                final String notice = HttpJson.get("https://raw.githubusercontent.com/XndroidDev/Xndroid-update/master/update/notice_"
+                        + (chinese ? "zh" : "en"));
+                if(notice.isEmpty())
+                    return;
+                mNoticeText.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mNoticeText.setText(notice);
+                    }
+                });
+            }
+        }).start();
+    }
 
     private void doCertSet(){
         if(ShellUtils.isRoot()){
@@ -333,8 +343,6 @@ public class XndroidFragment extends Fragment implements View.OnClickListener
     public void onClick(View v) {
         if(v == mCertSet){
             doCertSet();
-//        }else if(v == mProxySet){
-//            doProxyset();
         }else if(v == mAutoScanSet){
             doAutoScanSet();
         }else if(v == mAppIdSet){

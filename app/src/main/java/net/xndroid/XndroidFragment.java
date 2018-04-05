@@ -188,13 +188,7 @@ public class XndroidFragment extends Fragment implements View.OnClickListener
             @Override
             public void run() {
                 boolean chinese = AppModel.sLang.startsWith("zh");
-//                String ref = "https://xndroid-assist.appspot.com/statistics?version=" + AppModel.sVersionName
-//                        + "&api=" + Build.VERSION.SDK_INT + (AppModel.sDebug? "&debug" : "&release");
-//                String ref = "https://t.co/xndroid-statistics/version" + AppModel.sVersionName
-//                        + "_api" + Build.VERSION.SDK_INT + (AppModel.sDebug? "_debug" : "_release");
-                String url = "https://raw.githubusercontent.com/XndroidDev/Xndroid-update/master/update/notice_"
-                        + (chinese ? "zh" : "en");
-//                final String notice = HttpJson.get(url, ref);
+                String url = "https://raw.githubusercontent.com/XndroidDev/Xndroid-update/master/update/notice_" + (chinese ? "zh" : "en");
                 final String notice = HttpJson.get(url);
                 LogUtils.d("update notice:`" + notice + "`");
                 if(notice.isEmpty())

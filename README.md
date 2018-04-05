@@ -24,9 +24,7 @@ A proxy software for Android based on XX-Net and fqrouter.
  * Android 4.0 以下系统不支持VpnService, 暂不能使用本应用.
  * __Android 7.0及以上可能出现导入证书后仍然不被信任的情况. 建议在chrome, firefox(须在浏览器中导入证书), 或可忽略证书警告的浏览器(如:内置LightningBrowser, X浏览器)中使用. 如果root了, 就可以导入为系统证书, 默认被信任.__
  * __注意一些APP(如 Twitter, Facebook 等)由于不信任GAE的证书,可能无法正常访问网络, 建议在浏览器中使用.__
-
-## 关于XX-Net版本
- 原则上在新版XX-Net值得更新且可完美运行的情况下, Xndroid更新时会尽量使内置XX-Net较新. 因此通常无需在XX-Net中更新. 手动更新XX-Net后出现一次`XX-Net异常退出`属正常现象.
+ * 手动更新XX-Net后出现一次`XX-Net异常退出`属正常现象.
 
 ## 共享代理网络
  fqrouter提供了多种网络共享功能, root后可使用更多功能. **注意如果用到了GAE代理, 则目标设备上也需安装证书**

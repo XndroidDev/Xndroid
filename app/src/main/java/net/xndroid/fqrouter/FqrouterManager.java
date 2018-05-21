@@ -23,6 +23,8 @@ import java.io.FileInputStream;
 import java.io.OutputStreamWriter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static android.app.Activity.RESULT_OK;
 import static net.xndroid.AppModel.sActivity;
@@ -40,6 +42,7 @@ public class FqrouterManager {
     public static String sTeredoIP = "UNKNOW";
     public static String sLocalTeredoIP = "UNKNOW";
     public static String sFqrouterInfo = "";
+    public static String sOriginIPv6 = null;
     private static int sPort = 2515;
 
     static {
@@ -85,12 +88,19 @@ public class FqrouterManager {
                 }
             }
         }
+        sOriginIPv6 = originIPv6();
+        if(sOriginIPv6 != null){
+            AppModel.showToast(AppModel.sContext.getString(R.string.available_origin_ipv6) + sOriginIPv6);
+            LogUtils.i("use origin ipv6 " + sOriginIPv6);
+        }
     }
 
     public static void onRequestResult(int resultCode, Activity activity){
         if (resultCode == RESULT_OK) {
             sRequestApproved = true;
-            sContext.startService(new Intent(sContext, SocksVpnService.class));
+            Intent service = new Intent(sContext, SocksVpnService.class);
+            service.putExtra("origin_ipv6", sOriginIPv6);
+            sContext.startService(service);
         } else {
             AppModel.fatalError(sContext.getString(R.string.vpn_reject));
         }
@@ -114,6 +124,25 @@ public class FqrouterManager {
     }
 
 
+    public static String originIPv6(){
+        String output = ShellUtils.execBusybox("ip address");
+        String regex = "inet6\\s((\\w|:)+)";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(output);
+        while(matcher.find()){
+            String ipv6 = matcher.group(1);
+            if(!ipv6.contains(":"))
+                continue;
+            if(ipv6.startsWith("fe80"))
+                continue;
+            if(ipv6.startsWith("::"))
+                continue;
+            return ipv6;
+        }
+        return null;
+    }
+
+
     public static void startFqrouter(){
         new Thread(new Runnable() {
             @Override
@@ -128,6 +157,7 @@ public class FqrouterManager {
                             + "export PATH=" + sXndroidFile + ":$PATH\n"
 //                            + "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/vendor/lib64:/vendor/lib:/system/lib64:/system/lib\n"
                             + ((AppModel.sDebug || AppModel.sLastFail) ? "export DEBUG=TRUE\n" : "")
+                            + (sOriginIPv6 != null ? "export NO_TEREDO=TRUE\n" : "")
                             + "sh " + sXndroidFile + "/python/bin"
                             + (Build.VERSION.SDK_INT > 17 ? "/python-launcher.sh " : "/python-launcher-nopie.sh ")
                             + sXndroidFile + "/fqrouter/manager/main.py run "
@@ -137,6 +167,7 @@ public class FqrouterManager {
                             + "export PATH=" + sXndroidFile + ":$PATH\n"
 //                            + "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/vendor/lib64:/vendor/lib:/system/lib64:/system/lib\n"
                             + ((AppModel.sDebug || AppModel.sLastFail) ? "export DEBUG=TRUE\n" : "")
+                            + (sOriginIPv6 != null ? "export NO_TEREDO=TRUE\n" : "")
                             + "sh " + sXndroidFile + "/python/bin"
                             + (Build.VERSION.SDK_INT > 17 ? "/python-launcher.sh " : "/python-launcher-nopie.sh ")
                             + sXndroidFile + "/fqrouter/manager/vpn.py "

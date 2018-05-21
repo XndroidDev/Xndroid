@@ -134,4 +134,6 @@
     <string name="change_server_tip">leave a blank to pick a build-in server</string>
     <string name="change_teredo_server">please type teredo server</string>
     <string name="not_ip_domain">fail, not a valid IPV4 address or domain name.</string>
+    <string name="available_origin_ipv6">There is origin IPv6 network, teredo will be disabled.</string>
+    <string name="DISABLED">DISABLED</string>
 </resources>

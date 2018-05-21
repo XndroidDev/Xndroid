@@ -121,8 +121,10 @@ public class XndroidFragment extends Fragment implements View.OnClickListener
                 }else if(XXnetManager.sSummaryLevel == XXnetManager.SUMMARY_LEVEL_ERROR){
                     mXXState.setBackgroundColor(0xFFFFC0C0);
                 }
-
-                mTeredoState.setText(FqrouterManager.sIsQualified?getString(R.string.qualified):getString(R.string.offline));
+                if(FqrouterManager.sOriginIPv6 != null)
+                    mTeredoState.setText(R.string.DISABLED);
+                else
+                    mTeredoState.setText(FqrouterManager.sIsQualified?getString(R.string.qualified):getString(R.string.offline));
                 mNatType.setText(FqrouterManager.sNATType);
                 mTeredoIP.setText(FqrouterManager.sTeredoIP);
                 if(FqrouterManager.sTeredoIP.length() < 8 || FqrouterManager.sTeredoIP.equals(FqrouterManager.sLocalTeredoIP)) {

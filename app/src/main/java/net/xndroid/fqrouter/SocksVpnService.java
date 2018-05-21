@@ -86,7 +86,11 @@ public class SocksVpnService extends VpnService {
                 }
             }
         }).start();
-//        return START_STICKY;
+        String ipv6 = intent.getStringExtra("origin_ipv6");
+        if(ipv6!=null){
+            startVpn(null);
+            LogUtils.i("origin ipv6 " + ipv6);
+        }
         return START_NOT_STICKY;
     }
 

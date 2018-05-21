@@ -178,7 +178,7 @@ def redirect_ip_packet(tun_fd, teredo_client):
         LOGGER.error('read packet failed: %s' % e)
         gevent.sleep(3)
         return
-    if ord(data[0]) & 0xf0 == 0x60:
+    if ord(data[0]) & 0xf0 == 0x60 and teredo_client:
         return teredo_client.transmit(data)
     ip_packet = dpkt.ip.IP(data)
     src = socket.inet_ntoa(ip_packet.src)
@@ -267,21 +267,24 @@ if '__main__' == __name__:
     except:
         LOGGER.exception('failed to patch ssl')
 
+    # wait sockVpnService to be ready
     teredo_sock = create_teredo_sock_until_ready()
-    teredo_client = teredo.teredo_client(teredo_sock, teredo.get_default_teredo_server())
-    teredo_ip = None
-    try:
-        teredo_ip = teredo_client.start()
-    except:
-        LOGGER.exception('start teredo fail')
-    if not teredo_ip:
-        LOGGER.error('start teredo client fail, use default:%s' % default_loacl_teredo_ip)
-        teredo_client.server_forever(default_loacl_teredo_ip)
-        send_message('TEREDO FAIL,%s' % default_loacl_teredo_ip)
-    else:
-        LOGGER.info('teredo start succeed, teredo ip:%s' % teredo_ip)
-        teredo_client.server_forever(teredo_ip)
-        send_message('TEREDO READY,%s' % teredo_ip)
+    teredo_client = None
+    if not os.getenv('NO_TEREDO'):
+        teredo_client = teredo.teredo_client(teredo_sock, teredo.get_default_teredo_server())
+        teredo_ip = None
+        try:
+            teredo_ip = teredo_client.start()
+        except:
+            LOGGER.exception('start teredo fail')
+        if not teredo_ip:
+            LOGGER.error('start teredo client fail, use default:%s' % default_loacl_teredo_ip)
+            teredo_client.server_forever(default_loacl_teredo_ip)
+            send_message('TEREDO FAIL,%s' % default_loacl_teredo_ip)
+        else:
+            LOGGER.info('teredo start succeed, teredo ip:%s' % teredo_ip)
+            teredo_client.server_forever(teredo_ip)
+            send_message('TEREDO READY,%s' % teredo_ip)
 
     TUN_IP = sys.argv[1]
     FAKE_USER_MODE_NAT_IP = sys.argv[2]

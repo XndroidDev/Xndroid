@@ -134,4 +134,6 @@
     <string name="change_server_tip">留空以挑选内置的服务器</string>
     <string name="change_teredo_server">输入teredo服务器地址或域名</string>
     <string name="not_ip_domain">失败, 不是有效的IPV4地址或域名.</string>
+    <string name="available_origin_ipv6">原生IPv6可用, 将禁用teredo.</string>
+    <string name="DISABLED">已禁用</string>
 </resources>

@@ -36,20 +36,6 @@ class ip_buffer_list(object):
         self.append(item_p)
         return item_p
 
-    # def _get_near_num(self,num):
-    #     num = int(num)
-    #     max_num = 2048
-    #     if num <= 1:
-    #         return 1
-    #     if num >= max_num:
-    #         return max_num
-    #     for i in range(1,9):
-    #         if num == pow(2,i):
-    #             return num
-    #         if num < pow(2,i):
-    #             return pow(2,i-1)
-    #     return num
-
     def _get_list_index(self, id):
         return hash(id) % self.list_num
 
@@ -149,8 +135,8 @@ import json
 def handle_teredo_state(environ, start_response):
     start_response(httplib.OK, [('Content-Type', 'text/json')])
     if default_teredo_client == None:
-        return [json.dumps({'qualified':'UNKNOW','nat_type':'UNKNOW',
-                            'teredo_ip':'UNKNOW','local_teredo_ip':'UNKNOW'})]
+        return [json.dumps({'qualified':False,'nat_type':'DISABLED',
+                            'teredo_ip':'DISABLED','local_teredo_ip':'DISABLED'})]
     return [json.dumps({'qualified': default_teredo_client.qualified,
                         'nat_type': default_teredo_client.nat_type,
                         'teredo_ip': socket.inet_ntop(socket.AF_INET6,default_teredo_client.teredo_ip) if default_teredo_client.teredo_ip else 'None',

@@ -276,28 +276,29 @@ def run():
     shutdown_hook.add(functools.partial(iptables.delete_rules, SOCKS_RULES))
     wifi.setup_lo_alias()
 
-    LOGGER.info('init teredo and tun')
-    sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-    sock.bind(('10.1.2.3', 0))
-    teredo_client = teredo.teredo_client(sock, teredo.get_default_teredo_server())
-    teredo_ip = None
-    try:
-        teredo_ip = teredo_client.start()
-    except:
-        LOGGER.exception('start teredo fail')
-    if not teredo_ip:
-        LOGGER.error('start teredo client fail, use default:%s' % default_loacl_teredo_ip)
-        teredo_ip = default_loacl_teredo_ip
-    else:
-        LOGGER.info('teredo start succeed, teredo ip:%s' % teredo_ip)
+    if not os.getenv('NO_TEREDO'):
+        LOGGER.info('init teredo and tun')
+        sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+        sock.bind(('10.1.2.3', 0))
+        teredo_client = teredo.teredo_client(sock, teredo.get_default_teredo_server())
+        teredo_ip = None
+        try:
+            teredo_ip = teredo_client.start()
+        except:
+            LOGGER.exception('start teredo fail')
+        if not teredo_ip:
+            LOGGER.error('start teredo client fail, use default:%s' % default_loacl_teredo_ip)
+            teredo_ip = default_loacl_teredo_ip
+        else:
+            LOGGER.info('teredo start succeed, teredo ip:%s' % teredo_ip)
 
-    tun_fd = init_tun(teredo_ip)
-    if not tun_fd:
-        LOGGER.error('init tun fail!')
-    else:
-        teredo.tun_fd = tun_fd
-        teredo_client.server_forever(teredo_ip)
-        gevent.spawn(redirect_tun_traffic, tun_fd, teredo_client)
+        tun_fd = init_tun(teredo_ip)
+        if not tun_fd:
+            LOGGER.error('init tun fail!')
+        else:
+            teredo.tun_fd = tun_fd
+            teredo_client.server_forever(teredo_ip)
+            gevent.spawn(redirect_tun_traffic, tun_fd, teredo_client)
 
 
     args = [

@@ -3,6 +3,8 @@ A proxy software for Android based on XX-Net and fqrouter.
 
 [最新测试版](https://raw.githubusercontent.com/XndroidDev/Xndroid-update/master/update/app-debug.apk)
 
+[稳定版1.1.10](https://github.com/XndroidDev/Xndroid/releases/download/1.1.10/app-release.apk)
+
 [稳定版1.1.9](https://github.com/XndroidDev/Xndroid/releases/download/1.1.9/app-release.apk)
 
 [稳定版1.1.7](https://github.com/XndroidDev/Xndroid/releases/download/1.1.7/app-release.apk)

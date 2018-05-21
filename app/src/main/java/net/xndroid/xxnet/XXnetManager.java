@@ -115,7 +115,7 @@ public class XXnetManager {
                     sStateSummary = sContext.getString(R.string.no_ipv6);
                 }
                 sSummaryLevel = SUMMARY_LEVEL_ERROR;
-            }else if(XXnetManager.sIpQuality > 1400) {
+            }else if(XXnetManager.sIpQuality > 1800) {
                 sSummaryLevel = SUMMARY_LEVEL_WARNING;
                 sStateSummary = sContext.getString(R.string.no_ip);
             }else if(sWorkerH2 == 0 && sWorkerH1 ==0){

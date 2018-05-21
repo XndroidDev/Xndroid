@@ -56,7 +56,7 @@
     <string name="xxnet_running">XX-Net正在运行</string>
     <string name="no_internet">无网络连接,请检查网络设置!</string>
     <string name="running_normally">一切正常,你可自由访问互联网</string>
-    <string name="no_ip">无足够IP,稍等片刻</string>
+    <string name="no_ip">无足够可用IP,稍等片刻</string>
     <string name="no_respond">XX-Net未响应,可能已经崩溃!</string>
     <string name="waitting_respond">等待XX-Net响应</string>
     <string name="public_appid">(未设置AppID,访问受限!)</string>

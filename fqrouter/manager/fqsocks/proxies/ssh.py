@@ -31,6 +31,7 @@ class SshProxy(Proxy):
         self.connection_failed = gevent.event.Event()
         self.failed_times = 0
         self.priority = int(priority)
+        self.connect()
 
     def connect(self):
         if '0.0.0.0' == self._proxy_ip:

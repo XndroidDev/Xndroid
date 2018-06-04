@@ -125,8 +125,10 @@ public class FqrouterManager {
 
 
     public static String originIPv6(){
-        String output = ShellUtils.execBusybox("ip address");
-        String regex = "inet6\\s((\\w|:)+)";
+        String output = ShellUtils.exec("ip route get 2001:13d2:2801::11");
+        if(ShellUtils.stdErr != null || output.contains("error") || output.contains("unreachable"))
+            return null;
+        String regex = "src\\s((\\w|:)+)";
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(output);
         while(matcher.find()){

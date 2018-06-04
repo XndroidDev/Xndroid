@@ -56,7 +56,7 @@ public class XXnetService extends Service {
         Intent intent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this,0,intent,PendingIntent.FLAG_UPDATE_CURRENT);
         builder.setContentIntent(pendingIntent);
-        builder.setChannel(CHANNEL_ID);
+        //builder.setChannel(CHANNEL_ID);
         Notification notification = builder.build();
         startForeground(NOTIFICATION_ID, notification);
     }

@@ -138,53 +138,12 @@ public class LaunchService extends Service {
         return ret;
     }
 
-//    private static void test(){
-//        LogUtils.i("========================begin test======================");
-//        ShellUtils.execBusybox("whoami");
-//        ShellUtils.execBusybox("ls -l " + sXndroidFile);
-//        ShellUtils.execBusybox("ls -l " + sXndroidFile + "/python");
-//        ShellUtils.execBusybox("ls -l " + sXndroidFile + "/python/bin");
-//        ShellUtils.execBusybox("du -a " + sXndroidFile);
-//        File bin = new File(sXndroidFile + "/python/bin");
-//        if(!bin.exists()){
-//            LogUtils.e(sXndroidFile + "/python/bin  not exist!");
-//        }
-//        String[] binstrs = bin.list();
-//        if(binstrs == null){
-//            LogUtils.e("bin.list() == null");
-//        }else {
-//            LogUtils.i("binstrs: " + Arrays.toString(binstrs));
-//        }
-//        File[] binfiles = bin.listFiles();
-//        if(binfiles == null){
-//            LogUtils.e("binfiles == null");
-//        }else {
-//            LogUtils.i("binfiles len: " + binfiles.length);
-//        }
-//        if(new File(sXndroidFile + "/python/bin/python").exists()){
-//            LogUtils.i("python/bin/python canExecute:" + new File(sXndroidFile + "/python/bin/python").canExecute());
-//        }else {
-//            LogUtils.e(sXndroidFile + "/python/bin/python not exist !");
-//        }
-//        if(!new File(sXndroidFile + "/python/bin/python").setExecutable(true, false)){
-//            LogUtils.e("can't set executable");
-//        }
-//        if(new File(sXndroidFile + "/python/bin/python").exists()){
-//            LogUtils.i("python/bin/python canExecute:" + new File(sXndroidFile + "/python/bin/python").canExecute());
-//        }else {
-//            LogUtils.e(sXndroidFile + "/python/bin/python not exist !");
-//        }
-//        ShellUtils.execBusybox("ls -l " + sXndroidFile + "/python/bin");
-//        LogUtils.i("========================end test======================");
-//        AppModel.exportLogs();
-//    }
 
     private static void pythonInit(){
         if(FileUtils.exists(sXndroidFile + "/python/bin/python"))
             return;
         if(!unzipRawFile(R.raw.python, sXndroidFile))
             AppModel.fatalError("prepare python fail");
-//        test();
         File[] files = new File(sXndroidFile + "/python/bin").listFiles();
         if(files == null){
             LogUtils.e("fail to list python/bin");
@@ -291,7 +250,10 @@ public class LaunchService extends Service {
         }
 
         /*for "line 1: dirname: Permission denied" in Android 4.x and Android 5.x*/
-        ShellUtils.execBusybox("ln -s " + ShellUtils.sBusyBox + " " + sXndroidFile + "/dirname");
+        String pwd = ShellUtils.execBusybox("pwd").trim();
+        ShellUtils.exec("cd " + sXndroidFile);
+        ShellUtils.execBusybox("ln -s busybox dirname");
+        ShellUtils.exec("cd " + pwd);
         ShellUtils.exec("export PATH=" + sXndroidFile + ":$PATH");
         /*get device information*/
         ShellUtils.exec("env");

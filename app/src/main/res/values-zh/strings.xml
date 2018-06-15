@@ -136,4 +136,13 @@
     <string name="not_ip_domain">失败, 不是有效的IPV4地址或域名.</string>
     <string name="available_origin_ipv6">原生IPv6可用, 将禁用teredo.</string>
     <string name="DISABLED">已禁用</string>
+    <string name="update_xxnet">离线更新XX-Net</string>
+    <string name="xxnet_update_title">离线更新XX-Net</string>
+    <string name="xxnet_update_tip">若要离线更新XX-Net,前请从 https://github.com/XX-net/XX-Net/releases 下载XX-Net zip更新包,并放置在sdcard顶级目录,命名为`XX-Net.zip`.\n通常在XX-Net管理页中在线更新即可,无法在线更新时才需要此操作.</string>
+    <string name="update_remove">更新并清除数据</string>
+    <string name="wait_for">处理中,稍等</string>
+    <string name="xxnet_zip_no_find">找不到更新包</string>
+    <string name="xxnet_zip_not_complete">更新包不完整</string>
+    <string name="xxnet_zip_unknown_version">未知的XX-Net版本</string>
+    <string name="update_xxnet_fail">更新XX-Net失败</string>
 </resources>

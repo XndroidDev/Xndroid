@@ -1,7 +1,9 @@
 package net.xndroid;
 
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.net.Uri;
@@ -185,6 +187,42 @@ public class MainActivity extends AppCompatActivity
         }).start();
     }
 
+    private void update_xxnet(final boolean rmdata){
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                AppModel.showToast(getString(R.string.wait_for));
+                if(XXnetManager.updateXXNet(rmdata)){
+                    AppModel.showToast(getString(R.string.restart_tip));
+                    restart();
+                    AppModel.appStop();
+                    try {
+                        Thread.sleep(10000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }).start();
+    }
+
+    private void update_xxnet(){
+        new AlertDialog.Builder(AppModel.sActivity)
+                .setTitle(R.string.xxnet_update_title)
+                .setMessage(R.string.xxnet_update_tip)
+                .setNegativeButton(R.string.update_remove, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        update_xxnet(true);
+                    }
+                }).setPositiveButton(R.string.update, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        update_xxnet(false);
+                    }
+                }).create().show();
+    }
+
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -248,8 +286,9 @@ public class MainActivity extends AppCompatActivity
             }).start();
         }else if(id == R.id.action_update_setting){
             UpdateManager.setUpdatePolicy(this);
-        }
-        else {
+        }else if(id == R.id.action_update_xxnet){
+            update_xxnet();
+        }else {
             return super.onOptionsItemSelected(item);
         }
         return true;

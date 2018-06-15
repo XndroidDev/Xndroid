@@ -249,7 +249,8 @@ public class XXnetManager {
     }
 
     public static void prepare(){
-        if(FileUtils.exists(sXndroidFile + "/xxnet/code/default/launcher/start.py"))
+        String version = ShellUtils.execBusybox("cat " + AppModel.sXndroidFile + "/xxnet/code/version.txt").trim();
+        if(FileUtils.exists(sXndroidFile + "/xxnet/code/" + version + "/launcher/start.py"))
             return;
         if(!unzipRawFile(R.raw.xxnet, sXndroidFile))
             AppModel.fatalError("prepare XX-Net fail");
@@ -393,7 +394,7 @@ public class XXnetManager {
                 return;
             }
         }
-        AppModel.showToast(AppModel.sService.getString(R.string.import_cert_tip)
+        AppModel.showToast(sContext.getString(R.string.import_cert_tip)
                 + (Build.VERSION.SDK_INT>23?( sContext.getString(R.string.import_cert_7tip)):"" ));
         byte[] keychain;
         try{
@@ -412,6 +413,67 @@ public class XXnetManager {
         String md5 = ShellUtils.execBusybox("md5sum " + certPath + " | " + ShellUtils.sBusyBox + " cut -c 1-32").trim();
         AppModel.sPreferences.edit().putString(PER_CA_MD5, md5).apply();
 
+    }
+
+    public static boolean updateXXNet(boolean rmdata) {
+        String tmpDir = AppModel.sXndroidFile + "/tmp_update_xxnet";
+        boolean ret = updateXXNet(rmdata, tmpDir);
+        ShellUtils.execBusybox("rm -r " + tmpDir);
+        return ret;
+    }
+
+    private static boolean updateXXNet(boolean rmdata, String tmpDir) {
+        String xxnetZip = "/sdcard/XX-Net.zip";
+        if(!new File(xxnetZip).exists()){
+            xxnetZip = null;
+            String[] files = new File("/sdcard").list();
+            if(null != files){
+                for(String file : files){
+                    if(file.toLowerCase().startsWith("xx-net")
+                            && file.toLowerCase().endsWith(".zip")){
+                        xxnetZip = "/sdcard/" + file;
+                        break;
+                    }
+                }
+            }
+            if(null == xxnetZip){
+                AppModel.showToast(sContext.getString(R.string.xxnet_zip_no_find));
+                return false;
+            }
+        }
+        ShellUtils.execBusybox("rm -r " + tmpDir);
+        ShellUtils.execBusybox("mkdir " + tmpDir);
+        ShellUtils.execBusybox("unzip " + xxnetZip + " -d " + tmpDir);
+        String[] subDirs = ShellUtils.execBusybox("ls " + tmpDir).trim().split("\\s+");
+        /* File.list() doesn't work if it's create by root */
+        //String[] subDirs = new File(tmpDir).list();
+        if(null == subDirs || 0 == subDirs.length){
+            AppModel.showToast(sContext.getString(R.string.xxnet_zip_not_complete));
+            return false;
+        }
+        String newXXNet = tmpDir + "/" + subDirs[0];
+        String version = ShellUtils.execBusybox("cat " + newXXNet + "/code/default/version.txt").trim();
+        if(ShellUtils.stdErr != null || version.length() == 0){
+            AppModel.showToast(sContext.getString(R.string.xxnet_zip_unknown_version));
+            return false;
+        }
+        ShellUtils.execBusybox("mv " + newXXNet + "/code/default "
+                + AppModel.sXndroidFile + "/xxnet/code/" + version);
+        if(ShellUtils.stdErr != null){
+            AppModel.showToast(sContext.getString(R.string.update_xxnet_fail));
+            return false;
+        }
+        ShellUtils.execBusybox("echo " + version + " > " + AppModel.sXndroidFile + "/xxnet/code/version.txt");
+        String pwd = ShellUtils.execBusybox("pwd").trim();
+        ShellUtils.exec("cd " + AppModel.sXndroidFile + "/xxnet/code");
+        ShellUtils.execBusybox("rm default");
+        ShellUtils.execBusybox("ln -s " + version + " default");
+        ShellUtils.exec("cd " + pwd);
+        if(rmdata){
+            ShellUtils.execBusybox("rm -r " + AppModel.sXndroidFile + "/xxnet/data");
+        }
+        AppModel.showToast("update XX-Net to " + version + " finished");
+        return true;
     }
 
 }

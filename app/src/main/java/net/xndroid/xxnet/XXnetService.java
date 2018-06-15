@@ -64,11 +64,14 @@ public class XXnetService extends Service {
 
     private void removeUselessFiles() {
         if(XXnetManager.sIpNum > 0 && XXnetManager.sXXversion.indexOf(".") > 0){
-            String version = XXnetManager.sXXversion;
+            String version = ShellUtils.execBusybox("cat " + AppModel.sXndroidFile + "/xxnet/code/version.txt").trim();
             String codePath = sXndroidFile + "/xxnet/code";
             LogUtils.i("XX-Net version is " + version + ", remove useless files");
             FileUtils.rmExclude(codePath, new String[]{"version.txt", version});
-            ShellUtils.execBusybox("ln -s " + codePath + "/" + version + " " + codePath + "/default");
+            String pwd = ShellUtils.execBusybox("pwd").trim();
+            ShellUtils.exec("cd " + codePath);
+            ShellUtils.execBusybox("ln -s " + version + " default");
+            ShellUtils.exec("cd " + pwd);
             ShellUtils.execBusybox("rm -r " + sXndroidFile + "/xxnet/data/downloads");
             ShellUtils.execBusybox("rm -r " + sXndroidFile + "/xxnet/SwitchyOmega");
             ShellUtils.execBusybox("rm -r " + codePath + "/" + version + "/gae_proxy/server");

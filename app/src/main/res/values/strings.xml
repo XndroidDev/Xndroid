@@ -136,4 +136,13 @@
     <string name="not_ip_domain">fail, not a valid IPV4 address or domain name.</string>
     <string name="available_origin_ipv6">There is origin IPv6 network, teredo will be disabled.</string>
     <string name="DISABLED">DISABLED</string>
+    <string name="update_xxnet">update XX-Net offline</string>
+    <string name="xxnet_update_title">Update XX-Net offline</string>
+    <string name="xxnet_update_tip">Before doing this, you need to download the XX-Net zip file from https://github.com/XX-net/XX-Net/releases, and copy it to `/sdcard/XX-Net.zip`. You can also update XX-Net online by click the button in the XX-Net management page.</string>
+    <string name="update_remove">update and remove data</string>
+    <string name="wait_for">wait for a minute</string>
+    <string name="xxnet_zip_no_find">can\'t find the XX-Net zip file.</string>
+    <string name="xxnet_zip_not_complete">not a complete XX-Net zip file</string>
+    <string name="xxnet_zip_unknown_version">unknown XX-Net version</string>
+    <string name="update_xxnet_fail">update XX-Net fail</string>
 </resources>

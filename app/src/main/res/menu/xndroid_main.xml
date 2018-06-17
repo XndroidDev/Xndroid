@@ -27,19 +27,24 @@
         android:title="@string/choose_mode"
         app:showAsAction="never" />
     <item
+        android:id="@+id/action_launch_component"
+        android:orderInCategory="100"
+        android:title="@string/launch_component"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/action_clear_cert"
         android:orderInCategory="100"
         android:title="@string/clear_certificate_cache"
         app:showAsAction="never" />
     <item
-        android:id="@+id/action_update_setting"
-        android:orderInCategory="100"
-        android:title="@string/update_setting"
-        app:showAsAction="never" />
-    <item
         android:id="@+id/action_update_xxnet"
         android:orderInCategory="100"
         android:title="@string/update_xxnet"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_update_setting"
+        android:orderInCategory="100"
+        android:title="@string/update_setting"
         app:showAsAction="never" />
     <item
         android:id="@+id/action_check_update"

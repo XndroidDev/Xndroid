@@ -88,10 +88,18 @@ public class FqrouterManager {
                 }
             }
         }
-        sOriginIPv6 = originIPv6();
-        if(sOriginIPv6 != null){
-            AppModel.showToast(AppModel.sContext.getString(R.string.available_origin_ipv6) + sOriginIPv6);
-            LogUtils.i("use origin ipv6 " + sOriginIPv6);
+        if(!AppModel.sEnableTeredo){
+            sOriginIPv6 = "::";
+            //AppModel.showToast("Teredo disabled by user.");
+            LogUtils.i("Teredo disabled by user.");
+        }else if(!AppModel.sAutoTeredo){
+            sOriginIPv6 = null;
+        }else {
+            sOriginIPv6 = originIPv6();
+            if (sOriginIPv6 != null) {
+                AppModel.showToast(AppModel.sContext.getString(R.string.available_origin_ipv6) + sOriginIPv6);
+                LogUtils.i("use origin ipv6 " + sOriginIPv6);
+            }
         }
     }
 
@@ -160,6 +168,7 @@ public class FqrouterManager {
 //                            + "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/vendor/lib64:/vendor/lib:/system/lib64:/system/lib\n"
                             + ((AppModel.sDebug || AppModel.sLastFail) ? "export DEBUG=TRUE\n" : "")
                             + (sOriginIPv6 != null ? "export NO_TEREDO=TRUE\n" : "")
+                            + (!AppModel.sEnableFqDNS ? "export NO_FQDNS=TRUE\n" : "")
                             + "sh " + sXndroidFile + "/python/bin"
                             + (Build.VERSION.SDK_INT > 17 ? "/python-launcher.sh " : "/python-launcher-nopie.sh ")
                             + sXndroidFile + "/fqrouter/manager/main.py run "
@@ -170,6 +179,7 @@ public class FqrouterManager {
 //                            + "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/vendor/lib64:/vendor/lib:/system/lib64:/system/lib\n"
                             + ((AppModel.sDebug || AppModel.sLastFail) ? "export DEBUG=TRUE\n" : "")
                             + (sOriginIPv6 != null ? "export NO_TEREDO=TRUE\n" : "")
+                            + (!AppModel.sEnableFqDNS ? "export NO_FQDNS=TRUE\n" : "")
                             + "sh " + sXndroidFile + "/python/bin"
                             + (Build.VERSION.SDK_INT > 17 ? "/python-launcher.sh " : "/python-launcher-nopie.sh ")
                             + sXndroidFile + "/fqrouter/manager/vpn.py "

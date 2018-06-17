@@ -346,8 +346,8 @@ public class LaunchService extends Service {
         if(AppModel.sLastVersion == 0 || AppModel.sLastVersion == AppModel.sVersionCode)
             return;
         FileUtils.rmExclude(sXndroidFile + "/fqrouter", new String[] {"etc"});
-        if(AppModel.sLastVersion <= 19) {
-            ShellUtils.execBusybox("rm " + sXndroidFile + "/xxnet/code/default");
+        if(AppModel.sLastVersion <= 20) {
+            ShellUtils.execBusybox("rm -r " + sXndroidFile + "/xxnet/code");
         }
         if(AppModel.sLastVersion <= 17){
             ShellUtils.execBusybox("rm -r " + sXndroidFile + "/python");
@@ -384,11 +384,13 @@ public class LaunchService extends Service {
                     updateMsg(getString(R.string.wait_fqrouter));
                     FqrouterManager.startFqrouter();
                     FqrouterManager.waitReady();
-                    updateMsg(getString(R.string.prepare_xxnet));
-                    XXnetManager.prepare();
-                    updateMsg(getString(R.string.wait_xxnet));
-                    XXnetManager.startXXnet(LaunchService.this);
-                    XXnetManager.waitReady();
+                    if(AppModel.sEnableXXNet) {
+                        updateMsg(getString(R.string.prepare_xxnet));
+                        XXnetManager.prepare();
+                        updateMsg(getString(R.string.wait_xxnet));
+                        XXnetManager.startXXnet(LaunchService.this);
+                        XXnetManager.waitReady();
+                    }
                     checkXndroidUpdate();
                 }catch (Exception e){
                     LogUtils.e("launch fail ", e);

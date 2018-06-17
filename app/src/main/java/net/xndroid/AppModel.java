@@ -41,11 +41,21 @@ public class AppModel {
     public static boolean sLastFail = false;
     public static boolean sIsRootMode = false;
 
+    public static boolean sEnableXXNet = true;
+    public static boolean sEnableFqDNS = true;
+    public static boolean sEnableTeredo = true;
+    public static boolean sAutoTeredo = true;
+
     public static SharedPreferences sPreferences;
     public static boolean sAutoThread = true;
     public static final String PER_AUTO_THREAD = "XNDROID_AUTO_THREAD";
     public static final String PER_VERSION = "XNDROID_VERSION";
     public static final String PER_LAST_FAIL = "XNDROID_LAST_FAIL";
+
+    public static final String PRE_ENABLE_XXNET = "XNDROID_ENABLE_XXNET";
+    public static final String PRE_ENABLE_FQDNS = "XNDROID_ENABLE_FQDNS";
+    public static final String PRE_ENABLE_TEREDO = "XNDROID_ENABLE_TEREDO";
+    public static final String PRE_AUTO_TEREDO = "XNDROID_AUTO_TEREDO";
 
     public static void showToast(final String msg) {
         try {
@@ -251,6 +261,12 @@ public class AppModel {
         sLastVersion = sPreferences.getInt(PER_VERSION, 0);
         sDebug = isApkInDebug(activity);
         sLastFail = sPreferences.getBoolean(PER_LAST_FAIL, false);
+
+        sEnableXXNet = sPreferences.getBoolean(PRE_ENABLE_XXNET, true);
+        sEnableFqDNS = sPreferences.getBoolean(PRE_ENABLE_FQDNS, true);
+        sEnableTeredo = sPreferences.getBoolean(PRE_ENABLE_TEREDO, true);
+        sAutoTeredo = sPreferences.getBoolean(PRE_AUTO_TEREDO, true);
+
         sPreferences.edit().putBoolean(PER_LAST_FAIL, true).apply();
         sPreferences.edit().putInt(PER_VERSION, sVersionCode).apply();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -262,7 +278,9 @@ public class AppModel {
         LogUtils.sSetDefaultLog(new LogUtils(sXndroidFile+"/log/java_main.log"));
         LogUtils.i("APP start, sVersionCode: " + sVersionCode + ",sVersionName: " + sVersionName
                 + ",sAutoThread:" + sAutoThread + ",sLastVersion:" + sLastVersion + ",sDebug:" + sDebug
-                + ",sLastFail:" + sLastFail + ",sLang:" + sLang + ",sXndroidFile:" + sXndroidFile);
+                + ",sLastFail:" + sLastFail + ",sLang:" + sLang + ",sXndroidFile:" + sXndroidFile
+                + ",sEnableXXNet:" + sEnableXXNet + ",sEnableFqDNS:" + sEnableFqDNS
+                + ",sEnableTeredo:" + sEnableTeredo + ",sAutoTeredo:" + sAutoTeredo);
         Intent intent = new Intent(activity,LaunchService.class);
         activity.startService(intent);
     }

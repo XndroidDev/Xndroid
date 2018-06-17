@@ -86,7 +86,7 @@ public class XXnetService extends Service {
 
     private final int IP_QUALITY_LIMIT = 700;
     private final int IP_NUM_LIMIT = 200;
-    public static int MAX_THREAD_NUM = 18;
+    public static int MAX_THREAD_NUM = 12;
 
     private int giveThreadNum(){
         if(XXnetManager.sIpQuality <= 0 || XXnetManager.sIpQuality >= 3000 || XXnetManager.sIpNum <= 0 ||

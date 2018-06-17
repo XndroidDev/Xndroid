@@ -270,8 +270,9 @@ def run():
     iptables.tables = {}
     iptables.init_fq_chains()
     shutdown_hook.add(iptables.flush_fq_chain)
-    iptables.insert_rules(DNS_RULES)
-    shutdown_hook.add(functools.partial(iptables.delete_rules, DNS_RULES))
+    if not os.getenv('NO_FQDNS'):
+        iptables.insert_rules(DNS_RULES)
+        shutdown_hook.add(functools.partial(iptables.delete_rules, DNS_RULES))
     iptables.insert_rules(SOCKS_RULES)
     shutdown_hook.add(functools.partial(iptables.delete_rules, SOCKS_RULES))
     wifi.setup_lo_alias()

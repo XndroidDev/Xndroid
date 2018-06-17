@@ -236,7 +236,7 @@ class VpnUdpHandler(fqdns.DnsHandler):
         try:
             src_ip, src_port = address
             dst_ip, dst_port = get_original_destination(None, src_ip, src_port)
-            if 53 ==  get_original_destination(None, src_ip, src_port)[1]:
+            if 53 ==  get_original_destination(None, src_ip, src_port)[1] and not os.getenv('NO_FQDNS'):
                 super(VpnUdpHandler, self).__call__( sendto, request, address)
             else:
                 sock = fqdns.create_udp_socket()

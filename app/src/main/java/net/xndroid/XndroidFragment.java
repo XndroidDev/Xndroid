@@ -71,6 +71,8 @@ public class XndroidFragment extends Fragment implements View.OnClickListener
         AppModel.sUpdateInfoUI = null;
     }
 
+    private boolean _firstUiUpdate = false;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -102,36 +104,54 @@ public class XndroidFragment extends Fragment implements View.OnClickListener
         mUiUpdate = new Runnable() {
             @Override
             public void run() {
-                if(XXnetManager.sAppid.length() == 0) {
-                    mAppid.setText(R.string.public_appid);
-                    mAppid.setTextColor(0xFFD06651);
+                if(_firstUiUpdate){
+                    _firstUiUpdate = false;
+                    ViewGroup view = mRootView.findViewById(R.id.xndroid_content);
+                    if(!AppModel.sEnableXXNet){
+                        view.removeView(view.findViewById(R.id.xndroid_xxnet_state));
+                        view.removeView(view.findViewById(R.id.xndroid_xxnet_table));
+                        TextView xxnetTitle = view.findViewById(R.id.xndroid_xxnet_title);
+                        xxnetTitle.setText("XX-Net (" + getText(R.string.DISABLED) + ")");
+                    }
+                    if(FqrouterManager.sOriginIPv6 != null){
+                        view.removeView(view.findViewById(R.id.xndroid_teredo_table));
+                        TextView teredoTitle = view.findViewById(R.id.xndroid_teredo_title);
+                        teredoTitle.setText("Teredo (" + getText(R.string.DISABLED) + ")");
+                        TextView teredoServer = view.findViewById(R.id.xndroid_change_teredo_server);
+                        teredoServer.setText("");
+                    }
                 }
-                else {
-                    mAppid.setText(XXnetManager.sAppid);
-                    mAppid.setTextColor(mIpNum.getCurrentTextColor());
+
+
+                if(AppModel.sEnableXXNet) {
+                    if (XXnetManager.sAppid.length() == 0) {
+                        mAppid.setText(R.string.public_appid);
+                        mAppid.setTextColor(0xFFD06651);
+                    } else {
+                        mAppid.setText(XXnetManager.sAppid);
+                        mAppid.setTextColor(mIpNum.getCurrentTextColor());
+                    }
+                    mIpNum.setText(XXnetManager.sIpNum + "");
+                    mIpQuality.setText(XXnetManager.sIpQuality + "");
+                    mXXVersion.setText(XXnetManager.sXXversion);
+                    mXXState.setText(XXnetManager.sStateSummary);
+                    if (XXnetManager.sSummaryLevel == XXnetManager.SUMMARY_LEVEL_OK) {
+                        mXXState.setBackgroundColor(0xFFB3F6B8);
+                    } else if (XXnetManager.sSummaryLevel == XXnetManager.SUMMARY_LEVEL_WARNING) {
+                        mXXState.setBackgroundColor(0xFFFFF4AB);
+                    } else if (XXnetManager.sSummaryLevel == XXnetManager.SUMMARY_LEVEL_ERROR) {
+                        mXXState.setBackgroundColor(0xFFFFC0C0);
+                    }
                 }
-                mIpNum.setText(XXnetManager.sIpNum + "");
-                mIpQuality.setText(XXnetManager.sIpQuality + "");
-                mXXVersion.setText(XXnetManager.sXXversion);
-                mXXState.setText(XXnetManager.sStateSummary);
-                if(XXnetManager.sSummaryLevel == XXnetManager.SUMMARY_LEVEL_OK){
-                    mXXState.setBackgroundColor(0xFFB3F6B8);
-                }else if(XXnetManager.sSummaryLevel == XXnetManager.SUMMARY_LEVEL_WARNING){
-                    mXXState.setBackgroundColor(0xFFFFF4AB);
-                }else if(XXnetManager.sSummaryLevel == XXnetManager.SUMMARY_LEVEL_ERROR){
-                    mXXState.setBackgroundColor(0xFFFFC0C0);
-                }
-                if(FqrouterManager.sOriginIPv6 != null)
-                    mTeredoState.setText(R.string.DISABLED);
-                else
-                    mTeredoState.setText(FqrouterManager.sIsQualified?getString(R.string.qualified):getString(R.string.offline));
-                mNatType.setText(FqrouterManager.sNATType);
-                mTeredoIP.setText(FqrouterManager.sTeredoIP);
-                if(FqrouterManager.sTeredoIP.length() < 8 || FqrouterManager.sTeredoIP.equals(FqrouterManager.sLocalTeredoIP)) {
-                    mTeredoChangedWarning.setVisibility(View.INVISIBLE);
-                }
-                else {
-                    mTeredoChangedWarning.setVisibility(View.VISIBLE);
+                if(null == FqrouterManager.sOriginIPv6) {
+                    mTeredoState.setText(FqrouterManager.sIsQualified ? getString(R.string.qualified) : getString(R.string.offline));
+                    mNatType.setText(FqrouterManager.sNATType);
+                    mTeredoIP.setText(FqrouterManager.sTeredoIP);
+                    if (FqrouterManager.sTeredoIP.length() < 8 || FqrouterManager.sTeredoIP.equals(FqrouterManager.sLocalTeredoIP)) {
+                        mTeredoChangedWarning.setVisibility(View.INVISIBLE);
+                    } else {
+                        mTeredoChangedWarning.setVisibility(View.VISIBLE);
+                    }
                 }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     mFqrouterInfo.setText(Html.fromHtml(FqrouterManager.sFqrouterInfo, 0));
@@ -149,6 +169,7 @@ public class XndroidFragment extends Fragment implements View.OnClickListener
             }
         };
         mUiUpdate.run();
+        _firstUiUpdate = true;
 
 //        mProxySet = mRootView.findViewById(R.id.xndroid_proxy);
         mCertSet = mRootView.findViewById(R.id.xndroid_cert);

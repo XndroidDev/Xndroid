@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_margin="10dp"
+    android:padding="20dp"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <CheckBox
+        android:id="@+id/launch_check_xxnet"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="XX-Net" />
+
+    <Space
+        android:layout_height="30dp"
+        android:layout_width="match_parent"/>
+
+    <CheckBox
+        android:id="@+id/launch_check_fqroute"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:checked="true"
+        android:enabled="false"
+        android:text="fqrouter" />
+    <Space
+        android:layout_height="20dp"
+        android:layout_width="match_parent"/>
+    <CheckBox
+        android:id="@+id/launch_check_fqdns"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="30dp"
+        android:text="fqdns" />
+    <Space
+        android:layout_height="20dp"
+        android:layout_width="match_parent"/>
+    <CheckBox
+        android:id="@+id/launch_check_teredo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="30dp"
+        android:text="teredo" />
+    <Space
+        android:layout_height="10dp"
+        android:layout_width="match_parent"/>
+    <CheckBox
+        android:id="@+id/launch_check_teredo_ipv6"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="60dp"
+        android:text="@string/auto_disable_teredo" />
+    <Space
+        android:layout_height="20dp"
+        android:layout_width="match_parent"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/restart_to_take_effect"/>
+    <Space
+        android:layout_height="10dp"
+        android:layout_width="match_parent"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/fqdns_disabled_tip"/>
+    <Space
+        android:layout_height="10dp"
+        android:layout_width="match_parent"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/replace_the_proxy_tip"/>
+
+</LinearLayout>

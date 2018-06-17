@@ -17,16 +17,20 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 
 import net.xndroid.fqrouter.FqrouterManager;
 import net.xndroid.utils.LogUtils;
 import net.xndroid.utils.ShellUtils;
 import net.xndroid.xxnet.XXnetManager;
 
+import static net.xndroid.R.id.action_import_cert;
 import static net.xndroid.fqrouter.FqrouterManager.ASK_VPN_PERMISSION;
 
 public class MainActivity extends AppCompatActivity
@@ -170,57 +174,111 @@ public class MainActivity extends AppCompatActivity
         startActivity(intent);
     }
 
+    private void reboot(){
+        restart();
+        AppModel.appStop();
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void clear_cert_cache(){
         ShellUtils.execBusybox("rm -r " + AppModel.sXndroidFile + "/xxnet/data/gae_proxy/certs");
         AppModel.showToast(getString(R.string.restart_tip));
         new Thread(new Runnable() {
             @Override
             public void run() {
-                restart();
-                AppModel.appStop();
-                try {
-                    Thread.sleep(10000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                reboot();
             }
         }).start();
     }
 
-    private void update_xxnet(final boolean rmdata){
+    private void updateXXNet(final boolean rmdata){
         new Thread(new Runnable() {
             @Override
             public void run() {
                 AppModel.showToast(getString(R.string.wait_for));
                 if(XXnetManager.updateXXNet(rmdata)){
                     AppModel.showToast(getString(R.string.restart_tip));
-                    restart();
-                    AppModel.appStop();
-                    try {
-                        Thread.sleep(10000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+                    reboot();
                 }
             }
         }).start();
     }
 
-    private void update_xxnet(){
+    private void updateXXNet(){
         new AlertDialog.Builder(AppModel.sActivity)
                 .setTitle(R.string.xxnet_update_title)
                 .setMessage(R.string.xxnet_update_tip)
                 .setNegativeButton(R.string.update_remove, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        update_xxnet(true);
+                        updateXXNet(true);
                     }
                 }).setPositiveButton(R.string.update, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        update_xxnet(false);
+                        updateXXNet(false);
                     }
                 }).create().show();
+    }
+
+    private void selectComponent(){
+        LayoutInflater inflater = getLayoutInflater();
+        View view = inflater.inflate(R.layout.component_setting, null);
+        CheckBox checkXXNet = view.findViewById(R.id.launch_check_xxnet);
+        CheckBox checkTeredo = view.findViewById(R.id.launch_check_teredo);
+        CheckBox checkFqDNS = view.findViewById(R.id.launch_check_fqdns);
+        final CheckBox checkAutoTeredo = view.findViewById(R.id.launch_check_teredo_ipv6);
+
+        checkXXNet.setChecked(AppModel.sEnableXXNet);
+        checkFqDNS.setChecked(AppModel.sEnableFqDNS);
+        checkTeredo.setChecked(AppModel.sEnableTeredo);
+        checkAutoTeredo.setChecked(AppModel.sAutoTeredo);
+        checkAutoTeredo.setEnabled(AppModel.sEnableTeredo);
+
+        checkXXNet.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                AppModel.sPreferences.edit().putBoolean(AppModel.PRE_ENABLE_XXNET, isChecked).apply();
+            }
+        });
+        checkFqDNS.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                AppModel.sPreferences.edit().putBoolean(AppModel.PRE_ENABLE_FQDNS, isChecked).apply();
+            }
+        });
+        checkTeredo.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                checkAutoTeredo.setEnabled(isChecked);
+                AppModel.sPreferences.edit().putBoolean(AppModel.PRE_ENABLE_TEREDO, isChecked).apply();
+            }
+        });
+        checkAutoTeredo.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                AppModel.sPreferences.edit().putBoolean(AppModel.PRE_AUTO_TEREDO, isChecked).apply();
+            }
+        });
+        new AlertDialog.Builder(AppModel.sActivity)
+                .setTitle(R.string.launch_component)
+                .setView(view)
+                .setPositiveButton(R.string.reboot_app, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                reboot();
+                            }
+                        }).start();
+                    }
+                })
+                .create().show();
     }
 
     @Override
@@ -237,8 +295,20 @@ public class MainActivity extends AppCompatActivity
     public boolean onPrepareOptionsMenu(Menu menu) {
         int[] rootActions = new int[]{R.id.action_import_sys_cert, R.id.action_remove_sys_cert, R.id.action_launch_mode };
         for(int id : rootActions){
-            menu.findItem(id).setEnabled(ShellUtils.isRoot());
+            MenuItem item = menu.findItem(id);
+            if(item != null)
+                item.setEnabled(ShellUtils.isRoot());
         }
+        int[] xxnetActions = new int[]{R.id.action_update_xxnet, R.id.action_import_cert, R.id.action_import_sys_cert
+                                        , R.id.action_remove_sys_cert, R.id.action_clear_cert};
+        if(!AppModel.sEnableXXNet) {
+            for (int id : xxnetActions) {
+                MenuItem item = menu.findItem(id);
+                if (item != null)
+                    menu.removeItem(id);
+            }
+        }
+        //menu.findItem(R.id.action_update_xxnet).setEnabled(AppModel.sEnableXXNet);
         return true;
     }
 
@@ -287,7 +357,9 @@ public class MainActivity extends AppCompatActivity
         }else if(id == R.id.action_update_setting){
             UpdateManager.setUpdatePolicy(this);
         }else if(id == R.id.action_update_xxnet){
-            update_xxnet();
+            updateXXNet();
+        }else if(id == R.id.action_launch_component){
+            selectComponent();
         }else {
             return super.onOptionsItemSelected(item);
         }

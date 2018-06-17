@@ -145,4 +145,10 @@
     <string name="xxnet_zip_not_complete">not a complete XX-Net zip file</string>
     <string name="xxnet_zip_unknown_version">unknown XX-Net version</string>
     <string name="update_xxnet_fail">update XX-Net fail</string>
+    <string name="launch_component">choose launch component</string>
+    <string name="reboot_app">restart app</string>
+    <string name="auto_disable_teredo">auto disable teredo</string>
+    <string name="restart_to_take_effect">* Restart to take effect.</string>
+    <string name="replace_the_proxy_tip">* You may need to replace the proxy item in the fqrouter manager page.</string>
+    <string name="fqdns_disabled_tip">* There may be DNS pollution if fqdns is disabled.</string>
 </resources>

@@ -48,6 +48,37 @@ howcast.com
 ```
  注意Android6.0 及以上必须授予`存储空间(访问媒体文件)`的权限. 如果仍然不能满足需求, 可以在fqrouter的`配置代理`中关闭`优先使用个人代理`, 并开启`直连可以直连的服务器`
 
+## 关于编译
+编译使用AndroidStudio, 并在AndroidStudio中安装相应SDK, 如API Level 23. 由于VPN模式下需使用JNI, 故还需在AndroidStuio中安装NDK. NDK版本不要太高, 否则不支持armeabi指令集. 此外, LightningBrowser编译还需要在AndroidStudio中安装API Level 26及Kotlin插件.
+编译前,在源码顶层目录(Unix环境)下执行`./fqrouter_prebulid.sh`. 其会将fqrouter使用gz压缩到`app/src/main/res/raw/fqrouter`. 下载XX-Net源码, 将`android_start.py`复制到XX-Net源码顶级目录, 然后使用gz压缩到`app/src/main/res/raw/xxnet`.
+
+```sh
+# 编译器前进行以下操作
+# 进入源码目录
+cd "Xndroid_source_path"
+# 压缩fqrouter
+./fqrouter_prebulid.sh
+# 下载XX-Net到临时目录
+mkdir xxnet_tmp
+version=3.12.2
+wget -O xxnet_tmp/xxnet.zip https://github.com/XX-net/XX-Net/archive/${version}.zip
+unzip xxnet_tmp/xxnet.zip -d xxnet_tmp
+cp android_start.py xxnet_tmp/XX-Net-${version}
+# 移除不必要的文件
+rm -r xxnet_tmp/XX-Net-${version}/code/default/gae_proxy/server
+mv xxnet_tmp/XX-Net-${version}/code/default/python27/1.0 xxnet_tmp/XX-Net-${version}/code/default/python27/0
+mkdir -p xxnet_tmp/XX-Net-${version}/code/default/python27/1.0/lib
+cp -r xxnet_tmp/XX-Net-${version}/code/default/python27/0/lib/noarch xxnet_tmp/XX-Net-${version}/code/default/python27/1.0/lib/
+rm -r xxnet_tmp/XX-Net-${version}/code/default/python27/0
+# 更改版本号
+mv xxnet_tmp/XX-Net-${version}/code/default xxnet_tmp/XX-Net-${version}/code/${version}
+echo ${version} > xxnet_tmp/XX-Net-${version}/code/version.txt
+# 压缩XX-Net
+mv xxnet_tmp/XX-Net-${version} xxnet_tmp/xxnet
+tar -czf app/src/main/res/raw/xxnet xxnet_tmp/xxnet
+rm -r xxnet_tmp
+```
+
 ## 感谢以下开源项目
  * [XX-Net](https://github.com/XX-net/XX-Net)
  * [fqrouter (GPL v3.0)](https://github.com/fqrouter/fqrouter)

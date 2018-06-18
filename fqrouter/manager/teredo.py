@@ -482,7 +482,7 @@ class teredo_client(object):
             if peer:
                 # a icmpv6 packet for a ipv6_connectivity_test
                 if LOGGER.isEnabledFor(logging.DEBUG):
-                    LOGGER.debug('connectivity_test:%s OK' % hexlify(src))
+                    LOGGER.debug('connectivity_test:%s OK, from %s:%s' % (hexlify(src), ip, port))
                 self.untrusted_peer_list.remove(peer)
                 self.trusted_peer_list.append({'id':src, 'ip':ip, 'port':port, 'last_recv':time.time()})
                 return self.deque_packet(src, ip, port)

@@ -110,5 +110,5 @@ class Sock5Proxy(Proxy):
 
     @property
     def public_name(self):
-        return 'Sock5\t%s' % self.proxy_host
+        return 'Sock5\t%s:%d' % (self.proxy_host, self.proxy_port)
 

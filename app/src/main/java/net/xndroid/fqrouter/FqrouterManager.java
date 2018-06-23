@@ -53,6 +53,7 @@ public class FqrouterManager {
         return sPort;
     }
 
+
     public static boolean updateAttribute()
     {
         JSONObject json = HttpJson.getJson("http://127.0.0.1:" + sPort + "/teredo-state");
@@ -65,9 +66,28 @@ public class FqrouterManager {
             sNATType = json.getString("nat_type");
             sTeredoIP = json.getString("teredo_ip");
             sLocalTeredoIP = json.getString("local_teredo_ip");
-            sFqrouterInfo = HttpJson.get("http://127.0.0.1:" + sPort +"/proxies");
-            sFqrouterInfo = sFqrouterInfo.replace("</td>", "    </td>");
-            sFqrouterInfo = sFqrouterInfo.replace("</tr>", "</tr><br/><br/>");
+
+            String proxies = HttpJson.get("http://127.0.0.1:" + sPort +"/proxies");
+            if(proxies.isEmpty())
+                return false;
+            sFqrouterInfo = "";
+            Matcher matcherProxy = Pattern.compile("<tr>(.+?)</tr>", Pattern.DOTALL).matcher(proxies);
+            while(matcherProxy.find()){
+                String proxy = matcherProxy.group(1);
+                Matcher matcherField = Pattern.compile(
+                        "<button.*?>(.+?)</button>.*?<td.*?>(.+?)</td>.*?<td.*?>(.+?)</td>.*?<td.*?>(.+?)</td>.*?<td.*?>(.+?)</td>"
+                        , Pattern.DOTALL).matcher(proxy);
+                if(!matcherField.find())
+                    continue;
+                sFqrouterInfo += "<p>" + matcherField.group(1)
+                                + "</p><p style=\"color:#545601\">&emsp &emsp RX: &ensp "
+                                + matcherField.group(2).replace(" ", "&nbsp ") + " &emsp &emsp "
+                                + matcherField.group(3).replace(" ", "&nbsp ")
+                                + "</p><p style=\"color:#015F2E\">&emsp &emsp TX: &ensp "
+                                + matcherField.group(4).replace(" ", "&nbsp ") + " &emsp &emsp "
+                                + matcherField.group(5).replace(" ", "&nbsp ") + "</p><br />";
+            }
+
             return true;
         } catch (JSONException e) {
             LogUtils.e("fqrouter update attributes fail ", e);

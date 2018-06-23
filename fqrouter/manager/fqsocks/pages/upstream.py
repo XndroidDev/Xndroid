@@ -20,7 +20,7 @@ from .. import networking
 PROXIES_HTML_FILE = os.path.join(os.path.dirname(__file__), '..', 'templates', 'proxies.html')
 UPSTREAM_HTML_FILE = os.path.join(os.path.dirname(__file__), '..', 'templates', 'upstream.html')
 LOGGER = logging.getLogger(__name__)
-MAX_TIME_RANGE = 60 * 10
+MAX_TIME_RANGE = 5
 
 
 @httpd.http_handler('POST', 'refresh-proxies')
@@ -35,60 +35,48 @@ def handle_refresh_proxies(environ, start_response):
 @httpd.http_handler('GET', 'proxies')
 def handle_list_proxies(environ, start_response):
     start_response(httplib.OK, [('Content-Type', 'text/html')])
-    proxies_counters = {}
-    for counter in stat.counters:
-        proxies_counters.setdefault(counter.proxy.public_name, []).append(counter)
-    after = time.time() - MAX_TIME_RANGE
     proxies_stats = {}
-    for proxy_public_name, proxy_counters in sorted(proxies_counters.items(),
-                                                    key=lambda (proxy_public_name, proxy_counters): proxy_public_name):
-        rx_bytes_list, rx_seconds_list, _ = zip(*[counter.total_rx(after) for counter in proxy_counters])
-        rx_bytes = sum(rx_bytes_list)
-        rx_seconds = sum(rx_seconds_list)
-        if rx_seconds:
-            rx_speed = rx_bytes / (rx_seconds * 1000)
-        else:
-            rx_speed = 0
-        tx_bytes_list, tx_seconds_list, _ = zip(*[counter.total_tx(after) for counter in proxy_counters])
-        tx_bytes = sum(tx_bytes_list)
-        tx_seconds = sum(tx_seconds_list)
-        if tx_seconds:
-            tx_speed = tx_bytes / (tx_seconds * 1000)
-        else:
-            tx_speed = 0
-        if not proxy_public_name:
-            continue
-        proxies_stats[proxy_public_name] = {
-            'proxy_id': None,
-            'rx_speed_value': rx_speed,
-            'rx_speed_label': '%05.2f KB/s' % rx_speed,
-            'rx_bytes_value': rx_bytes,
-            'rx_bytes_label': to_human_readable_size(rx_bytes),
-            'tx_speed_value': tx_speed,
-            'tx_speed_label': '%05.2f KB/s' % tx_speed,
-            'tx_bytes_value': tx_bytes,
-            'tx_bytes_label': to_human_readable_size(tx_bytes)
-        }
     for proxy in proxy_client.proxies:
         proxy_public_name = proxy.public_name
         if not proxy_public_name:
             continue
-        if proxy_public_name in proxies_stats:
-            proxies_stats[proxy_public_name]['died'] = proxies_stats[proxy_public_name].get('died', False) or proxy.died
-            proxies_stats[proxy_public_name]['proxy_id'] = proxy.proxy_id
-        else:
+        if proxy_public_name not in proxies_stats:
             proxies_stats[proxy_public_name] = {
                 'proxy_id': proxy.proxy_id,
-                'died': proxy.died,
-                'rx_speed_value': 0,
-                'rx_speed_label': '00.00 KB/s',
                 'rx_bytes_value': 0,
-                'rx_bytes_label': '000.00 B',
-                'tx_speed_value': 0,
-                'tx_speed_label': '00.00 KB/s',
                 'tx_bytes_value': 0,
-                'tx_bytes_label': '000.00 B'
+                'rx_bytes_last': 0,
+                'tx_bytes_last': 0,
+                'died': False,
+                'time_elapse': time.time() - proxy.last_record_time
             }
+        stat_item = proxies_stats[proxy_public_name]
+        stat_item['died'] = stat_item['died'] or proxy.died
+        stat_item['rx_bytes_value'] += proxy.rx_bytes
+        stat_item['tx_bytes_value'] += proxy.tx_bytes
+        stat_item['rx_bytes_last'] += proxy.last_rx
+        stat_item['tx_bytes_last'] += proxy.last_tx
+        proxy.last_record_time = time.time()
+        proxy.last_rx = proxy.rx_bytes
+        proxy.last_tx = proxy.tx_bytes
+
+    for stat_item in proxies_stats.values():
+        rx_bytes = stat_item['rx_bytes_value']
+        tx_bytes = stat_item['tx_bytes_value']
+        time_elapse = stat_item['time_elapse']
+        stat_item['rx_bytes_label'] = to_human_readable_size(rx_bytes)
+        stat_item['tx_bytes_label'] = to_human_readable_size(tx_bytes)
+        rx_speed = (rx_bytes - stat_item['rx_bytes_last']) / (time_elapse * 1000)
+        tx_speed = (tx_bytes - stat_item['tx_bytes_last']) / (time_elapse * 1000)
+        stat_item['rx_speed_value'] = rx_speed
+        stat_item['tx_speed_value'] = tx_speed
+        stat_item['rx_speed_label'] = '%7.2f KB/s' % rx_speed
+        stat_item['tx_speed_label'] = '%7.2f KB/s' % tx_speed
+
+        del stat_item['rx_bytes_last']
+        del stat_item['tx_bytes_last']
+        del stat_item['time_elapse']
+
     with open(PROXIES_HTML_FILE) as f:
         template = jinja2.Template(f.read())
     return template.render(proxies_stats=proxies_stats).encode('utf8')
@@ -491,6 +479,6 @@ def handle_get_proxy(environ, start_response):
 def to_human_readable_size(num):
     for x in ['B', 'KB', 'MB', 'GB', 'TB']:
         if num < 1024.0:
-            return '%06.2f %s' % (num, x)
+            return '%7.2f %s' % (num, x)
         num /= 1024.0
 

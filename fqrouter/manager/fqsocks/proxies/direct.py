@@ -26,6 +26,11 @@ class Proxy(object):
         self.failed_times = 0
         self.auto_relive = False
         self.die_time = None
+        self.rx_bytes = 0
+        self.tx_bytes = 0
+        self.last_rx = 0
+        self.last_tx = 0
+        self.last_record_time = time.time()
 
     def increase_failed_time(self):
         LOGGER.error('failed once/%s: %s' % (self.failed_times, self))

@@ -95,5 +95,5 @@ class HttpConnectProxy(Proxy):
 
     @property
     def public_name(self):
-        return 'HTTP\t%s' % self.proxy_host
+        return 'HTTP\t%s:%d' % (self.proxy_host, self.proxy_port)
 

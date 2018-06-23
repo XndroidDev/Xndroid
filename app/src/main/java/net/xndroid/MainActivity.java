@@ -30,7 +30,6 @@ import net.xndroid.utils.LogUtils;
 import net.xndroid.utils.ShellUtils;
 import net.xndroid.xxnet.XXnetManager;
 
-import static net.xndroid.R.id.action_import_cert;
 import static net.xndroid.fqrouter.FqrouterManager.ASK_VPN_PERMISSION;
 
 public class MainActivity extends AppCompatActivity

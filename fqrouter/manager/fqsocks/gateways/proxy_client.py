@@ -46,6 +46,8 @@ from .. import config_file
 import os.path
 
 TLS1_1_VERSION = 0x0302
+TLS1_2_VERSION = 0x0303
+TLS1_3_VERSION = 0x0304
 RE_HTTP_HOST = re.compile('Host: (.+)\r\n')
 LOGGER = logging.getLogger(__name__)
 
@@ -460,7 +462,7 @@ def analyze_protocol(peeked_data):
             ssl3 = dpkt.ssl.SSL3(peeked_data)
         except dpkt.NeedData:
             return 'UNKNOWN', ''
-        if ssl3.version in (dpkt.ssl.SSL3_VERSION, dpkt.ssl.TLS1_VERSION, TLS1_1_VERSION):
+        if ssl3.version in (dpkt.ssl.SSL3_VERSION, dpkt.ssl.TLS1_VERSION, TLS1_1_VERSION, TLS1_2_VERSION, TLS1_3_VERSION):
             return 'HTTPS', parse_sni_domain(peeked_data).strip()
     except:
         LOGGER.exception('failed to analyze protocol')
@@ -553,7 +555,7 @@ def _pick_proxy_supports(client, picks_public=None):
 
 def should_pick(proxy, client, picks_public):
     if proxy.died:
-        if proxy.auto_relive and proxy.die_time and time.time() > proxy.die_time + 3:
+        if proxy.auto_relive and proxy.die_time and time.time() > proxy.die_time + 2:
             proxy.died = False
         else:
             return False

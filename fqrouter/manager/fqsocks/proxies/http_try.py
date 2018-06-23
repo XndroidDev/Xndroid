@@ -428,7 +428,7 @@ def try_receive_response_body(http_response, reads_all=False):
     if content_type and 'text/html' in content_type:
         reads_all = True
     if reads_all:
-        http_response.body = http_response.read()
+        http_response.body = http_response.read(2 * 1024 * 1024)
     else:
         http_response.body = http_response.read(min(http_response.content_length, 64 * 1024))
     return http_response.capturing_sock.rfile.captured

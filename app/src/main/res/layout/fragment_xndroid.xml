@@ -301,7 +301,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="10dp"
-                android:textSize="12sp"
                 android:layout_marginLeft="20dp"
                 android:layout_marginRight="20dp"
                 android:background="#f0f0f0"

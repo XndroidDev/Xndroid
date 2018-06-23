@@ -145,10 +145,18 @@
     <string name="xxnet_zip_not_complete">更新包不完整</string>
     <string name="xxnet_zip_unknown_version">未知的XX-Net版本</string>
     <string name="update_xxnet_fail">更新XX-Net失败</string>
-    <string name="launch_component">选择启动组件</string>
+    <string name="launch_component">启动组件及设置</string>
     <string name="reboot_app">重启应用</string>
     <string name="auto_disable_teredo">ipv6可用时禁用teredo</string>
-    <string name="restart_to_take_effect">* 重启应用以生效.</string>
-    <string name="replace_the_proxy_tip">* 你可能需要在fqrouter管理页中替换原有的代理项.</string>
-    <string name="fqdns_disabled_tip">* 若禁用fqdns, 可能会出现DNS污染的问题.</string>
+    <string name="restart_to_take_effect">* 重启应用后生效.</string>
+    <string name="replace_the_proxy_tip">* 你可能需要在fqrouter代理列表中替换原有的代理项.</string>
+    <string name="fqdns_disabled_tip">* 若禁用fqdns,可能会出现DNS污染的问题.</string>
+    <string name="notification_bar">常驻通知栏</string>
+    <string name="teredo_disable_tip">* XX-Net可能需要使用teredo来获得ipv6连接.</string>
+    <string name="notification_bar_disabled_tip">* 若禁用常驻通知栏,进程容易被系统强行终止.</string>
+    <string name="reimport_cert_tip">XX-Net证书需要重新导入,请进入Xndroid完成导入操作.</string>
+    <string name="auto_start">开机自启</string>
+    <string name="launch_mode">启动模式:</string>
+    <string name="notify_mode">通知模式:</string>
+    <string name="launch_setting">启动设置</string>
 </resources>

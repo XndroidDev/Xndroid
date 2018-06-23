@@ -17,11 +17,13 @@ public class AutoStart extends BroadcastReceiver {
         if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED")) {
             //if (preferences.getBoolean("AddToAuto", false)) {
             if (true){
-                Intent newIntent = context.getPackageManager()
-                        .getLaunchIntentForPackage("net.xndroid");
-                newIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                newIntent.putExtra("auto_start", true);
-                context.startActivity(newIntent);
+                AppModel.appInit(context);
+
+//                Intent newIntent = context.getPackageManager()
+//                        .getLaunchIntentForPackage("net.xndroid");
+//                newIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//                newIntent.putExtra("auto_start", true);
+//                context.startActivity(newIntent);
             }
         }
     }

@@ -250,8 +250,8 @@ public class PreferenceManager {
     }
 
     public boolean getUseProxy() {
-        //return mPrefs.getBoolean(Name.USE_PROXY, false);
-        return mPrefs.getBoolean(Name.USE_PROXY, true);
+        return mPrefs.getBoolean(Name.USE_PROXY, false);
+        //return mPrefs.getBoolean(Name.USE_PROXY, true);
     }
 
     @Constants.Proxy

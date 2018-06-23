@@ -46,6 +46,7 @@ public class AppModel {
     public static boolean sEnableTeredo = true;
     public static boolean sAutoTeredo = true;
     public static boolean sEnableNotification = true;
+    public static boolean sAutoStart = false;
 
     public static SharedPreferences sPreferences;
     public static boolean sAutoThread = true;
@@ -58,6 +59,7 @@ public class AppModel {
     public static final String PRE_ENABLE_TEREDO = "XNDROID_ENABLE_TEREDO";
     public static final String PRE_AUTO_TEREDO = "XNDROID_AUTO_TEREDO";
     public static final String PRE_ENABLE_NOTIFICATION = "XNDROID_ENABLE_NOTIFICATION";
+    public static final String PRE_AUTO_START = "XNDROID_AUTO_START";
 
     public static void showToast(final String msg) {
         try {
@@ -222,7 +224,7 @@ public class AppModel {
     public static boolean sDevBatteryLow = false;
     public static boolean sDevMobileWork = false;
     public static boolean sDevScreenOff = false;
-    public static boolean sIsForeground = true;
+    public static boolean sIsForeground = false;
 
     private static ConnectivityManager sConnectivityManager;
     public static void getNetworkState(){
@@ -240,28 +242,29 @@ public class AppModel {
     }
 
 
-    public static void appInit(final MainActivity activity){
+    public static void appInit(Context context){
         if(sAppStoped)
             return;
         sAppStoped = false;
-        sActivity = activity;
-        sContext = activity.getApplicationContext();
-        sFilePath = activity.getFilesDir().getAbsolutePath();
-        sAppPath = activity.getFilesDir().getParent();
+        //sActivity = activity;
+        //sContext = activity.getApplicationContext();
+        sContext = context;
+        sFilePath = sContext.getFilesDir().getAbsolutePath();
+        sAppPath = sContext.getFilesDir().getParent();
         sXndroidFile = sFilePath + "/xndroid_files";
-        sPackageName = activity.getPackageName();
+        sPackageName = sContext.getPackageName();
         try {
-            sVersionCode = activity.getPackageManager().
+            sVersionCode = sContext.getPackageManager().
                     getPackageInfo(sPackageName, PackageManager.GET_CONFIGURATIONS).versionCode;
-            sVersionName = activity.getPackageManager().
+            sVersionName = sContext.getPackageManager().
                     getPackageInfo(sPackageName, PackageManager.GET_CONFIGURATIONS).versionName;
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
-        sPreferences = PreferenceManager.getDefaultSharedPreferences(activity);
+        sPreferences = PreferenceManager.getDefaultSharedPreferences(sContext);
         sAutoThread = sPreferences.getBoolean(PER_AUTO_THREAD, true);
         sLastVersion = sPreferences.getInt(PER_VERSION, 0);
-        sDebug = isApkInDebug(activity);
+        sDebug = isApkInDebug(sContext);
         sLastFail = sPreferences.getBoolean(PER_LAST_FAIL, false);
 
         sEnableXXNet = sPreferences.getBoolean(PRE_ENABLE_XXNET, true);
@@ -269,13 +272,14 @@ public class AppModel {
         sEnableTeredo = sPreferences.getBoolean(PRE_ENABLE_TEREDO, true);
         sAutoTeredo = sPreferences.getBoolean(PRE_AUTO_TEREDO, true);
         sEnableNotification = sPreferences.getBoolean(PRE_ENABLE_NOTIFICATION, true);
+        sAutoStart = sPreferences.getBoolean(PRE_AUTO_START, false);
 
         sPreferences.edit().putBoolean(PER_LAST_FAIL, true).apply();
         sPreferences.edit().putInt(PER_VERSION, sVersionCode).apply();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            sLang = sActivity.getResources().getConfiguration().getLocales().toString();
+            sLang = sContext.getResources().getConfiguration().getLocales().toString();
         }else {
-            sLang = sActivity.getResources().getConfiguration().locale.toString();
+            sLang = sContext.getResources().getConfiguration().locale.toString();
         }
         sLang = sLang.contains("zh_CN") ? "zh_CN" : sLang;
         LogUtils.sSetDefaultLog(new LogUtils(sXndroidFile+"/log/java_main.log"));
@@ -283,8 +287,9 @@ public class AppModel {
                 + ",sAutoThread:" + sAutoThread + ",sLastVersion:" + sLastVersion + ",sDebug:" + sDebug
                 + ",sLastFail:" + sLastFail + ",sLang:" + sLang + ",sXndroidFile:" + sXndroidFile
                 + ",sEnableXXNet:" + sEnableXXNet + ",sEnableFqDNS:" + sEnableFqDNS
-                + ",sEnableTeredo:" + sEnableTeredo + ",sAutoTeredo:" + sAutoTeredo);
-        Intent intent = new Intent(activity,LaunchService.class);
-        activity.startService(intent);
+                + ",sEnableTeredo:" + sEnableTeredo + ",sAutoTeredo:" + sAutoTeredo
+                + ",sEnableNotification:" + sEnableNotification + "sAutoStart:" + sAutoStart);
+        Intent intent = new Intent(sContext, LaunchService.class);
+        sContext.startService(intent);
     }
 }

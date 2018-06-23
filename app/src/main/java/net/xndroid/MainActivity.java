@@ -22,8 +22,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.Spinner;
 
 import net.xndroid.fqrouter.FqrouterManager;
 import net.xndroid.utils.LogUtils;
@@ -126,7 +128,7 @@ public class MainActivity extends AppCompatActivity
         }
         AppModel.sActivity = this;
         if(AppModel.sContext == null) {
-            AppModel.appInit(this);
+            AppModel.appInit(getApplicationContext());
         }
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -149,6 +151,10 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+        if(!AppModel.sEnableXXNet) {
+            navigationView.getMenu().removeItem(R.id.nav_xxnet);
+            //navigationView.getMenu().removeItem(R.id.nav_lightning);
+        }
 
         mRootView = (ViewGroup) findViewById(R.id.content_main);
 
@@ -235,20 +241,30 @@ public class MainActivity extends AppCompatActivity
         CheckBox checkFqDNS = view.findViewById(R.id.launch_check_fqdns);
         final CheckBox checkAutoTeredo = view.findViewById(R.id.launch_check_teredo_ipv6);
         final CheckBox checkNotification = view.findViewById(R.id.launch_check_notify);
+        CheckBox checkAutoStart = view.findViewById(R.id.launch_check_auto_start);
+        Spinner spinnerLaunch = view.findViewById(R.id.launch_mode);
+        Spinner spinnerNotify = view.findViewById(R.id.launch_notify_mode);
 
         boolean enableXXnet = AppModel.sPreferences.getBoolean(AppModel.PRE_ENABLE_XXNET, true);
         boolean enableFqDNS = AppModel.sPreferences.getBoolean(AppModel.PRE_ENABLE_FQDNS, true);
         boolean enableTeredo = AppModel.sPreferences.getBoolean(AppModel.PRE_ENABLE_TEREDO, true);
-        boolean AutoTeredo = AppModel.sPreferences.getBoolean(AppModel.PRE_AUTO_TEREDO, true);
+        boolean autoTeredo = AppModel.sPreferences.getBoolean(AppModel.PRE_AUTO_TEREDO, true);
         boolean enableNotification = AppModel.sPreferences.getBoolean(AppModel.PRE_ENABLE_NOTIFICATION, true);
+        boolean autoStart = AppModel.sPreferences.getBoolean(AppModel.PRE_AUTO_START, false);
+
+        spinnerLaunch.setSelection(AppModel.sPreferences.getInt(LaunchService.PER_ROOT_MODE, 0));
+        spinnerLaunch.setEnabled(ShellUtils.isRoot());
+        spinnerNotify.setSelection(AppModel.sPreferences
+                .getInt(UpdateManager.PER_UPDATE_POLICY, UpdateManager.UPDATE_ALL));
 
         checkXXNet.setChecked(enableXXnet);
         checkFqDNS.setChecked(enableFqDNS);
         checkTeredo.setChecked(enableTeredo);
-        checkAutoTeredo.setChecked(AutoTeredo);
+        checkAutoTeredo.setChecked(autoTeredo);
         checkAutoTeredo.setEnabled(enableTeredo);
         checkNotification.setChecked(enableNotification);
         checkNotification.setEnabled(enableXXnet);
+        checkAutoStart.setChecked(autoStart);
 
         checkXXNet.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -282,6 +298,35 @@ public class MainActivity extends AppCompatActivity
                 AppModel.sPreferences.edit().putBoolean(AppModel.PRE_ENABLE_NOTIFICATION, isChecked).apply();
             }
         });
+        checkAutoStart.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                AppModel.sPreferences.edit().putBoolean(AppModel.PRE_AUTO_START, isChecked).apply();
+            }
+        });
+        spinnerLaunch.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                AppModel.sPreferences.edit().putInt(LaunchService.PER_ROOT_MODE, position).apply();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+        spinnerNotify.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                AppModel.sPreferences.edit().putInt(UpdateManager.PER_UPDATE_POLICY, position).apply();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
         new AlertDialog.Builder(AppModel.sActivity)
                 .setTitle(R.string.launch_component)
                 .setView(view)
@@ -312,7 +357,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
-        int[] rootActions = new int[]{R.id.action_import_sys_cert, R.id.action_remove_sys_cert, R.id.action_launch_mode };
+        int[] rootActions = new int[]{R.id.action_import_sys_cert, R.id.action_remove_sys_cert};
         for(int id : rootActions){
             MenuItem item = menu.findItem(id);
             if(item != null)
@@ -358,8 +403,6 @@ public class MainActivity extends AppCompatActivity
                     UpdateManager.checkUpdate(true);
                 }
             }).start();
-        }else if(id == R.id.action_launch_mode){
-            LaunchService.chooseLaunchMode();
         }else if(id == R.id.action_exit){
             AppModel.appStop();
         }else if(id == R.id.action_clear_cert){
@@ -373,8 +416,6 @@ public class MainActivity extends AppCompatActivity
                     XXnetManager.cleanSystemCert();
                 }
             }).start();
-        }else if(id == R.id.action_update_setting){
-            UpdateManager.setUpdatePolicy(this);
         }else if(id == R.id.action_update_xxnet){
             updateXXNet();
         }else if(id == R.id.action_launch_component){

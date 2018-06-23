@@ -80,11 +80,11 @@ public class FqrouterManager {
                 if(!matcherField.find())
                     continue;
                 sFqrouterInfo += "<p>" + matcherField.group(1)
-                                + "</p><p style=\"color:#545601\">&emsp &emsp RX: &ensp "
-                                + matcherField.group(2).replace(" ", "&nbsp ") + " &emsp &emsp "
+                                + "</p><p style=\"color:#545601\">&emsp &emsp RX &nbsp "
+                                + matcherField.group(2).replace(" ", "&nbsp ") + " &emsp &ensp "
                                 + matcherField.group(3).replace(" ", "&nbsp ")
-                                + "</p><p style=\"color:#015F2E\">&emsp &emsp TX: &ensp "
-                                + matcherField.group(4).replace(" ", "&nbsp ") + " &emsp &emsp "
+                                + "</p><p style=\"color:#015F2E\">&emsp &emsp TX &nbsp "
+                                + matcherField.group(4).replace(" ", "&nbsp ") + " &emsp &ensp "
                                 + matcherField.group(5).replace(" ", "&nbsp ") + "</p><br />";
             }
 
@@ -136,11 +136,22 @@ public class FqrouterManager {
 
     public static void startVpnService(){
         sRequestApproved = false;
-        Intent intent = VpnService.prepare(sActivity);
+        Intent intent = VpnService.prepare(AppModel.sContext);
         if (intent == null) {
-            onRequestResult(RESULT_OK, sActivity);
+            onRequestResult(RESULT_OK, null);
         } else {
-            sActivity.startActivityForResult(intent, ASK_VPN_PERMISSION);
+            if(AppModel.sActivity != null)
+                sActivity.startActivityForResult(intent, ASK_VPN_PERMISSION);
+            else{
+                try {
+                    AppModel.showToast(AppModel.sContext.getString(R.string.start_vpn));
+                    Thread.sleep(15000);
+                    onRequestResult(RESULT_OK, null);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
         }
         while (!sRequestApproved){
             try {

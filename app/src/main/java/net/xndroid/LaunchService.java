@@ -55,7 +55,7 @@ public class LaunchService extends Service {
             "android.permission.ACCESS_NETWORK_STATE"};
 
     @TargetApi(M)
-    static private void getPermission(String[] permissions,Activity activity) {
+    static private void getPermission(String[] permissions, Activity activity) {
         if(Build.VERSION.SDK_INT>=23) {
             ArrayList<String> preToDo = new ArrayList<>();
             boolean tip = false;
@@ -161,6 +161,10 @@ public class LaunchService extends Service {
             AppModel.showToast(sContext.getString(R.string.only_vpn_available));
             return;
         }
+        if(null == sActivity){
+            _modeChosen = true;
+            return;
+        }
         sActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -172,7 +176,7 @@ public class LaunchService extends Service {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             LaunchService._modeChosen = Boolean.FALSE;
-                            AppModel.sPreferences.edit().putInt(PER_ROOT_MODE, -1).apply();
+                            AppModel.sPreferences.edit().putInt(PER_ROOT_MODE, 0).apply();
                         }
                     }).setPositiveButton(R.string.root_mode, new DialogInterface.OnClickListener() {
                     @Override
@@ -188,8 +192,7 @@ public class LaunchService extends Service {
     private static boolean isRunInRootMode(){
         if(!ShellUtils.isRoot())
             return false;
-        int mode = AppModel.sPreferences.getInt(PER_ROOT_MODE, 0);
-        if(AppModel.sLastFail || mode == 0){
+        if(AppModel.sLastFail || AppModel.sPreferences.getInt(PER_ROOT_MODE, -1) == -1){
             _modeChosen = null;
             chooseLaunchMode();
             while (_modeChosen == null){
@@ -199,16 +202,9 @@ public class LaunchService extends Service {
                     e.printStackTrace();
                 }
             }
-            if(_modeChosen == Boolean.TRUE)
-                return true;
-            else
-                return false;
+            return _modeChosen;
         }
-        if(mode == 1)
-            return true;
-        if(mode == -1)
-            return false;
-        return false;
+        return AppModel.sPreferences.getInt(PER_ROOT_MODE, -1) == 1;
     }
 
     private static void shellInit() {
@@ -355,13 +351,18 @@ public class LaunchService extends Service {
     }
 
     private void launch(){
-        new WorkingDlg(AppModel.sActivity, getString(R.string.xndroid_launching)) {
+        WorkingDlg dlg = null;
+        if(AppModel.sActivity != null)
+            dlg = new WorkingDlg(AppModel.sActivity, getString(R.string.xndroid_launching));
+        final WorkingDlg finalDlg = dlg;
+        final Runnable work = new Runnable() {
             @Override
-            public void work() {
+            public void run() {
                 try {
-                    updateMsg(getString(R.string.request_permission));
-                    getPermission(sPermissions, sActivity);
-                    updateMsg(getString(R.string.initializing));
+                    WorkingDlg.updateMsg(getString(R.string.request_permission), finalDlg);
+                    if(sActivity != null)
+                        getPermission(sPermissions, sActivity);
+                    WorkingDlg.updateMsg(getString(R.string.initializing), finalDlg);
                     clearOldProcess();
                     updateEnvEarly();
                     shellInit();
@@ -373,21 +374,21 @@ public class LaunchService extends Service {
                         AppModel.fatalError(getString(R.string.no_network_tip));
                     }
                     AppModel.getNetworkState();
-                    updateMsg(getString(R.string.prepare_python));
+                    WorkingDlg.updateMsg(getString(R.string.prepare_python), finalDlg);
                     pythonInit();
-                    updateMsg(getString(R.string.prepare_fqrouter));
+                    WorkingDlg.updateMsg(getString(R.string.prepare_fqrouter), finalDlg);
                     FqrouterManager.prepareFqrouter();
                     if (!AppModel.sIsRootMode) {
-                        updateMsg(getString(R.string.start_vpn));
+                        WorkingDlg.updateMsg(getString(R.string.start_vpn), finalDlg);
                         FqrouterManager.startVpnService();
                     }
-                    updateMsg(getString(R.string.wait_fqrouter));
+                    WorkingDlg.updateMsg(getString(R.string.wait_fqrouter), finalDlg);
                     FqrouterManager.startFqrouter();
                     FqrouterManager.waitReady();
                     if(AppModel.sEnableXXNet) {
-                        updateMsg(getString(R.string.prepare_xxnet));
+                        WorkingDlg.updateMsg(getString(R.string.prepare_xxnet), finalDlg);
                         XXnetManager.prepare();
-                        updateMsg(getString(R.string.wait_xxnet));
+                        WorkingDlg.updateMsg(getString(R.string.wait_xxnet), finalDlg);
                         XXnetManager.startXXnet(LaunchService.this);
                         XXnetManager.waitReady();
                     }
@@ -398,6 +399,18 @@ public class LaunchService extends Service {
                 }
             }
         };
+
+        if(dlg != null)
+            dlg.start(work);
+        else{
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    work.run();
+                }
+            }).start();
+        }
+
         regReceiver();
     }
 

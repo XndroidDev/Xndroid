@@ -382,6 +382,10 @@ public class XXnetManager {
     }
 
     public static void importCert(){
+//        if(null == AppModel.sActivity) {
+//            AppModel.showToast(AppModel.sContext.getString(R.string.reimport_cert_tip));
+//            return;
+//        }
         String certPath = AppModel.sXndroidFile + "/xxnet/data/gae_proxy/CA.crt";
         ShellUtils.execBusybox("chmod 777 " + certPath);
         ShellUtils.execBusybox("cp -f " + certPath + " /sdcard/XX-Net.crt");
@@ -408,7 +412,8 @@ public class XXnetManager {
         Intent installIntent = KeyChain.createInstallIntent();
         installIntent.putExtra(KeyChain.EXTRA_CERTIFICATE, keychain);
         installIntent.putExtra(KeyChain.EXTRA_NAME,"XX-Net Chain");
-        AppModel.sActivity.startActivityForResult(installIntent, IMPORT_CERT_REQUEST);
+        //AppModel.sActivity.startActivityForResult(installIntent, IMPORT_CERT_REQUEST);
+        AppModel.sContext.startActivity(installIntent);
 
         String md5 = ShellUtils.execBusybox("md5sum " + certPath + " | " + ShellUtils.sBusyBox + " cut -c 1-32").trim();
         AppModel.sPreferences.edit().putString(PER_CA_MD5, md5).apply();

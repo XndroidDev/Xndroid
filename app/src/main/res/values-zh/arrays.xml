@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="launch_mode">
+        <item>VPN模式</item>
+        <item>Root模式</item>
+    </string-array>
+    <string-array name="notify_mode">
+        <item>不要提醒</item>
+        <item>提醒稳定版</item>
+        <item>提醒最新版</item>
+    </string-array>
+</resources>

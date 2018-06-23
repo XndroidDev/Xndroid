@@ -139,6 +139,8 @@ public class UpdateManager {
         final String finalVersionLog = versionLog;
         final String finalVersionName = versionName;
 
+        if(null == AppModel.sActivity)
+            return;
         //this code run in main thread.
         AppModel.sActivity.runOnUiThread(new Runnable() {
             @Override

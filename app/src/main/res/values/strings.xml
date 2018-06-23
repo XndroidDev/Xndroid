@@ -154,4 +154,9 @@
     <string name="notification_bar">notification bar</string>
     <string name="teredo_disable_tip">* XX-Net may need teredo to access the ipv6 network.</string>
     <string name="notification_bar_disabled_tip">* The process may be killed by system if the notification bar is disabled.</string>
+    <string name="reimport_cert_tip">XX-Net certification need to re-import. Please import it through Xndroid.</string>
+    <string name="auto_start">auto start</string>
+    <string name="launch_mode">launch mode:</string>
+    <string name="notify_mode">notify mode:</string>
+    <string name="launch_setting">launch setting</string>
 </resources>

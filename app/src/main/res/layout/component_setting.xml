@@ -14,9 +14,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="XX-Net" />
-    <Space
-        android:layout_height="10dp"
-        android:layout_width="match_parent"/>
+    <!--<Space-->
+        <!--android:layout_height="10dp"-->
+        <!--android:layout_width="match_parent"/>-->
     <CheckBox
         android:id="@+id/launch_check_notify"
         android:layout_width="match_parent"
@@ -25,7 +25,7 @@
         android:text="@string/notification_bar" />
 
     <Space
-        android:layout_height="20dp"
+        android:layout_height="10dp"
         android:layout_width="match_parent"/>
 
     <CheckBox
@@ -35,27 +35,27 @@
         android:checked="true"
         android:enabled="false"
         android:text="fqrouter" />
-    <Space
-        android:layout_height="10dp"
-        android:layout_width="match_parent"/>
+    <!--<Space-->
+        <!--android:layout_height="10dp"-->
+        <!--android:layout_width="match_parent"/>-->
     <CheckBox
         android:id="@+id/launch_check_fqdns"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginLeft="30dp"
         android:text="fqdns" />
-    <Space
-        android:layout_height="10dp"
-        android:layout_width="match_parent"/>
+    <!--<Space-->
+        <!--android:layout_height="10dp"-->
+        <!--android:layout_width="match_parent"/>-->
     <CheckBox
         android:id="@+id/launch_check_teredo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginLeft="30dp"
         android:text="teredo" />
-    <Space
-        android:layout_height="10dp"
-        android:layout_width="match_parent"/>
+    <!--<Space-->
+        <!--android:layout_height="10dp"-->
+        <!--android:layout_width="match_parent"/>-->
     <CheckBox
         android:id="@+id/launch_check_teredo_ipv6"
         android:layout_width="match_parent"
@@ -63,7 +63,49 @@
         android:layout_marginLeft="60dp"
         android:text="@string/auto_disable_teredo" />
     <Space
-        android:layout_height="20dp"
+        android:layout_height="10dp"
+        android:layout_width="match_parent"/>
+    <CheckBox
+        android:id="@+id/launch_check_auto_start"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/auto_start" />
+    <Space
+        android:layout_height="10dp"
+        android:layout_width="match_parent"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/launch_mode"/>
+        <Spinner
+            android:id="@+id/launch_mode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:entries="@array/launch_mode"/>
+    </LinearLayout>
+    <Space
+        android:layout_height="10dp"
+        android:layout_width="match_parent"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/notify_mode"/>
+        <Spinner
+            android:id="@+id/launch_notify_mode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:entries="@array/notify_mode"/>
+    </LinearLayout>
+    <Space
+        android:layout_height="10dp"
         android:layout_width="match_parent"/>
     <TextView
         android:layout_width="wrap_content"

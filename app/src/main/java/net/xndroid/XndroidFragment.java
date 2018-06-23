@@ -206,7 +206,11 @@ public class XndroidFragment extends Fragment implements View.OnClickListener
     }
 
 
+    private int _tryed_notice = 0;
     private void updateNotice(){
+        if(_tryed_notice > 12)
+            return;
+        _tryed_notice++;
         new Thread(new Runnable() {
             @Override
             public void run() {

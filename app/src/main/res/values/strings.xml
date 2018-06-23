@@ -151,4 +151,7 @@
     <string name="restart_to_take_effect">* Restart to take effect.</string>
     <string name="replace_the_proxy_tip">* You may need to replace the proxy item in the fqrouter manager page.</string>
     <string name="fqdns_disabled_tip">* There may be DNS pollution if fqdns is disabled.</string>
+    <string name="notification_bar">notification bar</string>
+    <string name="teredo_disable_tip">* XX-Net may need teredo to access the ipv6 network.</string>
+    <string name="notification_bar_disabled_tip">* The process may be killed by system if the notification bar is disabled.</string>
 </resources>

@@ -45,6 +45,7 @@ public class AppModel {
     public static boolean sEnableFqDNS = true;
     public static boolean sEnableTeredo = true;
     public static boolean sAutoTeredo = true;
+    public static boolean sEnableNotification = true;
 
     public static SharedPreferences sPreferences;
     public static boolean sAutoThread = true;
@@ -56,6 +57,7 @@ public class AppModel {
     public static final String PRE_ENABLE_FQDNS = "XNDROID_ENABLE_FQDNS";
     public static final String PRE_ENABLE_TEREDO = "XNDROID_ENABLE_TEREDO";
     public static final String PRE_AUTO_TEREDO = "XNDROID_AUTO_TEREDO";
+    public static final String PRE_ENABLE_NOTIFICATION = "XNDROID_ENABLE_NOTIFICATION";
 
     public static void showToast(final String msg) {
         try {
@@ -266,6 +268,7 @@ public class AppModel {
         sEnableFqDNS = sPreferences.getBoolean(PRE_ENABLE_FQDNS, true);
         sEnableTeredo = sPreferences.getBoolean(PRE_ENABLE_TEREDO, true);
         sAutoTeredo = sPreferences.getBoolean(PRE_AUTO_TEREDO, true);
+        sEnableNotification = sPreferences.getBoolean(PRE_ENABLE_NOTIFICATION, true);
 
         sPreferences.edit().putBoolean(PER_LAST_FAIL, true).apply();
         sPreferences.edit().putInt(PER_VERSION, sVersionCode).apply();

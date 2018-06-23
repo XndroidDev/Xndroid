@@ -131,7 +131,8 @@ public class XXnetService extends Service {
                 sActivity.runOnUiThread(AppModel.sUpdateInfoUI);
             String mesg = getString(R.string.ip_number) + ":" + XXnetManager.sIpNum
                     + "            " + getString(R.string.ip_quality) + ":" + XXnetManager.sIpQuality;
-            notification(XXnetManager.sStateSummary,mesg);
+            if(AppModel.sEnableNotification)
+                notification(XXnetManager.sStateSummary, mesg);
         }
 
     }

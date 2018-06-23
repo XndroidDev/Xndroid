@@ -124,10 +124,10 @@ public class MainActivity extends AppCompatActivity
             AppModel.fatalError("error: App is launched but LaunchService exit");
             return;
         }
+        AppModel.sActivity = this;
         if(AppModel.sContext == null) {
             AppModel.appInit(this);
         }
-        AppModel.sActivity = this;
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -165,6 +165,9 @@ public class MainActivity extends AppCompatActivity
         if(mAboutFragment == null)
             mAboutFragment = new AboutFragment();
         switchFragment(mXndroidFragment);
+
+        if(getIntent().getBooleanExtra("auto_start", false))
+            moveTaskToBack(true);
     }
 
     public void launchUrl(String url){
@@ -231,16 +234,26 @@ public class MainActivity extends AppCompatActivity
         CheckBox checkTeredo = view.findViewById(R.id.launch_check_teredo);
         CheckBox checkFqDNS = view.findViewById(R.id.launch_check_fqdns);
         final CheckBox checkAutoTeredo = view.findViewById(R.id.launch_check_teredo_ipv6);
+        final CheckBox checkNotification = view.findViewById(R.id.launch_check_notify);
 
-        checkXXNet.setChecked(AppModel.sEnableXXNet);
-        checkFqDNS.setChecked(AppModel.sEnableFqDNS);
-        checkTeredo.setChecked(AppModel.sEnableTeredo);
-        checkAutoTeredo.setChecked(AppModel.sAutoTeredo);
-        checkAutoTeredo.setEnabled(AppModel.sEnableTeredo);
+        boolean enableXXnet = AppModel.sPreferences.getBoolean(AppModel.PRE_ENABLE_XXNET, true);
+        boolean enableFqDNS = AppModel.sPreferences.getBoolean(AppModel.PRE_ENABLE_FQDNS, true);
+        boolean enableTeredo = AppModel.sPreferences.getBoolean(AppModel.PRE_ENABLE_TEREDO, true);
+        boolean AutoTeredo = AppModel.sPreferences.getBoolean(AppModel.PRE_AUTO_TEREDO, true);
+        boolean enableNotification = AppModel.sPreferences.getBoolean(AppModel.PRE_ENABLE_NOTIFICATION, true);
+
+        checkXXNet.setChecked(enableXXnet);
+        checkFqDNS.setChecked(enableFqDNS);
+        checkTeredo.setChecked(enableTeredo);
+        checkAutoTeredo.setChecked(AutoTeredo);
+        checkAutoTeredo.setEnabled(enableTeredo);
+        checkNotification.setChecked(enableNotification);
+        checkNotification.setEnabled(enableXXnet);
 
         checkXXNet.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                checkNotification.setEnabled(isChecked);
                 AppModel.sPreferences.edit().putBoolean(AppModel.PRE_ENABLE_XXNET, isChecked).apply();
             }
         });
@@ -263,6 +276,12 @@ public class MainActivity extends AppCompatActivity
                 AppModel.sPreferences.edit().putBoolean(AppModel.PRE_AUTO_TEREDO, isChecked).apply();
             }
         });
+        checkNotification.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                AppModel.sPreferences.edit().putBoolean(AppModel.PRE_ENABLE_NOTIFICATION, isChecked).apply();
+            }
+        });
         new AlertDialog.Builder(AppModel.sActivity)
                 .setTitle(R.string.launch_component)
                 .setView(view)
@@ -277,6 +296,7 @@ public class MainActivity extends AppCompatActivity
                         }).start();
                     }
                 })
+                .setNegativeButton(R.string.ok, null)
                 .create().show();
     }
 

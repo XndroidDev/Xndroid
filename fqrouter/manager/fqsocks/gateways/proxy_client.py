@@ -429,7 +429,8 @@ def pick_proxy(client):
                pick_preferred_private_proxy(client) or \
                (picK_ipv6_direct(client) if not ipv6_direct_try_first else None) or \
                pick_https_try_proxy(client) or \
-               pick_proxy_supports(client, picks_public)
+               pick_proxy_supports(client, picks_public) or \
+               (DIRECT_PROXY if not client.host else None)
     else:
         return pick_preferred_private_proxy(client) or picK_ipv6_direct(client) or DIRECT_PROXY
 
@@ -479,6 +480,11 @@ def parse_sni_domain(data):
                   if ord(m.group(1)) == len(m.group(2))).next()
     except StopIteration:
         pass
+    # if not domain:
+    #     from binascii import hexlify
+    #     LOGGER.warning('sni no found:\n%s' % hexlify(data))
+    #     with open("/sdcard/sni_no_found-%s" % time.time(), 'w') as f:
+    #         f.write(data)
     return domain
 
 
@@ -555,7 +561,7 @@ def _pick_proxy_supports(client, picks_public=None):
 
 def should_pick(proxy, client, picks_public):
     if proxy.died:
-        if proxy.auto_relive and proxy.die_time and time.time() > proxy.die_time + 2:
+        if proxy.auto_relive and proxy.die_time and time.time() > proxy.die_time + 3:
             proxy.died = False
         else:
             return False

@@ -407,7 +407,7 @@ def try_receive_response_header(client, upstream_sock, rejects_error=False):
             if LOGGER.isEnabledFor(logging.DEBUG):
                 LOGGER.debug('[%s] skip try reading response due to chunked' % repr(client))
             return http_response
-        if not http_response.content_length:
+        if content_length == None:
             if LOGGER.isEnabledFor(logging.DEBUG):
                 LOGGER.debug('[%s] skip try reading response due to no content length' % repr(client))
             return http_response
@@ -425,10 +425,10 @@ def try_receive_response_header(client, upstream_sock, rejects_error=False):
 
 def try_receive_response_body(http_response, reads_all=False):
     content_type = http_response.msg.dict.get('content-type')
-    if content_type and 'text/html' in content_type:
+    if content_type and 'text' in content_type:
         reads_all = True
     if reads_all:
-        http_response.body = http_response.read(2 * 1024 * 1024)
+        http_response.body = http_response.read(min(http_response.content_length, 2 * 1024 * 1024))
     else:
         http_response.body = http_response.read(min(http_response.content_length, 64 * 1024))
     return http_response.capturing_sock.rfile.captured

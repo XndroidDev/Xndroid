@@ -342,7 +342,7 @@ public class LaunchService extends Service {
         if(AppModel.sLastVersion == 0 || AppModel.sLastVersion == AppModel.sVersionCode)
             return;
         FileUtils.rmExclude(sXndroidFile + "/fqrouter", new String[] {"etc"});
-        if(AppModel.sLastVersion <= 20) {
+        if(AppModel.sLastVersion <= 21) {
             ShellUtils.execBusybox("rm -r " + sXndroidFile + "/xxnet/code");
         }
         if(AppModel.sLastVersion <= 17){

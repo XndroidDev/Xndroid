@@ -32,6 +32,7 @@ class HttpConnectProxy(Proxy):
         self.is_secured = to_bool(is_secured)
         self.priority = int(priority)
         self.allow_ip_access = True
+        self.allow_all_port = True
 
     def do_forward(self, client):
         LOGGER.info('[%s] http connect %s:%s' % (repr(client), self.proxy_ip, self.proxy_port))
@@ -81,9 +82,13 @@ class HttpConnectProxy(Proxy):
                 LOGGER.debug('[%s] http connect response: %s' % (repr(client), response.strip()))
             LOGGER.error('[%s] http connect rejected: %s' %
                          (repr(client), response.splitlines()[0] if response.splitlines() else 'unknown'))
-            if match and '403' == match.group(1) and not client.host:
-                LOGGER.info('disable HTTP connect access with ip')
-                self.allow_ip_access = False
+            if match and '403' == match.group(1):
+                if 443 != client.dst_port:
+                    LOGGER.info('disable HTTP connect no-https port')
+                    self.allow_all_port = False
+                elif not client.host:
+                    LOGGER.info('disable HTTP connect access with ip')
+                    self.allow_ip_access = False
             else:
                 self.died = True
                 self.die_time = time.time()
@@ -94,6 +99,8 @@ class HttpConnectProxy(Proxy):
 
     def is_protocol_supported(self, protocol, client=None):
         if client and not self.allow_ip_access and not client.host:
+            return False
+        if client and not self.allow_all_port and client.dst_port != 443:
             return False
         return protocol == 'HTTPS'
 

@@ -418,24 +418,24 @@ def pick_proxy(client):
     if not china_shortcut_enabled:
         picks_public = False
     if client.protocol == 'HTTP':
-        return (picK_ipv6_direct(client) if ipv6_direct_try_first else None) or \
+        return (pick_ipv6_direct(client) if ipv6_direct_try_first else None) or \
                pick_preferred_private_proxy(client) or \
-               (picK_ipv6_direct(client) if not ipv6_direct_try_first else None) or \
+               (pick_ipv6_direct(client) if not ipv6_direct_try_first else None) or \
                pick_http_try_proxy(client) or \
                pick_tcp_smuggler(client) or \
                pick_proxy_supports(client, picks_public)
     elif client.protocol == 'HTTPS':
-        return (picK_ipv6_direct(client) if ipv6_direct_try_first else None) or \
+        return (pick_ipv6_direct(client) if ipv6_direct_try_first else None) or \
                pick_preferred_private_proxy(client) or \
-               (picK_ipv6_direct(client) if not ipv6_direct_try_first else None) or \
+               (pick_ipv6_direct(client) if not ipv6_direct_try_first else None) or \
                pick_https_try_proxy(client) or \
                pick_proxy_supports(client, picks_public) or \
-               (DIRECT_PROXY if not client.host else None)
+               (DIRECT_PROXY if client.dst_port in [465, 993, 995] else None)
     else:
-        return pick_preferred_private_proxy(client) or picK_ipv6_direct(client) or DIRECT_PROXY
+        return pick_preferred_private_proxy(client) or pick_ipv6_direct(client) or DIRECT_PROXY
 
 
-def picK_ipv6_direct(client):
+def pick_ipv6_direct(client):
     if not ipv6_direct_enable:
         return None
     if IPV6_DIRECT_PROXY in client.tried_proxies:

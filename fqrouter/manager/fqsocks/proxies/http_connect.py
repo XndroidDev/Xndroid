@@ -38,7 +38,7 @@ class HttpConnectProxy(Proxy):
         LOGGER.info('[%s] http connect %s:%s' % (repr(client), self.proxy_ip, self.proxy_port))
         begin_at = time.time()
         try:
-            upstream_sock = client.create_tcp_socket(self.proxy_ip, self.proxy_port, 3)
+            upstream_sock = client.create_tcp_socket(self.proxy_ip, self.proxy_port, 5)
             if self.is_secured:
                 counter = upstream_sock.counter
                 upstream_sock = ssl.wrap_socket(upstream_sock)
@@ -50,7 +50,7 @@ class HttpConnectProxy(Proxy):
             return client.fall_back(
                 reason='http-connect upstream socket connect fail',
                 delayed_penalty=self.increase_failed_time)
-        upstream_sock.settimeout(3)
+        upstream_sock.settimeout(6.5)
         upstream_sock.sendall('CONNECT %s:%s HTTP/1.0\r\n' % (client.host if client.host else client.dst_ip, client.dst_port))
         if self.username and self.password:
             auth = base64.b64encode('%s:%s' % (self.username, self.password)).strip()

@@ -342,8 +342,14 @@ public class LaunchService extends Service {
         if(AppModel.sLastVersion == 0 || AppModel.sLastVersion == AppModel.sVersionCode)
             return;
         FileUtils.rmExclude(sXndroidFile + "/fqrouter", new String[] {"etc"});
-        if(AppModel.sLastVersion <= 21) {
+        if(AppModel.sLastVersion <= 22) {
             ShellUtils.execBusybox("rm -r " + sXndroidFile + "/xxnet/code");
+        }
+        if(AppModel.sLastVersion <= 0) {
+            ShellUtils.execBusybox("rm -r " + sXndroidFile + "/xxnet/data/gae_proxy/CA.crt");
+            ShellUtils.execBusybox("rm -r " + sXndroidFile + "/xxnet/data/gae_proxy/CAkey.pem");
+            ShellUtils.execBusybox("rm -r " + sXndroidFile + "/xxnet/data/gae_proxy/Certkey.pem");
+            ShellUtils.execBusybox("rm -r " + sXndroidFile + "/xxnet/data/gae_proxy/certs");
         }
         if(AppModel.sLastVersion <= 17){
             ShellUtils.execBusybox("rm -r " + sXndroidFile + "/python");

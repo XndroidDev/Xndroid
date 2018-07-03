@@ -3,7 +3,7 @@ A proxy software for Android based on XX-Net and fqrouter.
 
 [最新测试版](https://raw.githubusercontent.com/XndroidDev/Xndroid-update/master/update/app-debug.apk)
 
-[稳定版1.1.10](https://github.com/XndroidDev/Xndroid/releases/download/1.1.10/app-release.apk)
+[稳定版1.2.2](https://github.com/XndroidDev/Xndroid/releases/download/1.2.2/app-release.apk)
 
 [稳定版1.1.9](https://github.com/XndroidDev/Xndroid/releases/download/1.1.9/app-release.apk)
 
@@ -19,7 +19,7 @@ A proxy software for Android based on XX-Net and fqrouter.
  * 为fqrouter添加teredo支持, XX-Net + IPV6 自由浏览无障碍
  * 调用证书安装器安装证书, 确认即可一键安装(如果已经设置过图案解锁,却要求输入凭证,先清除屏幕锁即可), root后可导入为系统证书
  * 监听电量, 网络, 休眠状态, 自动调整最大扫描线程数
- * 集成LightningBrowser 4.5.1, 默认使用 localhost:8087 代理, 关闭证书警告
+ * 集成LightningBrowser 4.5.1, 关闭证书警告
 
 ## 兼容性与局限性
  * 目前不支持X86架构.

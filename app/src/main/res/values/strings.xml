@@ -159,4 +159,5 @@
     <string name="launch_mode">launch mode:</string>
     <string name="notify_mode">notify mode:</string>
     <string name="launch_setting">launch setting</string>
+    <string name="import_cert_fail">Import certification fail, please install manually.</string>
 </resources>

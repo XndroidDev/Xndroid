@@ -265,6 +265,18 @@ public class XXnetManager {
         for(int i=0;i < 25;i++){
             if(updateAttribute()) {
                 autoImportCA();
+                /*get a blocked url to avoid idle state of xxnet*/
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Thread.sleep(2000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        HttpJson.get("http://google.com");
+                    }
+                }).start();
                 return true;
             }
             try {
@@ -409,14 +421,20 @@ public class XXnetManager {
             LogUtils.e("read certificate fail!", e);
             return;
         }
-        Intent installIntent = KeyChain.createInstallIntent();
-        installIntent.putExtra(KeyChain.EXTRA_CERTIFICATE, keychain);
-        installIntent.putExtra(KeyChain.EXTRA_NAME,"XX-Net Chain");
-        //AppModel.sActivity.startActivityForResult(installIntent, IMPORT_CERT_REQUEST);
-        AppModel.sContext.startActivity(installIntent);
+        try {
+            Intent installIntent = KeyChain.createInstallIntent();
+            installIntent.putExtra(KeyChain.EXTRA_CERTIFICATE, keychain);
+            installIntent.putExtra(KeyChain.EXTRA_NAME, "XX-Net Chain");
+            //AppModel.sActivity.startActivityForResult(installIntent, IMPORT_CERT_REQUEST);
+            installIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            AppModel.sContext.startActivity(installIntent);
 
-        String md5 = ShellUtils.execBusybox("md5sum " + certPath + " | " + ShellUtils.sBusyBox + " cut -c 1-32").trim();
-        AppModel.sPreferences.edit().putString(PER_CA_MD5, md5).apply();
+            String md5 = ShellUtils.execBusybox("md5sum " + certPath + " | " + ShellUtils.sBusyBox + " cut -c 1-32").trim();
+            AppModel.sPreferences.edit().putString(PER_CA_MD5, md5).apply();
+        }catch (Exception e){
+            AppModel.showToast(AppModel.sContext.getString(R.string.import_cert_fail));
+            return;
+        }
 
     }
 

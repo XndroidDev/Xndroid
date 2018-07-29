@@ -159,4 +159,5 @@
     <string name="launch_mode">启动模式:</string>
     <string name="notify_mode">通知模式:</string>
     <string name="launch_setting">启动设置</string>
+    <string name="import_cert_fail">导入证书失败, 请手动导入证书.</string>
 </resources>

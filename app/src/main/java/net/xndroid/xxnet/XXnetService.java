@@ -85,7 +85,7 @@ public class XXnetService extends Service {
 
 
     private final int IP_QUALITY_LIMIT = 800;
-    private final int IP_NUM_LIMIT = 70;
+    private final int IP_NUM_LIMIT = 80;
     public static int MAX_THREAD_NUM = 12;
 
     private int giveThreadNum(){

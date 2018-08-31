@@ -463,6 +463,7 @@ public class SocksVpnService extends VpnService {
 
     private void stopVpn() {
         stopFlag = true;
+        LogUtils.d("stopVpn called");
         if (tunPFD != null) {
             try {
                 tunPFD.close();

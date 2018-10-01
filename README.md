@@ -3,7 +3,7 @@ A proxy software for Android based on XX-Net and fqrouter.
 
 [最新测试版](https://raw.githubusercontent.com/XndroidDev/Xndroid-update/master/update/app-debug.apk)
 
-[稳定版1.2.2](https://github.com/XndroidDev/Xndroid/releases/download/1.2.2/app-release.apk) 部分机型报错"unexpected exception: CallingstartActivity() from outside of an Activity context requires the FLAG_ ACTlVITY_ NEW_TASK flag. ls this really what you want?"请安装最新测试版.
+[稳定版1.2.4](https://github.com/XndroidDev/Xndroid/releases/download/1.2.4/app-release.apk) 
 
 [稳定版1.1.9](https://github.com/XndroidDev/Xndroid/releases/download/1.1.9/app-release.apk)
 
@@ -47,6 +47,9 @@ tedcdn.com
 howcast.com
 ```
  注意Android6.0 及以上必须授予`存储空间(访问媒体文件)`的权限. 如果仍然不能满足需求, 可以在fqrouter的`配置代理`中关闭`优先使用个人代理`, 并开启`直连可以直连的服务器`
+
+## 关于修改XX-NET配置
+一般无需也不建议手动修改XX-NET配置文件. 如特殊情况需要修改, root用户可直接修改相关文件, 其位于`/data/data/net.xndroid/files/xndroid_files/xxnet/`; 非root用户可以[下载XX-NET zip压缩包](https://github.com/XX-net/XX-Net/releases), 将其解压, 并修改或添加相应文件再压缩回zip, 点击菜单中的`离线更新XX-NET`, 选择修改的zip文件即可.
 
 ## 关于编译
 编译使用AndroidStudio, 并在AndroidStudio中安装相应SDK, 如API Level 23. 由于VPN模式下需使用JNI, 故还需在AndroidStuio中安装NDK. NDK版本不要太高, 否则不支持armeabi指令集. 此外, LightningBrowser编译还需要在AndroidStudio中安装API Level 26及Kotlin插件.

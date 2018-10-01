@@ -2,9 +2,16 @@ package net.xndroid.fqrouter;
 
 
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.net.VpnService;
 import android.os.Build;
+import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
 import android.util.Log;
 
 import net.xndroid.AppModel;
@@ -36,7 +43,7 @@ public class FqrouterManager {
     public static final int ASK_VPN_PERMISSION = 101;
     public static boolean sRequestApproved = false;
     private static Process mProcess;
-
+    protected static Messenger sMessenger;
     public static boolean sIsQualified = false;
     public static String sNATType = "UNKNOW";
     public static String sTeredoIP = "UNKNOW";
@@ -128,7 +135,19 @@ public class FqrouterManager {
             sRequestApproved = true;
             Intent service = new Intent(sContext, SocksVpnService.class);
             service.putExtra("origin_ipv6", sOriginIPv6);
+            ServiceConnection serviceConnection = new ServiceConnection() {
+                @Override
+                public void onServiceConnected(ComponentName name, IBinder service) {
+                    FqrouterManager.sMessenger = new Messenger(service);
+                }
+
+                @Override
+                public void onServiceDisconnected(ComponentName name) {
+                    FqrouterManager.sMessenger = null;
+                }
+            };
             sContext.startService(service);
+            sContext.bindService(service, serviceConnection, Context.BIND_AUTO_CREATE);
         } else {
             AppModel.fatalError(sContext.getString(R.string.vpn_reject));
         }
@@ -323,6 +342,13 @@ public class FqrouterManager {
 
     public static void postStop(){
         if(!AppModel.sIsRootMode) {
+            if(null != sMessenger){
+                try {
+                    sMessenger.send(Message.obtain(null, SocksVpnService.MSG_STOP_VPN, 0, 0));
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
+            }
             sContext.stopService(new Intent(sContext, SocksVpnService.class));
         }
         if(mProcess != null) {

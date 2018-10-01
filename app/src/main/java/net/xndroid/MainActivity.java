@@ -248,7 +248,7 @@ public class MainActivity extends AppCompatActivity
         boolean enableXXnet = AppModel.sPreferences.getBoolean(AppModel.PRE_ENABLE_XXNET, true);
         boolean enableFqDNS = AppModel.sPreferences.getBoolean(AppModel.PRE_ENABLE_FQDNS, true);
         boolean enableTeredo = AppModel.sPreferences.getBoolean(AppModel.PRE_ENABLE_TEREDO, true);
-        boolean autoTeredo = AppModel.sPreferences.getBoolean(AppModel.PRE_AUTO_TEREDO, true);
+        boolean autoTeredo = AppModel.sPreferences.getBoolean(AppModel.PRE_AUTO_TEREDO, false);
         boolean enableNotification = AppModel.sPreferences.getBoolean(AppModel.PRE_ENABLE_NOTIFICATION, true);
         boolean autoStart = AppModel.sPreferences.getBoolean(AppModel.PRE_AUTO_START, false);
 

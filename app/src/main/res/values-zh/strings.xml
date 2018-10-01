@@ -61,7 +61,7 @@
     <string name="waitting_respond">等待XX-Net响应</string>
     <string name="public_appid">(未设置AppID,访问受限!)</string>
     <string name="ignore">忽略</string>
-    <string name="connect_no_establish">连接尚未建立,稍等片刻</string>
+    <string name="connect_no_establish">连接尚未建立</string>
     <string name="import_u"><u>导入</u></string>
     <string name="import_cert">导入证书</string>
     <string name="import_cert_tip">如设置了图案解锁却要求输入凭证,则先清除锁屏密码再尝试.</string>
@@ -134,7 +134,7 @@
     <string name="change_server_tip">留空以挑选内置的服务器</string>
     <string name="change_teredo_server">输入teredo服务器地址或域名</string>
     <string name="not_ip_domain">失败, 不是有效的IPV4地址或域名.</string>
-    <string name="available_origin_ipv6">原生IPv6可用, 将禁用teredo.</string>
+    <string name="available_origin_ipv6">原生IPv6可用,将禁用teredo. 若ipv6不可用,可在启动设置中取消 IPV6可用时禁用teredo.</string>
     <string name="DISABLED">已禁用</string>
     <string name="update_xxnet">离线更新XX-Net</string>
     <string name="xxnet_update_title">离线更新XX-Net</string>

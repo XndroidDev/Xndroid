@@ -6,7 +6,10 @@ import android.net.LocalServerSocket;
 import android.net.LocalSocket;
 import android.net.VpnService;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Looper;
+import android.os.Message;
+import android.os.Messenger;
 import android.os.ParcelFileDescriptor;
 import android.widget.Toast;
 
@@ -67,6 +70,30 @@ public class SocksVpnService extends VpnService {
     private Set<String> skippedFds = new HashSet<String>();
     private Set<Integer> stagingFds = new HashSet<Integer>();
 
+    public static final int MSG_STOP_VPN = 1;
+
+    /**
+     * Handler of incoming messages from clients.
+     */
+    class SockHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case MSG_STOP_VPN:
+                    SocksVpnService.this.onRevoke();
+                    break;
+                default:
+                    super.handleMessage(msg);
+            }
+        }
+    }
+
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        Messenger messenger = new Messenger(new SockHandler());
+        return messenger.getBinder();
+    }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {

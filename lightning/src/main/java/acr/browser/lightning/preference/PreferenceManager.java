@@ -246,7 +246,7 @@ public class PreferenceManager {
     }
 
     public int getUseTheme() {
-        return mPrefs.getInt(Name.THEME, 2);
+        return mPrefs.getInt(Name.THEME, 0);
     }
 
     public boolean getUseProxy() {

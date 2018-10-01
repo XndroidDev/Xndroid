@@ -270,11 +270,15 @@ public class XXnetManager {
                     @Override
                     public void run() {
                         try {
-                            Thread.sleep(2000);
+                            Thread.sleep(1000);
+                            HttpJson.get("http://google.com");
+                            Thread.sleep(5000);
+                            HttpJson.get("http://youtube.com");
+                            Thread.sleep(15000);
+                            HttpJson.get("http://facebook.com");
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
-                        HttpJson.get("http://google.com");
                     }
                 }).start();
                 return true;

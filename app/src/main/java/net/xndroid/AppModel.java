@@ -270,7 +270,7 @@ public class AppModel {
         sEnableXXNet = sPreferences.getBoolean(PRE_ENABLE_XXNET, true);
         sEnableFqDNS = sPreferences.getBoolean(PRE_ENABLE_FQDNS, true);
         sEnableTeredo = sPreferences.getBoolean(PRE_ENABLE_TEREDO, true);
-        sAutoTeredo = sPreferences.getBoolean(PRE_AUTO_TEREDO, false);
+        sAutoTeredo = sPreferences.getBoolean(PRE_AUTO_TEREDO, true);
         sEnableNotification = sPreferences.getBoolean(PRE_ENABLE_NOTIFICATION, true);
         sAutoStart = sPreferences.getBoolean(PRE_AUTO_START, false);
 

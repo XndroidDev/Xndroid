@@ -52,6 +52,7 @@ def handle_list_proxies(environ, start_response):
             }
         stat_item = proxies_stats[proxy_public_name]
         stat_item['died'] = stat_item['died'] or proxy.died
+        stat_item['enabled'] = proxy.enabled
         stat_item['rx_bytes_value'] += proxy.rx_bytes
         stat_item['tx_bytes_value'] += proxy.tx_bytes
         stat_item['rx_bytes_last'] += proxy.last_rx
@@ -328,6 +329,26 @@ def to_private_server(environ):
     args = {key: environ['REQUEST_ARGUMENTS'][key].value for key in environ['REQUEST_ARGUMENTS'].keys()}
     args.pop('proxy_id', None)
     proxy_type = args['proxy_type']
+    priority = args.get('priority') or 100
+    try:
+        priority = int(priority)
+    except:
+        return _('Priority must be number', '优先级必须是数字')
+    enabled = args.get('enabled')
+    if enabled:
+        if isinstance(enabled, basestring):
+            if enabled == 'enabled' or enabled == '1':
+                enabled = True
+            else:
+                enabled = False
+        else:
+            enabled = True
+    else:
+        enabled = False
+    if enabled:
+        enabled = 1
+    else:
+        enabled = 0
     if 'GoAgent' == proxy_type:
         appid = args['appid']
         if not appid:
@@ -337,7 +358,9 @@ def to_private_server(environ):
             'path': args.get('path') or '/2',
             'goagent_version': args.get('goagent_version') or 'auto',
             'goagent_options': args.get('goagent_options'),
-            'goagent_password': args.get('goagent_password')
+            'goagent_password': args.get('goagent_password'),
+            'priority': priority,
+            'enabled': enabled
         }
     elif 'SSH' == proxy_type:
         host = args['host']
@@ -360,7 +383,9 @@ def to_private_server(environ):
             'port': port,
             'username': username,
             'password': password,
-            'connections_count': connections_count
+            'connections_count': connections_count,
+            'priority': priority,
+            'enabled': enabled
         }
     elif 'Shadowsocks' == proxy_type:
         host = args['host']
@@ -379,7 +404,9 @@ def to_private_server(environ):
             'host': host,
             'port': port,
             'password': password,
-            'encrypt_method': encrypt_method
+            'encrypt_method': encrypt_method,
+            'priority': priority,
+            'enabled': enabled
         }
     elif 'HTTP' == proxy_type:
         host = args['host']
@@ -400,7 +427,9 @@ def to_private_server(environ):
             'username': username,
             'password': password,
             'traffic_type': args.get('traffic_type') or 'HTTP/HTTPS',
-            'transport_type': args.get('transport_type') or 'HTTP'
+            'transport_type': args.get('transport_type') or 'HTTP',
+            'priority': priority,
+            'enabled': enabled
         }
     elif 'SPDY' == proxy_type:
         host = args['host']
@@ -426,7 +455,9 @@ def to_private_server(environ):
             'username': username,
             'password': password,
             'traffic_type': args.get('traffic_type') or 'HTTP/HTTPS',
-            'connections_count': connections_count
+            'connections_count': connections_count,
+            'priority': priority,
+            'enabled': enabled
         }
     elif 'Sock5' == proxy_type:
         host = args['host']
@@ -441,7 +472,9 @@ def to_private_server(environ):
             return _('Port must be number', '端口必须是数字')
         return {
             'host': host,
-            'port': port
+            'port': port,
+            'priority': priority,
+            'enabled': enabled
         }
     else:
         return _('Internal Error', '内部错误')

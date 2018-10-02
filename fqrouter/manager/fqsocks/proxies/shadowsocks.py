@@ -45,7 +45,7 @@ ip_209_85 = ['209.85.225.0', '209.85.226.0', '209.85.228.0', '209.85.229.0', '20
 blocked_ip_ranges = set(['209.116.150.0'] + ip_209_85 + ip_208_117 + ip_173_194 + ip_74_125)
 
 class ShadowSocksProxy(Proxy):
-    def __init__(self, proxy_host, proxy_port, password, encrypt_method, supported_protocol=None, **ignore):
+    def __init__(self, proxy_host, proxy_port, password, encrypt_method, supported_protocol=None, priority=0, **ignore):
         super(ShadowSocksProxy, self).__init__()
         self.proxy_host = proxy_host
         if not self.proxy_host:
@@ -54,6 +54,7 @@ class ShadowSocksProxy(Proxy):
         self.password = password
         self.encrypt_method = encrypt_method
         self.supported_protocol = supported_protocol
+        self.priority = int(priority)
         gevent.spawn(self.test_latency)
 
     def test_latency(self):

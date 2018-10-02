@@ -627,6 +627,22 @@
                                 </select>
                             </div>
                         </div>
+                        <div class="form-group">
+                            <div class="input-group hide" data-for-type="SSH,Shadowsocks,HTTP,SPDY,Sock5,GoAgent">
+                                <span class="input-group-addon">{{ _('Priority', '优先级') }}</span>
+                                <input name="priority" type="text" class="form-control"
+                                       placeholder="{{ _('100(smaller value higher priority)', '默认100(值越小优先级越高)') }}">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group hide" data-for-type="SSH,Shadowsocks,HTTP,SPDY,Sock5,GoAgent">
+                                <span class="input-group-addon">{{ _('Enable', '启用') }}</span>
+                                <select name="enabled" class="form-control">
+                                    <option value="1">{{ _('Enabled', '已启用') }}</option>
+                                    <option value="0">{{ _('Disabled', '已禁用') }}</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                     <div class="form-group hide advanced-toggle">
                         <button type="button" class="btn btn-default pull-right">

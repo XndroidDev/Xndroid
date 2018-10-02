@@ -2,7 +2,7 @@
     {% if not (proxy_stats.died and 'Public' in proxy_public_name) %}
 <tr>
     <td>
-        <button type="button" class="btn btn-xs {{ 'btn-danger' if proxy_stats.died else 'btn-success' }} proxy"
+        <button type="button" class="btn btn-xs {{'btn-inverse' if not proxy_stats.enabled else ('btn-danger' if proxy_stats.died else 'btn-success') }} proxy"
                 data-proxy-id="{{ proxy_stats['proxy_id'] or '' }}">
             {{ proxy_public_name }}
         </button>

@@ -560,6 +560,8 @@ def _pick_proxy_supports(client, picks_public=None):
 
 
 def should_pick(proxy, client, picks_public):
+    if not proxy.enabled:
+        return False
     if proxy.died:
         if proxy.auto_relive and proxy.die_time and time.time() > proxy.die_time + 3:
             proxy.died = False
@@ -626,6 +628,17 @@ def init_private_proxies(config):
     for proxy_id, private_server in config['private_servers'].items():
         try:
             proxy_type = private_server.pop('proxy_type')
+            enabled = private_server.get('enabled', True)
+            if enabled:
+                if isinstance(enabled, basestring):
+                    if enabled == 'enabled' or enabled == '1':
+                        enabled = True
+                    else:
+                        enabled = False
+                else:
+                    enabled = True
+            else:
+                enabled = False
             if 'GoAgent' == proxy_type:
                 for appid in private_server['appid'].split('|'):
                     if not appid.strip():
@@ -646,30 +659,39 @@ def init_private_proxies(config):
                         private_server.get('goagent_password'),
                         is_rc4_enabled=is_rc4_enabled,
                         is_obfuscate_enabled=is_obfuscate_enabled,
-                        goagent_version=private_server.get('goagent_version') or 'auto')
+                        goagent_version=private_server.get('goagent_version') or 'auto',
+                        priority=private_server.get('priority', 100))
                     proxy.proxy_id = proxy_id
+                    proxy.enabled = enabled
                     proxies.append(proxy)
             elif 'SSH' == proxy_type:
                 for i in range(private_server.get('connections_count') or 4):
                     proxy = SshProxy(
                         private_server['host'], private_server['port'],
-                        private_server['username'], private_server.get('password'))
+                        private_server['username'], private_server.get('password'),
+                        priority=private_server.get('priority', 100))
                     proxy.proxy_id = proxy_id
+                    proxy.enabled = enabled
                     proxies.append(proxy)
             elif 'Sock5' == proxy_type:
                 proxy = Sock5Proxy(
-                    private_server['host'], private_server['port'])
+                    private_server['host'], private_server['port'],
+                    priority=private_server.get('priority', 100))
                 proxy.proxy_id = proxy_id
+                proxy.enabled = enabled
                 proxies.append(proxy)
             elif 'XXnetGAE' == proxy_type:
-                proxy = XXnetGAE()
+                proxy = XXnetGAE(priority=private_server.get('priority', 100))
                 proxy.proxy_id = proxy_id
+                proxy.enabled = enabled
                 proxies.append(proxy)
             elif 'Shadowsocks' == proxy_type:
                 proxy = ShadowSocksProxy(
                     private_server['host'], private_server['port'],
-                    private_server['password'], private_server['encrypt_method'])
+                    private_server['password'], private_server['encrypt_method'],
+                    priority=private_server.get('priority', 100))
                 proxy.proxy_id = proxy_id
+                proxy.enabled = enabled
                 proxies.append(proxy)
             elif 'HTTP' == proxy_type:
                 is_secured = 'SSL' == private_server.get('transport_type')
@@ -677,15 +699,17 @@ def init_private_proxies(config):
                     proxy = HttpRelayProxy(
                         private_server['host'], private_server['port'],
                         private_server['username'], private_server['password'],
-                        is_secured=is_secured)
+                        is_secured=is_secured, priority=private_server.get('priority', 100))
                     proxy.proxy_id = proxy_id
+                    proxy.enabled = enabled
                     proxies.append(proxy)
                 if 'HTTPS' in private_server.get('traffic_type'):
                     proxy = HttpConnectProxy(
                         private_server['host'], private_server['port'],
                         private_server['username'], private_server['password'],
-                        is_secured=is_secured)
+                        is_secured=is_secured, priority=private_server.get('priority', 100))
                     proxy.proxy_id = proxy_id
+                    proxy.enabled = enabled
                     proxies.append(proxy)
             elif 'SPDY' == proxy_type:
                 from ..proxies.spdy_relay import SpdyRelayProxy
@@ -695,14 +719,18 @@ def init_private_proxies(config):
                     if 'HTTP' in private_server.get('traffic_type'):
                         proxy = SpdyRelayProxy(
                             private_server['host'], private_server['port'], 'auto',
-                            private_server['username'], private_server['password'])
+                            private_server['username'], private_server['password'],
+                            priority=private_server.get('priority', 100))
                         proxy.proxy_id = proxy_id
+                        proxy.enabled = enabled
                         proxies.append(proxy)
                     if 'HTTPS' in private_server.get('traffic_type'):
                         proxy = SpdyConnectProxy(
                             private_server['host'], private_server['port'], 'auto',
-                            private_server['username'], private_server['password'])
+                            private_server['username'], private_server['password'],
+                            priority=private_server.get('priority', 100))
                         proxy.proxy_id = proxy_id
+                        proxy.enabled = enabled
                         proxies.append(proxy)
             else:
                 raise NotImplementedError('proxy type: %s' % proxy_type)

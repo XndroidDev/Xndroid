@@ -86,7 +86,12 @@ public class FqrouterManager {
                         , Pattern.DOTALL).matcher(proxy);
                 if(!matcherField.find())
                     continue;
-                sFqrouterInfo += "<p>" + matcherField.group(1)
+                String proxyTip = "";
+                if(proxy.contains("btn-inverse"))
+                    continue;
+                if(proxy.contains("btn-danger"))
+                    proxyTip = "(Died)";
+                sFqrouterInfo += "<p>" + matcherField.group(1) + proxyTip
                                 + "</p><p style=\"color:#545601\">&emsp &emsp RX &nbsp "
                                 + matcherField.group(2).replace(" ", "&nbsp ") + " &emsp &ensp "
                                 + matcherField.group(3).replace(" ", "&nbsp ")
@@ -185,6 +190,8 @@ public class FqrouterManager {
     public static String originIPv6(){
         String output = ShellUtils.exec("ip route get 2001:13d2:2801::11");
         if(ShellUtils.stdErr != null || output.contains("error") || output.contains("unreachable"))
+            return null;
+        if(output.contains("via fe80"))
             return null;
         String regex = "src\\s((\\w|:)+)";
         Pattern pattern = Pattern.compile(regex);

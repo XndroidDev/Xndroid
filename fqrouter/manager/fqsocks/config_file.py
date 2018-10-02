@@ -67,7 +67,9 @@ def DEFAULT_CONFIG():
                 "transport_type": "HTTP",
                 "traffic_type": "HTTP/HTTPS",
                 "password": "",
-                "port": 8087
+                "port": 8087,
+                "priority": 200,
+                "enabled": 1
             }
         }
     }

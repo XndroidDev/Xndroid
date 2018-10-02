@@ -118,7 +118,7 @@ class GoAgentProxy(Proxy):
 
     def __init__(self, appid, path='/2', password='',
                  is_rc4_enabled=False, is_obfuscate_enabled=False, goagent_version='auto',
-                 whitelist_host=(), blacklist_host=(), group='default', **ignore):
+                 whitelist_host=(), blacklist_host=(), group='default', priority=255, **ignore):
         super(GoAgentProxy, self).__init__()
         assert appid
         self.appid = appid
@@ -133,6 +133,7 @@ class GoAgentProxy(Proxy):
         self.whitelist_host = whitelist_host if isinstance(whitelist_host, (list, tuple)) else [whitelist_host]
         self.blacklist_host = list(blacklist_host) if isinstance(blacklist_host, (list, tuple)) else [blacklist_host]
         self.group = group
+        self.priority = int(priority)
 
     @property
     def fetch_server(self):

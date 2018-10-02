@@ -7,8 +7,8 @@ android {
         applicationId "net.xndroid"
         minSdkVersion 14
         targetSdkVersion 23
-        versionCode 25
-        versionName "1.2.4"
+        versionCode 26
+        versionName "1.2.5"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {

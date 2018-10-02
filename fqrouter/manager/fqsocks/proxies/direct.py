@@ -17,6 +17,7 @@ class Proxy(object):
     def __init__(self):
         super(Proxy, self).__init__()
         self.died = False
+        self.enabled = True
         self.flags = set()
         self.priority = 0
         self.proxy_id = None

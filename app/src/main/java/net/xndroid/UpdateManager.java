@@ -103,7 +103,7 @@ public class UpdateManager {
             url = "https://github.com/XndroidDev/Xndroid/releases/download/" + sVersionName + "/app-release.apk";
         }
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
-        request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI);
+        //request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI);
         request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
         request.setTitle(sContext.getString(R.string.updating_xndroid));
         request.setDescription(sContext.getString(R.string.downloading_xndroid));

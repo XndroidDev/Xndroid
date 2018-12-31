@@ -8,6 +8,7 @@ LOGGER = logging.getLogger(__name__)
 DEFAULT_PUBLIC_SERVERS_SOURCE = 'no_available_source!'
 current_path = os.path.dirname(os.path.abspath(__file__))
 home_path = os.path.abspath(current_path + "/../..")
+multi_proxy = True
 
 def DEFAULT_CONFIG():
     return {

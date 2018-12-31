@@ -2,6 +2,7 @@ import logging
 import socket
 import time
 from .. import networking
+from .. import config_file
 
 LOGGER = logging.getLogger(__name__)
 on_proxy_died = None
@@ -35,6 +36,8 @@ class Proxy(object):
 
     def increase_failed_time(self):
         LOGGER.error('failed once/%s: %s' % (self.failed_times, self))
+        if not config_file.multi_proxy:
+            return
         self.failed_times += 1
         if self.failed_times > 3:
             self.died = True

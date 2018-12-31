@@ -107,7 +107,9 @@ class ProxyClient(object):
 
     def forward(self, upstream_sock, timeout=7, after_started_timeout=360, encrypt=None, decrypt=None,
                 delayed_penalty=None, on_forward_started=None):
-
+        if not config_file.multi_proxy:
+            timeout = timeout * 6
+            after_started_timeout = after_started_timeout * 6
         if self.forward_started:
             if self.dst_port in [5228, 8883]: # Google Service and MQTT
                 upstream_sock.settimeout(None)
@@ -625,6 +627,11 @@ def get_refresh_interval():
 
 
 def init_private_proxies(config):
+    if direct_access_enabled or china_shortcut_enabled or ipv6_direct_enable:
+        config_file.multi_proxy = True
+    else:
+        config_file.multi_proxy = False
+    private_proxy_num = 0
     for proxy_id, private_server in config['private_servers'].items():
         try:
             proxy_type = private_server.pop('proxy_type')
@@ -633,6 +640,9 @@ def init_private_proxies(config):
                 if isinstance(enabled, basestring):
                     if enabled == 'enabled' or enabled == '1':
                         enabled = True
+                        private_proxy_num += 1
+                        if private_proxy_num > 1:
+                            config_file.multi_proxy = True
                     else:
                         enabled = False
                 else:
@@ -736,6 +746,10 @@ def init_private_proxies(config):
                 raise NotImplementedError('proxy type: %s' % proxy_type)
         except:
             LOGGER.exception('failed to init %s' % private_server)
+    if config_file.multi_proxy:
+        LOGGER.info('run in multi-proxy mode')
+    else:
+        LOGGER.info('run in single-proxy mode')
 
 
 def init_proxies(config):

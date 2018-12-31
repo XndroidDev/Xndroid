@@ -10,7 +10,7 @@ from .direct import to_bool
 from .http_try import try_receive_response_header
 from .http_try import try_receive_response_body
 from .http_try import recv_and_parse_request
-
+from .. import config_file
 
 LOGGER = logging.getLogger(__name__)
 
@@ -32,7 +32,10 @@ class HttpRelayProxy(Proxy):
         LOGGER.info('[%s] http relay %s:%s' % (repr(client), self.proxy_ip, self.proxy_port))
         begin_at = time.time()
         try:
-            upstream_sock = client.create_tcp_socket(self.proxy_ip, self.proxy_port, 5)
+            if config_file.multi_proxy:
+                upstream_sock = client.create_tcp_socket(self.proxy_ip, self.proxy_port, 5)
+            else:
+                upstream_sock = client.create_tcp_socket(self.proxy_ip, self.proxy_port, 30)
             if self.is_secured:
                 counter = upstream_sock.counter
                 upstream_sock = ssl.wrap_socket(upstream_sock)
@@ -44,7 +47,10 @@ class HttpRelayProxy(Proxy):
             return client.fall_back(
                 reason='http-relay upstream socket connect timed out',
                 delayed_penalty=self.increase_failed_time)
-        upstream_sock.settimeout(5)
+        if config_file.multi_proxy:
+            upstream_sock.settimeout(5)
+        else:
+            upstream_sock.settimeout(36)
         is_payload_complete = recv_and_parse_request(client)
         request_data = '%s %s HTTP/1.1\r\n' % (client.method, client.url)
         client.headers['Connection'] = 'close' # no keep-alive

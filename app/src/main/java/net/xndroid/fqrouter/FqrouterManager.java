@@ -129,7 +129,7 @@ public class FqrouterManager {
         }else {
             sOriginIPv6 = originIPv6();
             if (sOriginIPv6 != null) {
-                AppModel.showToast(AppModel.sContext.getString(R.string.available_origin_ipv6) + sOriginIPv6);
+                AppModel.showToast(AppModel.sContext.getString(R.string.available_origin_ipv6));
                 LogUtils.i("use origin ipv6 " + sOriginIPv6);
             }
         }
@@ -190,8 +190,6 @@ public class FqrouterManager {
     public static String originIPv6(){
         String output = ShellUtils.exec("ip route get 2001:13d2:2801::11");
         if(ShellUtils.stdErr != null || output.contains("error") || output.contains("unreachable"))
-            return null;
-        if(output.contains("via fe80"))
             return null;
         String regex = "src\\s((\\w|:)+)";
         Pattern pattern = Pattern.compile(regex);

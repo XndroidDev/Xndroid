@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import static android.os.Build.VERSION_CODES.M;
 import static net.xndroid.AppModel.sActivity;
 import static net.xndroid.AppModel.sContext;
-import static net.xndroid.AppModel.sDevMobileWork;
 import static net.xndroid.AppModel.sXndroidFile;
 import static net.xndroid.AppModel.showToast;
 
@@ -286,21 +285,19 @@ public class LaunchService extends Service {
 
 
     private static void checkXndroidUpdate(){
-        if(!sDevMobileWork){
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        /*XX-Net may be not really ready, wait for a moment*/
-                        Thread.sleep(4000);
-                        UpdateManager.checkUpdate(false);
-                    }catch (Exception e){
-                        LogUtils.e("check Xndroid Update fail", e);
-                    }
-
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    /*XX-Net may be not really ready, wait for a moment*/
+                    Thread.sleep(4000);
+                    UpdateManager.checkUpdate(false);
+                }catch (Exception e){
+                    LogUtils.e("check Xndroid Update fail", e);
                 }
-            }).start();
-        }
+
+            }
+        }).start();
     }
 
     private static void clearOldProcess(){
@@ -342,7 +339,7 @@ public class LaunchService extends Service {
         if(AppModel.sLastVersion == 0 || AppModel.sLastVersion == AppModel.sVersionCode)
             return;
         FileUtils.rmExclude(sXndroidFile + "/fqrouter", new String[] {"etc"});
-        if(AppModel.sLastVersion <= 22) {
+        if(AppModel.sLastVersion <= 26) {
             ShellUtils.execBusybox("rm -r " + sXndroidFile + "/xxnet/code");
         }
         if(AppModel.sLastVersion <= 0) {

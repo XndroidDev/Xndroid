@@ -51,7 +51,7 @@ def create_ipv6_tcp_socket(server_ip, server_port, connect_timeout):
 
 def _create_tcp_socket(server_ip, server_port, connect_timeout):
     sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
-    if OUTBOUND_IP:
+    if OUTBOUND_IP and server_ip != '127.0.0.1':
         sock.bind((OUTBOUND_IP, 0))
     sock.setblocking(0)
     sock.settimeout(connect_timeout)

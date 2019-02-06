@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.net.LocalServerSocket;
 import android.net.LocalSocket;
 import android.net.VpnService;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -13,6 +14,7 @@ import android.os.Messenger;
 import android.os.ParcelFileDescriptor;
 import android.widget.Toast;
 
+import net.xndroid.AppModel;
 import net.xndroid.LaunchService;
 import net.xndroid.MainActivity;
 import net.xndroid.R;
@@ -67,6 +69,8 @@ public class SocksVpnService extends VpnService {
     private static String sFqHome;
     private static String sXndroidFile;
     private static boolean stopFlag = true;
+    private static int sProxyMode = 0;
+    private static String[] sProxyList;
     private Set<String> skippedFds = new HashSet<String>();
     private Set<Integer> stagingFds = new HashSet<Integer>();
 
@@ -113,11 +117,17 @@ public class SocksVpnService extends VpnService {
                 }
             }
         }).start();
+
+        sProxyMode = intent.getIntExtra("proxy_mode", 0);
+        sProxyList = intent.getStringArrayExtra("proxy_list");
+        LogUtils.i("sProxyMode=" + sProxyMode + ",sProxyList=" + (sProxyList!=null?sProxyList:"null"));
+
         String ipv6 = intent.getStringExtra("origin_ipv6");
         if(ipv6!=null){
             startVpn(null);
             LogUtils.i("origin ipv6 " + ipv6);
         }
+
         return START_NOT_STICKY;
     }
 
@@ -155,12 +165,13 @@ public class SocksVpnService extends VpnService {
     }
 
     private void startVpn(String teredo_ip) {
+
         try {
             LogUtils.i("startVpn, teredo_ip is " + teredo_ip);
             Intent statusActivityIntent = new Intent(this, MainActivity.class);
             PendingIntent pIntent = PendingIntent.getActivity(this, 0, statusActivityIntent, 0);
             Builder builder = new Builder().setConfigureIntent(pIntent).setSession("fqrouter2");
-            if(android.os.Build.VERSION.SDK_INT < 20){
+            if(Build.VERSION.SDK_INT < 20){
                 builder = builder.addAddress("10.25.1.1", 30);
             }else {
                 builder = builder.addAddress("26.26.26.1", 30);
@@ -171,39 +182,44 @@ public class SocksVpnService extends VpnService {
                         .addRoute("::", 0);
             }
 
-            builder = builder.addRoute("1.0.0.0", 8)
-                    .addRoute("2.0.0.0", 7)
-                    .addRoute("4.0.0.0", 6)
-                    .addRoute("8.0.0.0", 7)
-                    // 10.0.0.0 - 10.255.255.255
-                    .addRoute("11.0.0.0", 8)
-                    .addRoute("12.0.0.0", 6)
-                    .addRoute("16.0.0.0", 4)
-                    .addRoute("32.0.0.0", 3)
-                    .addRoute("64.0.0.0", 2)
-                    .addRoute("139.0.0.0", 8)
-                    .addRoute("140.0.0.0", 6)
-                    .addRoute("144.0.0.0", 4)
-                    .addRoute("160.0.0.0", 5)
-                    .addRoute("168.0.0.0", 6)
-                    .addRoute("172.0.0.0", 12)
-                    // 172.16.0.0 - 172.31.255.255
-                    .addRoute("172.32.0.0", 11)
-                    .addRoute("172.64.0.0", 10)
-                    .addRoute("172.128.0.0", 9)
-                    .addRoute("173.0.0.0", 8)
-                    .addRoute("174.0.0.0", 7)
-                    .addRoute("176.0.0.0", 4)
-                    .addRoute("192.0.0.0", 9)
-                    .addRoute("192.128.0.0", 11)
-                    .addRoute("192.160.0.0", 13)
-                    // 192.168.0.0 - 192.168.255.255
-                    .addRoute("192.169.0.0", 16)
-                    .addRoute("192.170.0.0", 15)
-                    .addRoute("192.172.0.0", 14)
-                    .addRoute("192.176.0.0", 12)
-                    .addRoute("192.192.0.0", 10)
-                    .addRoute("193.0.0.0", 8)
+            if(sProxyMode == AppModel.PROXY_MODE_NONE) {
+                LogUtils.i("do ipv4 router because global proxy is disabled");
+
+            } else {
+
+                builder = builder.addRoute("1.0.0.0", 8)
+                        .addRoute("2.0.0.0", 7)
+                        .addRoute("4.0.0.0", 6)
+                        .addRoute("8.0.0.0", 7)
+                        // 10.0.0.0 - 10.255.255.255
+                        .addRoute("11.0.0.0", 8)
+                        .addRoute("12.0.0.0", 6)
+                        .addRoute("16.0.0.0", 4)
+                        .addRoute("32.0.0.0", 3)
+                        .addRoute("64.0.0.0", 2)
+                        .addRoute("139.0.0.0", 8)
+                        .addRoute("140.0.0.0", 6)
+                        .addRoute("144.0.0.0", 4)
+                        .addRoute("160.0.0.0", 5)
+                        .addRoute("168.0.0.0", 6)
+                        .addRoute("172.0.0.0", 12)
+                        // 172.16.0.0 - 172.31.255.255
+                        .addRoute("172.32.0.0", 11)
+                        .addRoute("172.64.0.0", 10)
+                        .addRoute("172.128.0.0", 9)
+                        .addRoute("173.0.0.0", 8)
+                        .addRoute("174.0.0.0", 7)
+                        .addRoute("176.0.0.0", 4)
+                        .addRoute("192.0.0.0", 9)
+                        .addRoute("192.128.0.0", 11)
+                        .addRoute("192.160.0.0", 13)
+                        // 192.168.0.0 - 192.168.255.255
+                        .addRoute("192.169.0.0", 16)
+                        .addRoute("192.170.0.0", 15)
+                        .addRoute("192.172.0.0", 14)
+                        .addRoute("192.176.0.0", 12)
+                        .addRoute("192.192.0.0", 10)
+                        .addRoute("193.0.0.0", 8)
 //                    .addRoute("194.0.0.0", 7)
 //                    .addRoute("196.0.0.0", 6)
 //                    .addRoute("200.0.0.0", 5)
@@ -213,11 +229,32 @@ public class SocksVpnService extends VpnService {
 //                    .addRoute("248.0.0.0",6)
 //                    .addRoute("252.0.0.0",7)
 //                    .addRoute("254.0.0.0",8)
-                    .addDnsServer("8.8.8.8");
-            for (int i = 194;i < 224;i++)
-            {
-                builder = builder.addRoute(i + ".0.0.0", 8);
+                        .addDnsServer("8.8.8.8");
+                for (int i = 194; i < 224; i++) {
+                    builder = builder.addRoute(i + ".0.0.0", 8);
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && sProxyList != null) {
+                    if (sProxyMode == AppModel.PROXY_MODE_BACKLIST) {
+                        for (String pkg : sProxyList) {
+                            try {
+                                builder.addDisallowedApplication(pkg);
+                            } catch (Exception e) {
+                                LogUtils.e("addDisallowedApplication for " + pkg + "failed", e);
+                            }
+                        }
+                    } else if (sProxyMode == AppModel.PROXY_MODE_WHITELIST) {
+                        for (String pkg : sProxyList) {
+                            try {
+                                builder.addAllowedApplication(pkg);
+                            } catch (Exception e) {
+                                LogUtils.e("addAllowedApplication for " + pkg + "failed", e);
+                            }
+                        }
+                    }
+                }
             }
+
             tunPFD = builder.establish();
             if (tunPFD == null) {
                 LogUtils.e("vpn establish fail");

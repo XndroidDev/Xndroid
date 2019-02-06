@@ -104,9 +104,6 @@ SOCKS_RULES = [
         ('nat', 'OUTPUT', '-p tcp -d 127.0.0.1 -j ACCEPT')
     ), (
         {'target': 'DNAT', 'extra': 'to:10.1.2.3:12345'},
-        ('nat', 'OUTPUT', '-p tcp ! -s 10.1.2.3 -j DNAT --to-destination 10.1.2.3:12345')
-    ), (
-        {'target': 'DNAT', 'extra': 'to:10.1.2.3:12345'},
         ('nat', 'PREROUTING', '-p tcp ! -s 10.1.2.3 -j DNAT --to-destination 10.1.2.3:12345')
     )]
 default_dns_server = config.get_default_dns_server()
@@ -265,6 +262,40 @@ def needs_su():
     else:
         return True
 
+def setup_nat():
+    proxy_mode = os.getenv('PROXY_MODE')
+    if not proxy_mode:
+        proxy_mode = '0'
+    proxy_list = os.getenv('PROXY_LIST')
+    if not proxy_list:
+        proxy_list = ''
+    proxy_list = proxy_list.split()
+
+    if proxy_mode == '1':
+        pass
+    elif proxy_mode == '2':
+        for uid in proxy_list:
+            SOCKS_RULES.append((
+                {'target': 'DNAT', 'extra': 'owner UID match ' + uid + ' to:10.1.2.3:12345'},
+                ('nat', 'OUTPUT', '-p tcp ! -s 10.1.2.3 -j DNAT --to-destination 10.1.2.3:12345  -m owner --uid-owner ' + uid)
+            ))
+    elif proxy_mode == '3':
+        for uid in proxy_list:
+            SOCKS_RULES.append((
+                {'target': 'RETURN', 'extra': 'owner UID match ' + uid},
+                ('nat', 'OUTPUT', '-j RETURN -m owner --uid-owner ' + uid)
+            ))
+
+        SOCKS_RULES.append((
+            {'target': 'DNAT', 'extra': 'to:10.1.2.3:12345'},
+            ('nat', 'OUTPUT', '-p tcp ! -s 10.1.2.3 -j DNAT --to-destination 10.1.2.3:12345')
+        ))
+    else:
+        SOCKS_RULES.append((
+            {'target': 'DNAT', 'extra': 'to:10.1.2.3:12345'},
+            ('nat', 'OUTPUT', '-p tcp ! -s 10.1.2.3 -j DNAT --to-destination 10.1.2.3:12345')
+        ))
+
 
 def run():
     iptables.tables = {}
@@ -273,6 +304,7 @@ def run():
     if not os.getenv('NO_FQDNS'):
         iptables.insert_rules(DNS_RULES)
         shutdown_hook.add(functools.partial(iptables.delete_rules, DNS_RULES))
+    setup_nat()
     iptables.insert_rules(SOCKS_RULES)
     shutdown_hook.add(functools.partial(iptables.delete_rules, SOCKS_RULES))
     wifi.setup_lo_alias()

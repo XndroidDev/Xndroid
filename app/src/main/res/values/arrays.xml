@@ -9,4 +9,10 @@
         <item>Notify stable</item>
         <item>Notify latest</item>
     </string-array>
+    <string-array name="proxy_mode">
+        <item>Global proxy</item>
+        <item>Disable proxy</item>
+        <item>Proxy following APP</item>
+        <item>Proxy except following APP</item>
+    </string-array>
 </resources>

@@ -9,4 +9,10 @@
         <item>提醒稳定版</item>
         <item>提醒最新版</item>
     </string-array>
+    <string-array name="proxy_mode">
+        <item>全局代理</item>
+        <item>禁用代理</item>
+        <item>仅代理以下应用</item>
+        <item>不代理以下应用</item>
+    </string-array>
 </resources>

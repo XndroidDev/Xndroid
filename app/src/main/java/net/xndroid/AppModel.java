@@ -21,6 +21,8 @@ import net.xndroid.utils.LogUtils;
 import net.xndroid.utils.ShellUtils;
 
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AppModel {
     public static String sAppPath;
@@ -60,6 +62,33 @@ public class AppModel {
     public static final String PRE_AUTO_TEREDO = "XNDROID_AUTO_TEREDO";
     public static final String PRE_ENABLE_NOTIFICATION = "XNDROID_ENABLE_NOTIFICATION";
     public static final String PRE_AUTO_START = "XNDROID_AUTO_START";
+    public static final String PRE_PROXY_MODE = "XNDROID_PROXY_MODE";
+    public static final String PRE_PROXY_LIST_NUM = "XNDROID_PROXY_LIST_NUM";
+    public static final String PRE_PROXY_LIST = "XNDROID_PROXY_LIST_";
+
+    public static final int PROXY_MODE_ALL = 0;
+    public static final int PROXY_MODE_NONE = 1;
+    public static final int PROXY_MODE_WHITELIST = 2;
+    public static final int PROXY_MODE_BACKLIST = 3;
+
+    public static List<String> loadPackageList() {
+        int num = sPreferences.getInt(PRE_PROXY_LIST_NUM, 0);
+        List<String> list = new ArrayList();
+
+        for(int i = 0; i < num; i++) {
+            list.add(sPreferences.getString(PRE_PROXY_LIST + i, "NULL"));
+        }
+
+        return list;
+    }
+
+    public static void savePackageList(List<String> list) {
+        sPreferences.edit().putInt(PRE_PROXY_LIST_NUM, list.size()).apply();
+
+        for(int i = 0; i < list.size(); i++) {
+            sPreferences.edit().putString(PRE_PROXY_LIST + i, list.get(i)).apply();
+        }
+    }
 
     public static void showToast(final String msg) {
         try {
@@ -270,7 +299,7 @@ public class AppModel {
         sEnableXXNet = sPreferences.getBoolean(PRE_ENABLE_XXNET, true);
         sEnableFqDNS = sPreferences.getBoolean(PRE_ENABLE_FQDNS, true);
         sEnableTeredo = sPreferences.getBoolean(PRE_ENABLE_TEREDO, true);
-        sAutoTeredo = sPreferences.getBoolean(PRE_AUTO_TEREDO, true);
+        sAutoTeredo = sPreferences.getBoolean(PRE_AUTO_TEREDO, false);
         sEnableNotification = sPreferences.getBoolean(PRE_ENABLE_NOTIFICATION, true);
         sAutoStart = sPreferences.getBoolean(PRE_AUTO_START, false);
 

@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
@@ -25,6 +26,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.ListView;
 import android.widget.Spinner;
 
 import net.xndroid.fqrouter.FqrouterManager;
@@ -32,6 +34,9 @@ import net.xndroid.utils.LogUtils;
 import net.xndroid.utils.ShellUtils;
 import net.xndroid.xxnet.XXnetManager;
 
+import java.util.List;
+
+import static net.xndroid.AppModel.PRE_PROXY_MODE;
 import static net.xndroid.fqrouter.FqrouterManager.ASK_VPN_PERMISSION;
 
 public class MainActivity extends AppCompatActivity
@@ -248,7 +253,7 @@ public class MainActivity extends AppCompatActivity
         boolean enableXXnet = AppModel.sPreferences.getBoolean(AppModel.PRE_ENABLE_XXNET, true);
         boolean enableFqDNS = AppModel.sPreferences.getBoolean(AppModel.PRE_ENABLE_FQDNS, true);
         boolean enableTeredo = AppModel.sPreferences.getBoolean(AppModel.PRE_ENABLE_TEREDO, true);
-        boolean autoTeredo = AppModel.sPreferences.getBoolean(AppModel.PRE_AUTO_TEREDO, true);
+        boolean autoTeredo = AppModel.sPreferences.getBoolean(AppModel.PRE_AUTO_TEREDO, false);
         boolean enableNotification = AppModel.sPreferences.getBoolean(AppModel.PRE_ENABLE_NOTIFICATION, true);
         boolean autoStart = AppModel.sPreferences.getBoolean(AppModel.PRE_AUTO_START, false);
 
@@ -345,6 +350,113 @@ public class MainActivity extends AppCompatActivity
                 .create().show();
     }
 
+    private void proxySetting() {
+        LayoutInflater inflater = getLayoutInflater();
+        View view = inflater.inflate(R.layout.proxy_setting, null);
+        final Spinner proxyMode = view.findViewById(R.id.proxy_mode);
+        final ListView listView = view.findViewById(R.id.proxy_app_list);
+        final ViewGroup group = view.findViewById(R.id.proxy_container);
+        final List<String> list = AppModel.loadPackageList();
+
+        int mode = AppModel.sPreferences.getInt(PRE_PROXY_MODE, 0);
+        proxyMode.setSelection(mode);
+        if(AppModel.PROXY_MODE_ALL == mode || AppModel.PROXY_MODE_NONE == mode) {
+            group.removeView(listView);
+        }
+
+        proxyMode.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                int origin_mode = AppModel.sPreferences.getInt(PRE_PROXY_MODE, 0);
+                AppModel.sPreferences.edit().putInt(PRE_PROXY_MODE, position).apply();
+                View appList = group.findViewById(R.id.proxy_app_list);
+
+                if(AppModel.PROXY_MODE_ALL == position || AppModel.PROXY_MODE_NONE == position) {
+                    if(appList != null){
+                        group.removeView(appList);
+                    }
+                }else{
+                    if(Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP && !AppModel.sIsRootMode){
+                        proxyMode.setSelection(origin_mode);
+                        AppModel.sPreferences.edit().putInt(PRE_PROXY_MODE, origin_mode).apply();
+                        AppModel.showToast(getString(R.string.NO_INDIVIDUAL_SUPPORT));
+                        return;
+                    }
+
+                    if(appList == null){
+                        group.addView(listView);
+                    }
+
+                    String myPkg = getPackageName();
+
+                    if(AppModel.PROXY_MODE_WHITELIST == position) {
+                        if(!list.contains(myPkg)) {
+                            LogUtils.d("add proxy list:" + myPkg);
+                            list.add(myPkg);
+                            AppModel.savePackageList(list);
+                        }
+                    } else if(AppModel.PROXY_MODE_BACKLIST == position) {
+                        if(list.contains(myPkg)) {
+                            LogUtils.d("remove proxy list:" + myPkg);
+                            list.remove(myPkg);
+                            AppModel.savePackageList(list);
+                        }
+                    }
+                }
+
+                if((AppModel.PROXY_MODE_NONE == position || AppModel.PROXY_MODE_WHITELIST == position)
+                        && !AppModel.sIsRootMode && ShellUtils.isRoot()) {
+                    AppModel.showToast(getString(R.string.VPN_ROOT_GAE_tip));
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
+        listView.setAdapter(new PackageAdapter(this) {
+            @Override
+            boolean isPackageChecked(String packageName) {
+                return list.contains(packageName);
+            }
+
+            @Override
+            void onPackageChecked(String packageName, boolean checked) {
+                LogUtils.d("select " + packageName + (checked ? " checked" : " not checked"));
+                if(checked) {
+                    if(!list.contains(packageName)) {
+                        list.add(packageName);
+                        AppModel.savePackageList(list);
+                    }
+                } else {
+                    if(list.contains(packageName)) {
+                        list.remove(packageName);
+                        AppModel.savePackageList(list);
+                    }
+                }
+            }
+        });
+
+        new AlertDialog.Builder(AppModel.sActivity)
+                .setTitle(R.string.proxy_setting)
+                .setView(view)
+                .setPositiveButton(R.string.reboot_app, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                reboot();
+                            }
+                        }).start();
+                    }
+                })
+                .create().show();
+
+    }
+
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -418,8 +530,10 @@ public class MainActivity extends AppCompatActivity
             }).start();
         }else if(id == R.id.action_update_xxnet){
             updateXXNet();
-        }else if(id == R.id.action_launch_component){
+        }else if(id == R.id.action_launch_component) {
             selectComponent();
+        }else if(id == R.id.action_proxy_setting) {
+            proxySetting();
         }else {
             return super.onOptionsItemSelected(item);
         }

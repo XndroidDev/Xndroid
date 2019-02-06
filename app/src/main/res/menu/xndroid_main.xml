@@ -47,6 +47,11 @@
         android:title="@string/launch_setting"
         app:showAsAction="never" />
     <item
+        android:id="@+id/action_proxy_setting"
+        android:orderInCategory="100"
+        android:title="@string/proxy_setting"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/action_check_update"
         android:orderInCategory="100"
         android:title="@string/check_update"

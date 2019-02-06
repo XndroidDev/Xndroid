@@ -6,6 +6,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.net.VpnService;
 import android.os.Build;
 import android.os.IBinder;
@@ -29,6 +31,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.OutputStreamWriter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -51,6 +54,8 @@ public class FqrouterManager {
     public static String sFqrouterInfo = "";
     public static String sOriginIPv6 = null;
     private static int sPort = 2515;
+    private static int sProxyMode = 0;
+    private static List<String> sProxyList = null;
 
     static {
         sPort = getHttpManagerPort();
@@ -120,19 +125,29 @@ public class FqrouterManager {
                 }
             }
         }
+
+        sOriginIPv6 = originIPv6();
+        // if sOriginIPv6 is null, fqrouter will start the teredo service.
         if(!AppModel.sEnableTeredo){
             sOriginIPv6 = "::";
-            //AppModel.showToast("Teredo disabled by user.");
             LogUtils.i("Teredo disabled by user.");
         }else if(!AppModel.sAutoTeredo){
-            sOriginIPv6 = null;
+            if(sOriginIPv6 != null) {
+                sOriginIPv6 = null;
+                AppModel.showToast(AppModel.sContext.getString(R.string.ORIGIN_IPV6_OK_TIP));
+                LogUtils.i("force to use teredo");
+            }
         }else {
-            sOriginIPv6 = originIPv6();
             if (sOriginIPv6 != null) {
                 AppModel.showToast(AppModel.sContext.getString(R.string.available_origin_ipv6));
                 LogUtils.i("use origin ipv6 " + sOriginIPv6);
             }
         }
+
+        sProxyMode = AppModel.sPreferences.getInt(AppModel.PRE_PROXY_MODE, 0);
+        sProxyList = AppModel.loadPackageList();
+
+        LogUtils.i("proxy mode:" + sProxyMode + " proxy list:" + sProxyList);
     }
 
     public static void onRequestResult(int resultCode, Activity activity){
@@ -140,6 +155,8 @@ public class FqrouterManager {
             sRequestApproved = true;
             Intent service = new Intent(sContext, SocksVpnService.class);
             service.putExtra("origin_ipv6", sOriginIPv6);
+            service.putExtra("proxy_mode", sProxyMode);
+            service.putExtra("proxy_list", sProxyList.toArray(new String[0]));
             ServiceConnection serviceConnection = new ServiceConnection() {
                 @Override
                 public void onServiceConnected(ComponentName name, IBinder service) {
@@ -159,6 +176,7 @@ public class FqrouterManager {
     }
 
     public static void startVpnService(){
+
         sRequestApproved = false;
         Intent intent = VpnService.prepare(AppModel.sContext);
         if (intent == null) {
@@ -191,6 +209,8 @@ public class FqrouterManager {
         String output = ShellUtils.exec("ip route get 2001:13d2:2801::11");
         if(ShellUtils.stdErr != null || output.contains("error") || output.contains("unreachable"))
             return null;
+        if(output.contains("dev tun"))
+            return null;
         String regex = "src\\s((\\w|:)+)";
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(output);
@@ -217,9 +237,32 @@ public class FqrouterManager {
                 byte[] error = new byte[1024];
                 int errorLen = 0;
                 String cmd = "";
+                PackageManager packageManager = AppModel.sContext.getPackageManager();
+
                 if(AppModel.sIsRootMode){
+                    String uidList = "";
+                    if(sProxyList != null){
+                        for(String pkg : sProxyList) {
+                            try {
+                                ApplicationInfo app = packageManager.getPackageInfo(pkg, 0).applicationInfo;
+                                if(app == null) {
+                                    LogUtils.w("null applicationInfo of " + pkg);
+                                    continue;
+                                }
+                                uidList += app.uid;
+                                uidList += " ";
+                            } catch (PackageManager.NameNotFoundException e) {
+                                LogUtils.e("get uid of " + pkg + " failed", e);
+                            }
+                        }
+                    }
+
+                    uidList = uidList.trim();
+
                     cmd = "cd " + sXndroidFile + " \n"
                             + "export PATH=" + sXndroidFile + ":$PATH\n"
+                            + "export PROXY_MODE=" + sProxyMode + "\n"
+                            + "export PROXY_LIST='" + uidList + "'\n"
 //                            + "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/vendor/lib64:/vendor/lib:/system/lib64:/system/lib\n"
                             + ((AppModel.sDebug || AppModel.sLastFail) ? "export DEBUG=TRUE\n" : "")
                             + (sOriginIPv6 != null ? "export NO_TEREDO=TRUE\n" : "")
@@ -227,7 +270,8 @@ public class FqrouterManager {
                             + "sh " + sXndroidFile + "/python/bin"
                             + (Build.VERSION.SDK_INT > 17 ? "/python-launcher.sh " : "/python-launcher-nopie.sh ")
                             + sXndroidFile + "/fqrouter/manager/main.py run "
-                            + " > " + sXndroidFile + "/log/fqrouter-output.log 2>&1 \nexit\n";
+                            + ((AppModel.sDebug || AppModel.sLastFail) ? (" > " + sXndroidFile + "/log/fqrouter-output.log 2>&1 \n") : "")
+                            + "exit\n";
                 }else {
                     cmd = "cd " + sXndroidFile + " \n"
                             + "export PATH=" + sXndroidFile + ":$PATH\n"
@@ -239,7 +283,8 @@ public class FqrouterManager {
                             + (Build.VERSION.SDK_INT > 17 ? "/python-launcher.sh " : "/python-launcher-nopie.sh ")
                             + sXndroidFile + "/fqrouter/manager/vpn.py "
                             + (Build.VERSION.SDK_INT >= 20 ? " 26.26.26.1 26.26.26.2 " : " 10.25.1.1 10.25.1.2 ")
-                            + " > " + sXndroidFile + "/log/fqrouter-output.log 2>&1 \nexit\n";
+                            + ((AppModel.sDebug || AppModel.sLastFail) ? (" > " + sXndroidFile + "/log/fqrouter-output.log 2>&1 \n") : "")
+                            + "exit\n";
                 }
                 LogUtils.i("try to start fqrouter, cmd: " + cmd);
                 try {

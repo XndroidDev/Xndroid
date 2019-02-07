@@ -14,7 +14,7 @@ A proxy software for Android based on XX-Net and fqrouter.
 基于XX-Net与fqrouter的Android端代理软件, XX-Net与fqrouter各取所长, 内置teredo客户端.
 
 ## 特性
- * 集成XX-Net 3.10.4(版本号可自动更新)
+ * 集成XX-Net 3.13.1(版本号可自动更新)
  * 集成fqrouter, 实现全局代理
  * 为fqrouter添加teredo支持, XX-Net + IPV6 自由浏览无障碍
  * 调用证书安装器安装证书, 确认即可一键安装(如果已经设置过图案解锁,却要求输入凭证,先清除屏幕锁即可), root后可导入为系统证书

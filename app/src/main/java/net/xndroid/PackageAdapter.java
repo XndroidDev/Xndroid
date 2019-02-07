@@ -12,6 +12,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
@@ -27,29 +29,39 @@ public abstract class PackageAdapter extends BaseAdapter {
         mPackageManager = mActive.getPackageManager();
         mPkgList = mPackageManager.getInstalledPackages(0);
 
-        String myPkg = activity.getPackageName();
-        PackageInfo myInfo = null;
-        for(PackageInfo info : mPkgList) {
-            if(myPkg.equals(info.packageName)){
-                myInfo = info;
-                break;
+        Collections.sort(mPkgList, new Comparator<PackageInfo>() {
+            @Override
+            public int compare(PackageInfo o1, PackageInfo o2) {
+                ApplicationInfo app1 = o1.applicationInfo;
+                ApplicationInfo app2 = o2.applicationInfo;
+                String name1 = "";
+                String name2 = "";
+                if(app1 != null) {
+                    name1 = app1.loadLabel(mPackageManager).toString();
+                }
+                if(app2 != null) {
+                    name2 = app2.loadLabel(mPackageManager).toString();
+                }
+
+                return name1.compareTo(name2);
             }
-        }
+        });
 
-        if(myInfo != null) {
-            mPkgList.remove(myInfo);
-        }
-
-        // move the selected package to the top
+        String myPkg = activity.getPackageName();
+        // move the selected package to the top and remove the self package
         List<PackageInfo> selectedPkg = new ArrayList<>();
         Iterator<PackageInfo> iterator = mPkgList.iterator();
         while (iterator.hasNext()) {
             PackageInfo info = iterator.next();
-            if(isPackageChecked(info.packageName)) {
+
+            if(myPkg.equals(info.packageName)) {
+                iterator.remove();
+            }else if(isPackageChecked(info.packageName)) {
                 selectedPkg.add(info);
                 iterator.remove();
             }
         }
+
         for(PackageInfo info : selectedPkg) {
             mPkgList.add(0, info);
         }

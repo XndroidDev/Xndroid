@@ -28,7 +28,7 @@ import static net.xndroid.AppModel.sXndroidFile;
 
 public class XXnetService extends Service {
 
-    private final int NOTIFICATION_ID = 0x4321;
+    private final int NOTIFICATION_ID = 0x4322;
     private Process mProcess;
 
     private static XXnetService sDefaultService;
@@ -36,7 +36,7 @@ public class XXnetService extends Service {
         return sDefaultService;
     }
 
-    private final String CHANNEL_ID = "channel_xxnet_state";
+    private final String CHANNEL_ID = "channel_xxnet_status_1";
 
     public XXnetService() {
 
@@ -44,7 +44,7 @@ public class XXnetService extends Service {
 
 
     private void notification(String title,String mesg){
-        NotificationCompat.Builder builder=new NotificationCompat.Builder(this);
+        NotificationCompat.Builder builder=new NotificationCompat.Builder(this, CHANNEL_ID);
         builder.setSmallIcon(R.mipmap.ic_launcher);
         builder.setLargeIcon(BitmapFactory.decodeResource(getResources(),R.mipmap.ic_launcher));
         builder.setAutoCancel(false);
@@ -214,10 +214,11 @@ public class XXnetService extends Service {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "Channel XX-Net state", NotificationManager.IMPORTANCE_DEFAULT);
+                NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "Channel XX-Net status", NotificationManager.IMPORTANCE_DEFAULT);
                 channel.setDescription("Show the state of XX-Net");
                 channel.enableLights(false);
                 channel.enableVibration(false);
+                channel.setSound(null, null);
                 mNotificationManager.createNotificationChannel(channel);
             }
             startXXnet();

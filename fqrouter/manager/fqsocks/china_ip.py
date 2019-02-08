@@ -9,7 +9,13 @@ LOGGER = logging.getLogger(__name__)
 
 
 def load_china_ip_ranges():
-    with open(os.path.join(os.path.dirname(__file__), 'china_ip.txt')) as f:
+    china_ip_txt = '/sdcard/fqrouter_china_ip.txt'
+    if not os.path.exists(china_ip_txt):
+        china_ip_txt = os.path.join(os.path.dirname(__file__), 'china_ip.txt')
+    print('use china_ip_txt %s' % china_ip_txt)
+    # add something unrelated to the list in case of empty list
+    yield ip_to_int('127.0.0.1'), ip_to_int('127.0.0.1')
+    with open(china_ip_txt) as f:
         for line in f.readlines():
             line = line.strip()
             if not line:

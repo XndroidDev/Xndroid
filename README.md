@@ -3,13 +3,9 @@ A proxy software for Android based on XX-Net and fqrouter.
 
 [最新测试版](https://raw.githubusercontent.com/XndroidDev/Xndroid-update/master/update/app-debug.apk)
 
-[稳定版1.2.6](https://github.com/XndroidDev/Xndroid/releases/download/1.2.6/app-release.apk) 
+[稳定版1.3.0](https://github.com/XndroidDev/Xndroid/releases/download/1.3.0/app-release.apk)
 
-[稳定版1.1.9](https://github.com/XndroidDev/Xndroid/releases/download/1.1.9/app-release.apk)
-
-[稳定版1.1.7](https://github.com/XndroidDev/Xndroid/releases/download/1.1.7/app-release.apk)
-
-[稳定版1.1.6](https://github.com/XndroidDev/Xndroid/releases/download/1.1.6/app-release.apk)
+[稳定版1.2.6](https://github.com/XndroidDev/Xndroid/releases/download/1.2.6/app-release.apk)
 
 基于XX-Net与fqrouter的Android端代理软件, XX-Net与fqrouter各取所长, 内置teredo客户端.
 

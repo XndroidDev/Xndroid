@@ -1,20 +1,23 @@
 # Xndroid
-A proxy software for Android based on XX-Net and fqrouter.
+A proxy tool for Android based on XX-Net and fqrouter.
 
 [最新测试版](https://raw.githubusercontent.com/XndroidDev/Xndroid-update/master/update/app-debug.apk)
 
-[稳定版1.3.0](https://github.com/XndroidDev/Xndroid/releases/download/1.3.0/app-release.apk)
+[稳定版1.3.1](https://github.com/XndroidDev/Xndroid/releases/download/1.3.1/app-release.apk)
 
 [稳定版1.2.6](https://github.com/XndroidDev/Xndroid/releases/download/1.2.6/app-release.apk)
 
-基于XX-Net与fqrouter的Android端代理软件, XX-Net与fqrouter各取所长, 内置teredo客户端.
+Android端代工具, 基于fqrouter.
+默认集成XX-Net, 安装后无需额外配置即可使用. XX-Net需要使用ipv6, Xndroid已内置teredo客户端, 默认使用teredo访问ipv6, 无需额外配置. 如果你的网络支持原生ipv6, 可尝试在`启动设置`中勾选`ipv6可用时禁用teredo`. 需要注意是许多地区原生ipv6封锁较严重, 此时使用teredo隧道效果可能更好. 另外不同网络环境, 封锁情况差别很大, 通常来说, 手机网络环境比宽带网络环境好.
+__鉴于目前网络环境, 如果内置XX-Net无法正常使用, 请在fqrouter管理页中添加个人代理(如Shadowsocks).__
+__默认集成的XX-Net不是使用socket转发, 会存在证书问题, 一些APP中可能会无法正常联网. 要解决此问题, 请在fqrouter管理页中添加个人代理(如Shadowsocks)并删除默认的XX-Net代理`HTTP 127.0.0.1:8087`.__
 
 ## 特性
  * 集成XX-Net 3.13.1(版本号可自动更新)
- * 集成fqrouter, 实现全局代理
- * 为fqrouter添加teredo支持, XX-Net + IPV6 自由浏览无障碍
- * 调用证书安装器安装证书, 确认即可一键安装(如果已经设置过图案解锁,却要求输入凭证,先清除屏幕锁即可), root后可导入为系统证书
- * 监听电量, 网络, 休眠状态, 自动调整最大扫描线程数
+ * 集成fqrouter, 实现全局代理及指定应用代理
+ * 为fqrouter添加teredo支持
+ * 自动调用证书安装器安装证书(如果已经设置过图案解锁,却要求输入凭证,先清除屏幕锁即可), root后可导入为系统证书
+ * 监听电量, 网络, 休眠状态, 自动调整XX-Net最大扫描线程数
  * 集成LightningBrowser 4.5.1, 关闭证书警告
 
 ## 兼容性与局限性
@@ -22,11 +25,10 @@ A proxy software for Android based on XX-Net and fqrouter.
  * Android 4.0 以下系统不支持VpnService, 暂不能使用本应用.
  * __Android 7.0及以上可能出现导入证书后仍然不被信任的情况. 建议在chrome, firefox(须在浏览器中导入证书), 或可忽略证书警告的浏览器(如:内置LightningBrowser, X浏览器)中使用. 如果root了, 就可以导入为系统证书, 默认被信任.__
  * __注意一些APP(如 Twitter, Facebook 等)由于不信任GAE的证书,可能无法正常访问网络, 建议在浏览器中使用.__
- * 手动更新XX-Net后出现一次`XX-Net异常退出`属正常现象.
 
 ## 共享代理网络
  fqrouter提供了多种网络共享功能, root后可使用更多功能. **注意如果用到了GAE代理, 则目标设备上也需安装证书**
- * HTTP 代理, 如果目标设备支持http代理且在同一局域网下, 就可使用此项功能共享代理网络. 可使用fqrouter的2516端口(需先在fqrouter开启`HTTP代理`), GAE 的8087 端口, 或X-Tunnel 的1080端口 ,XX-Net Smart Router 的8086端口
+ * HTTP 代理, 如果目标设备支持http代理且在同一局域网下, 就可使用此项功能共享代理网络. 可使用fqrouter的2516端口(需先在fqrouter开启`HTTP代理`)
  * 如果以root模式启动, 可使用Android 的网络共享功能, 如: 便携式热点, USB共享网络(一些手机上可能导致死机), 蓝牙共享网络
  * 如果以root模式启动, 可使用fqrouter 的 Pick&Play 功能 , 通过类似于 `中间人攻击` 的手法时局域网中其他设备走fqrouter的代理
  * 如果以root模式启动, 部分手机可以使用 fqrouter的 wifi-repeat(无线中继) 功能, 其它设备连上即可自由浏览. 注意fqrouter早已停止维护此功能, 无法保证此功能在所有手机上都可以, 并且不会尝试增强此功能的兼容性
@@ -44,7 +46,10 @@ howcast.com
 ```
  注意Android6.0 及以上必须授予`存储空间(访问媒体文件)`的权限. 如果仍然不能满足需求, 可以在fqrouter的`配置代理`中关闭`优先使用个人代理`, 并开启`直连可以直连的服务器`
 
-## 关于修改XX-NET配置
+## 更新XX-NET
+在XX-Net管理页中点击相应更新按钮即可. Xndroid更新时也会更新自带的XX-Net.
+
+## 修改XX-NET配置
 一般无需也不建议手动修改XX-NET配置文件. 如特殊情况需要修改, root用户可直接修改相关文件, 其位于`/data/data/net.xndroid/files/xndroid_files/xxnet/`; 非root用户可以[下载XX-NET zip压缩包](https://github.com/XX-net/XX-Net/releases), 将其解压, 并修改或添加相应文件再压缩回zip, 点击菜单中的`离线更新XX-NET`, 选择修改的zip文件即可.
 
 ## 关于编译

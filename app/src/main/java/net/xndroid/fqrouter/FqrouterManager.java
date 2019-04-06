@@ -270,7 +270,7 @@ public class FqrouterManager {
                             + "sh " + sXndroidFile + "/python/bin"
                             + (Build.VERSION.SDK_INT > 17 ? "/python-launcher.sh " : "/python-launcher-nopie.sh ")
                             + sXndroidFile + "/fqrouter/manager/main.py run "
-                            + ((AppModel.sDebug || AppModel.sLastFail) ? (" > " + sXndroidFile + "/log/fqrouter-output.log 2>&1 \n") : "\n")
+                            + ((AppModel.sDebug || AppModel.sLastFail) ? (" > " + sXndroidFile + "/log/fqrouter-output.log 2>&1 \n") : " >/dev/null 2>&1\n")
                             + "exit\n";
                 }else {
                     cmd = "cd " + sXndroidFile + " \n"
@@ -283,7 +283,7 @@ public class FqrouterManager {
                             + (Build.VERSION.SDK_INT > 17 ? "/python-launcher.sh " : "/python-launcher-nopie.sh ")
                             + sXndroidFile + "/fqrouter/manager/vpn.py "
                             + (Build.VERSION.SDK_INT >= 20 ? " 26.26.26.1 26.26.26.2 " : " 10.25.1.1 10.25.1.2 ")
-                            + ((AppModel.sDebug || AppModel.sLastFail) ? (" > " + sXndroidFile + "/log/fqrouter-output.log 2>&1 \n") : "\n")
+                            + ((AppModel.sDebug || AppModel.sLastFail) ? (" > " + sXndroidFile + "/log/fqrouter-output.log 2>&1 \n") : " >/dev/null 2>&1\n")
                             + "exit\n";
                 }
                 LogUtils.i("try to start fqrouter, cmd: " + cmd);

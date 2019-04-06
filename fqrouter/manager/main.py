@@ -143,7 +143,7 @@ fqsocks.httpd.HANDLERS[('POST', 'exit')] = handle_exit
 
 
 def setup_logging():
-    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG if os.getenv('DEBUG') else (logging.CRITICAL + 1), format='%(asctime)s %(levelname)s %(message)s')
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG if os.getenv('DEBUG') else logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
     log_level = logging.DEBUG if os.getenv('DEBUG') else logging.INFO
     handler = logging.handlers.RotatingFileHandler(
         MANAGER_LOG_FILE, maxBytes=1024 * 512, backupCount=0)

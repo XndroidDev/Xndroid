@@ -83,7 +83,7 @@ def setup_logging(log_level, log_file=None):
             log_file, maxBytes=1024 * 512, backupCount=1)
         handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
         handler.setLevel(log_level)
-        logging.getLogger('fqsocks').setLevel(log_level)
+        #logging.getLogger('fqsocks').setLevel(log_level)
         logging.getLogger('fqsocks').addHandler(handler)
 
 

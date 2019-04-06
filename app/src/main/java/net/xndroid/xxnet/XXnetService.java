@@ -250,6 +250,8 @@ public class XXnetService extends Service {
                 }
                 mProcess = null;
             }
+
+            ShellUtils.execBusybox("rm " + sXndroidFile + "/log/xxnet-output.log");
         }
         stopForeground(true);
         this.stopSelf();

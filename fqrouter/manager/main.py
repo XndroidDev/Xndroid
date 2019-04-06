@@ -143,26 +143,32 @@ fqsocks.httpd.HANDLERS[('POST', 'exit')] = handle_exit
 
 
 def setup_logging():
-    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG if os.getenv('DEBUG') else logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG if os.getenv('DEBUG') else (logging.CRITICAL + 1), format='%(asctime)s %(levelname)s %(message)s')
+    log_level = logging.DEBUG if os.getenv('DEBUG') else logging.INFO
     handler = logging.handlers.RotatingFileHandler(
         MANAGER_LOG_FILE, maxBytes=1024 * 512, backupCount=0)
     handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+    handler.setLevel(log_level)
     logging.getLogger('fqrouter').addHandler(handler)
     handler = logging.handlers.RotatingFileHandler(
         FQDNS_LOG_FILE, maxBytes=1024 * 256, backupCount=0)
     handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+    handler.setLevel(log_level)
     logging.getLogger('fqdns').addHandler(handler)
     handler = logging.handlers.RotatingFileHandler(
         FQLAN_LOG_FILE, maxBytes=1024 * 256, backupCount=0)
     handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+    handler.setLevel(log_level)
     logging.getLogger('fqlan').addHandler(handler)
     handler = logging.handlers.RotatingFileHandler(
         WIFI_LOG_FILE, maxBytes=1024 * 512, backupCount=1)
     handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+    handler.setLevel(log_level)
     logging.getLogger('wifi').addHandler(handler)
     handler = logging.handlers.RotatingFileHandler(
         os.path.join(LOG_DIR, 'teredo.log'), maxBytes=1024 * 256, backupCount=0)
     handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+    handler.setLevel(log_level)
     logging.getLogger('teredo').addHandler(handler)
 
 

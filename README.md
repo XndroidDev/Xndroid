@@ -8,8 +8,11 @@ A proxy tool for Android based on XX-Net and fqrouter.
 [稳定版1.2.6](https://github.com/XndroidDev/Xndroid/releases/download/1.2.6/app-release.apk)
 
 Android端代工具, 基于fqrouter.
+
 默认集成XX-Net, 安装后无需额外配置即可使用. XX-Net需要使用ipv6, Xndroid已内置teredo客户端, 默认使用teredo访问ipv6, 无需额外配置. 如果你的网络支持原生ipv6, 可尝试在`启动设置`中勾选`ipv6可用时禁用teredo`. 需要注意是许多地区原生ipv6封锁较严重, 此时使用teredo隧道效果可能更好. 另外不同网络环境, 封锁情况差别很大, 通常来说, 手机网络环境比宽带网络环境好.
+
 __鉴于目前网络环境, 如果内置XX-Net无法正常使用, 请在fqrouter管理页中添加个人代理(如Shadowsocks).__
+
 __默认集成的XX-Net不是使用socket转发, 会存在证书问题, 一些APP中可能会无法正常联网. 要解决此问题, 请在fqrouter管理页中添加个人代理(如Shadowsocks)并删除默认的XX-Net代理`HTTP 127.0.0.1:8087`.__
 
 ## 特性

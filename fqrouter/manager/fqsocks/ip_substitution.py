@@ -10,22 +10,24 @@ sub_map = {}
 sub_lock = set()
 
 def substitute_ip(client, dst_black_list):
-    if client.dst_ip not in sub_map:
-        gevent.spawn(fill_sub_map, client.host, client.dst_ip)
-        return False
-    if client.dst_ip in sub_map and sub_map[client.dst_ip] is None:
-        return False
-    candidate_ips = []
-    for ip in sub_map.get(client.dst_ip):
-        if (ip, client.dst_port) not in dst_black_list:
-            candidate_ips.append(ip)
-    if candidate_ips:
-        substituted_ip = random.choice(candidate_ips)
-        client.dst_ip = substituted_ip
-        return True
-    else:
-        sub_map[client.dst_ip] = None
-        return False
+    '''not available anymore'''
+    return False
+    # if client.dst_ip not in sub_map:
+    #     gevent.spawn(fill_sub_map, client.host, client.dst_ip)
+    #     return False
+    # if client.dst_ip in sub_map and sub_map[client.dst_ip] is None:
+    #     return False
+    # candidate_ips = []
+    # for ip in sub_map.get(client.dst_ip):
+    #     if (ip, client.dst_port) not in dst_black_list:
+    #         candidate_ips.append(ip)
+    # if candidate_ips:
+    #     substituted_ip = random.choice(candidate_ips)
+    #     client.dst_ip = substituted_ip
+    #     return True
+    # else:
+    #     sub_map[client.dst_ip] = None
+    #     return False
 
 
 def fill_sub_map(host, dst_ip):

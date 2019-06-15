@@ -68,7 +68,10 @@ class HttpRelayProxy(Proxy):
                 reason='send to upstream failed: %s' % sys.exc_info()[1],
                 delayed_penalty=self.increase_failed_time)
         if is_payload_complete:
-            response = try_receive_response_body(try_receive_response_header(client, upstream_sock))
+            try:
+                response = try_receive_response_body(try_receive_response_header(client, upstream_sock))
+            except:
+                return client.fall_back(reason='bad response', delayed_penalty=self.increase_failed_time)
             upstream_sock.counter.received(len(response))
             client.forward_started = True
             client.downstream_sock.sendall(response)

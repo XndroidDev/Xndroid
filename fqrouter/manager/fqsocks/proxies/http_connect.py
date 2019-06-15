@@ -97,8 +97,7 @@ class HttpConnectProxy(Proxy):
                     LOGGER.info('disable HTTP connect access with ip')
                     self.allow_ip_access = False
             elif config_file.multi_proxy:
-                self.died = True
-                self.die_time = time.time()
+                pass
             client.fall_back(
                 response.splitlines()[0] if response.splitlines() else 'unknown',
                 delayed_penalty=self.increase_failed_time)

@@ -14,14 +14,14 @@ android {
     }
 
     sourceSets {
-        lightningPlus.setRoot('src/LightningPlus')
-        lightningLite.setRoot('src/LightningLite')
+        //lightningPlus.setRoot('src/LightningPlus')
+        //lightningLite.setRoot('src/LightningLite')
     }
 
     buildTypes {
         debug {
             minifyEnabled false
-            shrinkResources false
+            //shrinkResources false
             //proguardFiles 'proguard-project.txt'
             proguardFiles getDefaultProguardFile('proguard-android.txt')
         }
@@ -29,7 +29,7 @@ android {
         release {
             //minifyEnabled true
             minifyEnabled false
-            shrinkResources true
+            //shrinkResources true
             //proguardFiles 'proguard-project.txt'
             proguardFiles getDefaultProguardFile('proguard-android.txt')
         }
@@ -69,40 +69,40 @@ android {
 //}
 
 dependencies {
-    testCompile 'junit:junit:4.12'
+    testImplementation 'junit:junit:4.12'
     // support libraries
     def supportLibVersion = '26.+'
-    compile "com.android.support:palette-v7:$supportLibVersion"
-    compile "com.android.support:appcompat-v7:$supportLibVersion"
-    compile "com.android.support:design:$supportLibVersion"
-    compile "com.android.support:recyclerview-v7:$supportLibVersion"
-    compile "com.android.support:support-v4:$supportLibVersion"
+    api "com.android.support:palette-v7:$supportLibVersion"
+    api "com.android.support:appcompat-v7:$supportLibVersion"
+    api "com.android.support:design:$supportLibVersion"
+    api "com.android.support:recyclerview-v7:$supportLibVersion"
+    api "com.android.support:support-v4:$supportLibVersion"
     // html parsing for reading mode
-    compile 'org.jsoup:jsoup:1.10.2'
+    api 'org.jsoup:jsoup:1.10.2'
     // dependency injection
     def daggerVersion = '2.11'
-    compile "com.google.dagger:dagger:$daggerVersion"
+    api "com.google.dagger:dagger:$daggerVersion"
     annotationProcessor "com.google.dagger:dagger-compiler:$daggerVersion"
-    provided 'javax.annotation:jsr250-api:1.0'
+    compileOnly 'javax.annotation:jsr250-api:1.0'
     // view binding
     def butterknifeVersion = '8.6.0'
-    compile "com.jakewharton:butterknife:$butterknifeVersion"
+    implementation "com.jakewharton:butterknife:$butterknifeVersion"
     annotationProcessor "com.jakewharton:butterknife-compiler:$butterknifeVersion"
     // permissions
-    compile 'com.anthonycr.grant:permissions:1.1.2'
+    implementation 'com.anthonycr.grant:permissions:1.1.2'
     // proxy support
-    compile 'net.i2p.android:client:0.8'
-    compile 'com.squareup.okhttp3:okhttp:3.8.0'
+    implementation 'net.i2p.android:client:0.8'
+    implementation 'com.squareup.okhttp3:okhttp:3.8.0'
     // tor proxy
     def netcipherVersion = '2.0.0-alpha1'
-    compile "info.guardianproject.netcipher:netcipher:$netcipherVersion"
+    implementation "info.guardianproject.netcipher:netcipher:$netcipherVersion"
 //    compile "info.guardianproject.netcipher:netcipher-webkit:$netcipherVersion"
-    compile 'com.anthonycr.bonsai:bonsai:1.1.0'
-    compile 'com.anthonycr.progress:animated-progress:1.0'
+    implementation 'com.anthonycr.bonsai:bonsai:1.1.0'
+    implementation 'com.anthonycr.progress:animated-progress:1.0'
     // memory leak analysis
     def leakCanaryVersion = '1.5.1'
-    debugCompile "com.squareup.leakcanary:leakcanary-android:$leakCanaryVersion"
-    releaseCompile "com.squareup.leakcanary:leakcanary-android-no-op:$leakCanaryVersion"
+    debugImplementation "com.squareup.leakcanary:leakcanary-android:$leakCanaryVersion"
+    releaseImplementation "com.squareup.leakcanary:leakcanary-android-no-op:$leakCanaryVersion"
     // Kotlin
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
+    api "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }

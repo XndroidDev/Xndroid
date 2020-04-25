@@ -82,6 +82,8 @@ SPI['get_original_destination'] = _get_original_destination
 
 
 def resolve_ips(host):
+    if ':' in host:
+        return [host]
     if RE_IP.match(host):
         return [host]
     request = dpkt.dns.DNS(

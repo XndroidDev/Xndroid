@@ -300,11 +300,11 @@ public class XXnetManager {
         String md5 = ShellUtils.execBusybox("md5sum " + certPath + " | " + ShellUtils.sBusyBox + " cut -c 1-32").trim();
         String lastMd5 = AppModel.sPreferences.getString(PER_CA_MD5, "");
         if(lastMd5.isEmpty() || !lastMd5.equals(md5)) {
-            if(ShellUtils.isRoot()) {
-                importSystemCert();
-            }else {
+//            if(ShellUtils.isRoot()) {
+//                importSystemCert();
+//            }else {
                 importCert();
-            }
+//            }
         }
 
     }

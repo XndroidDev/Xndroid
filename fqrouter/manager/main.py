@@ -70,6 +70,7 @@ import teredo
 # IFF_NO_PI need not match between interface creation and reconnection time.
 # Also note that when capturing traffic on the interface with Wireshark, those 4 bytes are never shown.
 
+IP_WHITE_LIST_PATH = '/sdcard/fqrouter_ip_white_list.txt'
 fqsocks.pages.home.is_root_mode = True
 default_loacl_teredo_ip = '2001:0:53aa:64c:0:1234:1234:1234'
 
@@ -102,9 +103,6 @@ SOCKS_RULES = [
     ), (
         {'target': 'ACCEPT', 'destination': '127.0.0.1'},
         ('nat', 'OUTPUT', '-p tcp -d 127.0.0.1 -j ACCEPT')
-    ), (
-        {'target': 'DNAT', 'extra': 'to:10.1.2.3:12345'},
-        ('nat', 'PREROUTING', '-p tcp ! -s 10.1.2.3 -j DNAT --to-destination 10.1.2.3:12345')
     )]
 default_dns_server = config.get_default_dns_server()
 DNS_HANDLER = fqdns.DnsHandler(
@@ -268,6 +266,19 @@ def needs_su():
     else:
         return True
 
+def get_ip_white_list():
+    try:
+        if not os.path.exists(IP_WHITE_LIST_PATH):
+            return []
+
+        with open(IP_WHITE_LIST_PATH, 'r') as fp:
+            content = fp.read()
+            white_list = [line.split('#')[0].strip() for line in content.split('\n')]
+            return filter(None, white_list)
+    except:
+        LOGGER.exception("read ip white list %s failed" % IP_WHITE_LIST_PATH)
+        return []
+
 def setup_nat():
     proxy_mode = os.getenv('PROXY_MODE')
     if not proxy_mode:
@@ -276,6 +287,22 @@ def setup_nat():
     if not proxy_list:
         proxy_list = ''
     proxy_list = proxy_list.split()
+
+    ip_white_list = get_ip_white_list()
+    for ip in ip_white_list:
+        SOCKS_RULES.append((
+            {'target': 'RETURN'},
+            ('nat', 'PREROUTING', '-j RETURN -d %s' % ip)
+        ))
+        SOCKS_RULES.append((
+            {'target': 'RETURN'},
+            ('nat', 'OUTPUT', '-j RETURN -d %s' % ip)
+        ))
+
+    SOCKS_RULES.append((
+        {'target': 'DNAT', 'extra': 'to:10.1.2.3:12345'},
+        ('nat', 'PREROUTING', '-p tcp ! -s 10.1.2.3 -j DNAT --to-destination 10.1.2.3:12345')
+    ))
 
     if proxy_mode == '1':
         pass
@@ -301,7 +328,6 @@ def setup_nat():
             {'target': 'DNAT', 'extra': 'to:10.1.2.3:12345'},
             ('nat', 'OUTPUT', '-p tcp ! -s 10.1.2.3 -j DNAT --to-destination 10.1.2.3:12345')
         ))
-
 
 def run():
     iptables.tables = {}

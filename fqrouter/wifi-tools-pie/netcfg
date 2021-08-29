@@ -1,0 +1,19 @@
+#!/system/bin/sh
+
+[ $# != 3 ] && {
+    ifconfig $@
+    exit $?
+}
+
+[ $2 == 'up' ] && {
+    ifup $1
+    exit $?
+}
+
+[ $2 == 'down' ] && {
+    ifdown $1
+    exit $?
+}
+
+echo "unsupported command: $@"
+exit 1

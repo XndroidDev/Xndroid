@@ -238,6 +238,7 @@ public class FqrouterManager {
                 int errorLen = 0;
                 String cmd = "";
                 PackageManager packageManager = AppModel.sContext.getPackageManager();
+                String env_path = sXndroidFile + ":$PATH:" + sXndroidFile + "/fqrouter/wifi-tools";
 
                 if(AppModel.sIsRootMode){
                     String uidList = "";
@@ -260,7 +261,7 @@ public class FqrouterManager {
                     uidList = uidList.trim();
 
                     cmd = "cd " + sXndroidFile + " \n"
-                            + "export PATH=" + sXndroidFile + ":$PATH\n"
+                            + "export PATH=" + env_path + "\n"
                             + "export PROXY_MODE=" + sProxyMode + "\n"
                             + "export PROXY_LIST='" + uidList + "'\n"
 //                            + "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/vendor/lib64:/vendor/lib:/system/lib64:/system/lib\n"
@@ -274,7 +275,7 @@ public class FqrouterManager {
                             + "exit\n";
                 }else {
                     cmd = "cd " + sXndroidFile + " \n"
-                            + "export PATH=" + sXndroidFile + ":$PATH\n"
+                            + "export PATH=" + env_path + "\n"
 //                            + "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/vendor/lib64:/vendor/lib:/system/lib64:/system/lib\n"
                             + ((AppModel.sDebug || AppModel.sLastFail) ? "export DEBUG=TRUE\n" : "")
                             + (sOriginIPv6 != null ? "export NO_TEREDO=TRUE\n" : "")
